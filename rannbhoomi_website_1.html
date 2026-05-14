@@ -409,24 +409,6 @@
   <p class="ft-copy">© 2026 Rannbhoomi. All rights reserved. Forged through battle.</p>
 </footer>
 
-<script>
-function switchTab(i) {
-  document.querySelectorAll('.tab-btn').forEach((b,j) => b.classList.toggle('active', i===j));
-  document.querySelectorAll('.tab-panel').forEach((p,j) => p.classList.toggle('active', i===j));
-}
-function toggleFaq(btn) {
-  btn.parentElement.classList.toggle('open');
-}
-function toggleNav(el) {
-  const ul = document.querySelector('.nav-links');
-  const open = ul.style.display === 'flex';
-  ul.style.cssText = open ? '' :
-    'display:flex;flex-direction:column;position:fixed;top:62px;left:0;right:0;background:rgba(214,185,122,0.98);padding:20px 5vw;gap:14px;border-bottom:1px solid rgba(76,0,7,.25);z-index:998;';
-}
-const obs = new IntersectionObserver(es => es.forEach(e => {
-  if (e.isIntersecting) e.target.classList.add('visible');
-}), {threshold:0.1});
-document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
-</script>
+<script src="js/main.js"></script>
 </body>
 </html>
