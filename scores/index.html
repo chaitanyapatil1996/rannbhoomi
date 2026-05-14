@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scores — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --text:#4c0007; --crimson-border:rgba(76,0,7,0.28); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  min-height:100vh;
+  background:#d6b97a url('../images/parchment.png') center/cover fixed;
+  font-family:'Cinzel',serif; color:var(--text);
+  padding:60px 5vw;
+}
+.back-link { font-size:11px; letter-spacing:3px; color:var(--crimson); opacity:0.6; text-decoration:none; }
+.back-link:hover { opacity:1; }
+.page-label { font-size:10px; letter-spacing:6px; opacity:0.4; margin:40px 0 14px; display:block; }
+.page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(44px,7vw,84px); letter-spacing:4px; color:var(--crimson); line-height:1; }
+.page-rule { width:70px; height:2px; background:var(--crimson); opacity:0.35; margin:18px 0 48px; }
+.controls { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px; }
+.ctrl-btn {
+  padding:10px 22px; border:1px solid var(--crimson-border);
+  background:transparent; font-family:'Cinzel',serif; font-size:10px;
+  letter-spacing:3px; color:var(--crimson); cursor:pointer; transition:.2s;
+}
+.ctrl-btn.active { background:var(--crimson); color:var(--gold); }
+.ctrl-btn:hover:not(.active) { background:rgba(76,0,7,0.08); }
+.search-wrap { margin-bottom:32px; }
+.search-wrap input {
+  width:100%; max-width:400px; padding:12px 16px;
+  border:1px solid var(--crimson-border); background:rgba(214,185,122,0.4);
+  font-family:'Cinzel',serif; font-size:13px; color:var(--crimson); outline:none;
+}
+.search-wrap input:focus { border-color:var(--crimson); }
+.scores-table { width:100%; border-collapse:collapse; max-width:900px; }
+.scores-table th {
+  font-size:9px; letter-spacing:3px; opacity:0.5;
+  padding:10px 16px; text-align:left; border-bottom:1px solid var(--crimson-border);
+}
+.scores-table td { padding:14px 16px; border-bottom:1px solid rgba(76,0,7,0.08); font-size:13px; }
+.scores-table tr:hover td { background:rgba(76,0,7,0.04); }
+.rank-1 td:first-child { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gold); }
+.rank-badge { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; }
+.loading { font-size:12px; letter-spacing:3px; opacity:0.4; margin-top:40px; }
+</style>
+</head>
+<body>
+<a class="back-link" href="../">← BACK TO RANNBHOOMI</a>
+<span class="page-label">Competition Results</span>
+<h1 class="page-title">LEADERBOARD</h1>
+<div class="page-rule"></div>
+
+<div class="controls">
+  <button class="ctrl-btn active" onclick="setRound(1)">Round 1 — Qualifiers</button>
+  <button class="ctrl-btn" onclick="setRound(2)">Round 2 — Semi-Finals</button>
+  <button class="ctrl-btn" onclick="setRound(3)">Round 3 — Finals</button>
+  <button class="ctrl-btn" id="catBtn" onclick="toggleCategory()">Showing: Male</button>
+</div>
+
+<div class="search-wrap">
+  <input type="text" id="search" placeholder="SEARCH ATHLETE NAME..." oninput="renderTable()">
+</div>
+
+<div id="tableWrap"><p class="loading">Loading scores...</p></div>
+
+<script>
+const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+let allScores = [];
+let currentRound = 1;
+let currentCategory = 'male';
+
+async function loadScores() {
+  document.getElementById('tableWrap').innerHTML = '<p class="loading">Loading...</p>';
+  try {
+    const url = `${APPS_SCRIPT_URL}?action=scores&round=${currentRound}&category=${currentCategory}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    allScores = data.scores || [];
+    renderTable();
+  } catch (e) {
+    document.getElementById('tableWrap').innerHTML = '<p class="loading">Failed to load scores. Check back later.</p>';
+  }
+}
+
+function renderTable() {
+  const query = document.getElementById('search').value.toLowerCase();
+  const filtered = allScores.filter(r => r.name.toLowerCase().includes(query));
+  if (!filtered.length) {
+    document.getElementById('tableWrap').innerHTML = '<p class="loading">No scores yet.</p>';
+    return;
+  }
+  const headers = Object.keys(filtered[0]).filter(k => k !== 'rank');
+  let html = `<table class="scores-table"><thead><tr>
+    <th>RANK</th>
+    ${headers.map(h => `<th>${h.replace(/_/g,' ').toUpperCase()}</th>`).join('')}
+  </tr></thead><tbody>`;
+  filtered.forEach((row, i) => {
+    const rankClass = i === 0 ? 'rank-1' : '';
+    html += `<tr class="${rankClass}">
+      <td><span class="rank-badge">${row.rank}</span></td>
+      ${headers.map(h => `<td>${row[h] ?? '—'}</td>`).join('')}
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('tableWrap').innerHTML = html;
+}
+
+function setRound(r) {
+  currentRound = r;
+  document.querySelectorAll('.ctrl-btn').forEach((b, i) => {
+    if (i < 3) b.classList.toggle('active', i === r - 1);
+  });
+  loadScores();
+}
+
+function toggleCategory() {
+  currentCategory = currentCategory === 'male' ? 'female' : 'male';
+  document.getElementById('catBtn').textContent = `Showing: ${currentCategory === 'male' ? 'Male' : 'Female'}`;
+  loadScores();
+}
+
+loadScores();
+</script>
+</body>
+</html>
