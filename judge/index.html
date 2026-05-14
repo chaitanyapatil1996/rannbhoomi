@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Judge Portal — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --text:#4c0007; --crimson-border:rgba(76,0,7,0.28); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; background:#d6b97a url('../images/parchment.png') center/cover fixed; font-family:'Cinzel',serif; color:var(--text); padding:40px 5vw; }
+.panel { max-width:600px; margin:0 auto; }
+.page-title { font-family:'Bebas Neue',sans-serif; font-size:52px; letter-spacing:4px; color:var(--crimson); }
+.page-rule { width:60px; height:2px; background:var(--crimson); opacity:0.35; margin:14px 0 36px; }
+label { display:block; font-size:10px; letter-spacing:3px; opacity:0.5; margin-bottom:8px; margin-top:20px; }
+input, select {
+  width:100%; padding:13px 16px; border:1px solid var(--crimson-border);
+  background:rgba(214,185,122,0.4); font-family:'Cinzel',serif;
+  font-size:13px; color:var(--crimson); outline:none;
+}
+input:focus, select:focus { border-color:var(--crimson); background:rgba(214,185,122,0.7); }
+input[type="number"] { -moz-appearance:textfield; }
+.btn {
+  display:block; width:100%; margin-top:28px; padding:16px;
+  background:var(--crimson); color:var(--gold); font-family:'Bebas Neue',sans-serif;
+  font-size:18px; letter-spacing:4px; border:none; cursor:pointer; transition:.2s;
+}
+.btn:hover { opacity:.85; }
+.btn:disabled { opacity:.4; cursor:not-allowed; }
+.btn-secondary { background:transparent; color:var(--crimson); border:1px solid var(--crimson-border); font-size:14px; margin-top:12px; }
+.scores-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:8px; }
+.msg { margin-top:20px; font-size:12px; letter-spacing:2px; min-height:20px; text-align:center; }
+.msg.success { color:#1a6b00; }
+.msg.error { color:var(--crimson); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <div style="font-size:10px;letter-spacing:4px;opacity:0.4;margin-bottom:14px;">JUDGE ACCESS</div>
+  <h1 class="page-title">SCORE ENTRY</h1>
+  <div class="page-rule"></div>
+
+  <!-- PIN screen -->
+  <div id="pinScreen">
+    <label for="pinInput">JUDGE PIN</label>
+    <input type="password" id="pinInput" placeholder="Enter PIN" maxlength="10">
+    <button class="btn" onclick="verifyPin()">ENTER</button>
+    <div class="msg" id="pinMsg"></div>
+  </div>
+
+  <!-- Score entry screen (hidden until PIN entered) -->
+  <div id="scoreScreen" style="display:none;">
+    <label for="roundSelect">ROUND</label>
+    <select id="roundSelect" onchange="updateStationFields()">
+      <option value="1">Round 1 — Qualifiers</option>
+      <option value="2">Round 2 — Semi-Finals</option>
+      <option value="3">Round 3 — Finals</option>
+    </select>
+
+    <label for="athleteId">ATHLETE ID</label>
+    <input type="text" id="athleteId" placeholder="e.g. RB123456">
+
+    <div id="stationFields"></div>
+
+    <button class="btn" id="submitScoreBtn" onclick="submitScore()">SUBMIT SCORE</button>
+    <button class="btn btn-secondary" onclick="resetForm()">CLEAR FORM</button>
+    <div class="msg" id="scoreMsg"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+
+const ROUND_STATIONS = {
+  '1': ['s1_burpees','s2_bike','s3_lunges','s4_pushups','s5_sprint','s6_inchworms','s7_squats'],
+  '2': ['rowing','devils_press','kb_walk','box_jump'],
+  '3': ['weight_total','time_seconds'],
+};
+
+const STATION_LABELS = {
+  s1_burpees:'Burpees (reps)', s2_bike:'Erg Bike (metres)', s3_lunges:'Lunges (reps)',
+  s4_pushups:'Push Ups (reps)', s5_sprint:'Sprint (20m lengths)', s6_inchworms:'Inch Worms (reps)',
+  s7_squats:'DB Front Squats (reps)', rowing:'Rowing (cals)', devils_press:"Devil's Press (reps)",
+  kb_walk:'KB Walk (20m lengths)', box_jump:'Box Jumps (reps)',
+  weight_total:'Total Weight (kg)', time_seconds:'Finish Time (seconds)',
+};
+
+let judgePin = '';
+
+function verifyPin() {
+  const entered = document.getElementById('pinInput').value;
+  if (!entered) return;
+  judgePin = entered;
+  document.getElementById('pinScreen').style.display = 'none';
+  document.getElementById('scoreScreen').style.display = 'block';
+  updateStationFields();
+}
+
+function updateStationFields() {
+  const round = document.getElementById('roundSelect').value;
+  const stations = ROUND_STATIONS[round];
+  let html = '<div class="scores-grid">';
+  stations.forEach(s => {
+    html += `<div>
+      <label for="${s}">${STATION_LABELS[s].toUpperCase()}</label>
+      <input type="number" id="${s}" name="${s}" placeholder="0" min="0" step="0.5">
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('stationFields').innerHTML = html;
+}
+
+async function submitScore() {
+  const btn = document.getElementById('submitScoreBtn');
+  const msg = document.getElementById('scoreMsg');
+  const round = document.getElementById('roundSelect').value;
+  const athleteId = document.getElementById('athleteId').value.trim();
+  if (!athleteId) {
+    msg.textContent = 'Enter an athlete ID';
+    msg.className = 'msg error';
+    return;
+  }
+
+  const stations = ROUND_STATIONS[round];
+  const scores = {};
+  stations.forEach(s => {
+    scores[s] = parseFloat(document.getElementById(s)?.value || 0) || 0;
+  });
+
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+  msg.textContent = '';
+  msg.className = 'msg';
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'score', pin: judgePin, round, athlete_id: athleteId, scores }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      msg.textContent = `Score saved. Total: ${data.total} pts`;
+      msg.className = 'msg success';
+      resetForm();
+    } else {
+      throw new Error(data.error || 'Failed');
+    }
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg error';
+  }
+  btn.disabled = false;
+  btn.textContent = 'SUBMIT SCORE';
+}
+
+function resetForm() {
+  document.getElementById('athleteId').value = '';
+  updateStationFields();
+}
+
+updateStationFields();
+</script>
+</body>
+</html>
