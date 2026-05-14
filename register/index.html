@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root {
+  --crimson: #4c0007;
+  --gold: #dec189;
+  --text: #4c0007;
+  --crimson-border: rgba(76,0,7,0.28);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  min-height: 100vh;
+  background: #d6b97a url('../images/parchment.png') center/cover fixed;
+  font-family: 'Cinzel', serif;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60px 20px;
+}
+.back-link {
+  align-self: flex-start;
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--crimson);
+  opacity: 0.6;
+  text-decoration: none;
+  margin-bottom: 40px;
+}
+.back-link:hover { opacity: 1; }
+.form-wrap {
+  width: 100%;
+  max-width: 560px;
+  border: 1px solid var(--crimson-border);
+  padding: 52px 48px;
+  background: rgba(214,185,122,0.6);
+}
+.form-label { font-size: 10px; letter-spacing: 6px; opacity: 0.4; margin-bottom: 14px; display: block; }
+.form-title { font-family: 'Bebas Neue', sans-serif; font-size: 56px; letter-spacing: 4px; color: var(--crimson); line-height:1; }
+.form-rule { width: 60px; height: 2px; background: var(--crimson); opacity: 0.35; margin: 18px 0 36px; }
+label { display: block; font-size: 10px; letter-spacing: 3px; opacity: 0.5; margin-bottom: 8px; margin-top: 22px; }
+input, select {
+  width: 100%;
+  padding: 13px 16px;
+  border: 1px solid var(--crimson-border);
+  background: rgba(214,185,122,0.4);
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  color: var(--crimson);
+  outline: none;
+  appearance: none;
+}
+input:focus, select:focus { border-color: var(--crimson); background: rgba(214,185,122,0.7); }
+select option { background: #d6b97a; }
+.submit-btn {
+  display: block;
+  width: 100%;
+  margin-top: 36px;
+  padding: 18px;
+  background: var(--crimson);
+  color: var(--gold);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 4px;
+  border: none;
+  cursor: pointer;
+  transition: opacity .2s;
+}
+.submit-btn:hover { opacity: 0.85; }
+.submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.msg { margin-top: 24px; font-size: 12px; letter-spacing: 2px; min-height: 20px; text-align: center; }
+.msg.success { color: #1a6b00; }
+.msg.error { color: var(--crimson); }
+.reg-id-box {
+  display: none;
+  margin-top: 28px;
+  padding: 20px;
+  border: 1px solid var(--crimson-border);
+  text-align: center;
+}
+.reg-id-label { font-size: 10px; letter-spacing: 4px; opacity: 0.5; margin-bottom: 10px; display: block; }
+.reg-id-val { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: var(--crimson); letter-spacing: 4px; }
+</style>
+</head>
+<body>
+<a class="back-link" href="../">← BACK TO RANNBHOOMI</a>
+<div class="form-wrap">
+  <span class="form-label">Join The Arena</span>
+  <h1 class="form-title">REGISTER</h1>
+  <div class="form-rule"></div>
+
+  <form id="regForm">
+    <label for="name">FULL NAME</label>
+    <input type="text" id="name" name="name" placeholder="As it appears on ID" required>
+
+    <label for="email">EMAIL ADDRESS</label>
+    <input type="email" id="email" name="email" placeholder="you@example.com" required>
+
+    <label for="phone">PHONE NUMBER</label>
+    <input type="tel" id="phone" name="phone" placeholder="+91 XXXXX XXXXX">
+
+    <label for="category">CATEGORY</label>
+    <select id="category" name="category" required>
+      <option value="" disabled selected>Select category</option>
+      <option value="Male">Male</option>
+      <option value="Female">Female</option>
+    </select>
+
+    <button type="submit" class="submit-btn" id="submitBtn">ENTER THE ARENA</button>
+  </form>
+
+  <div class="msg" id="msg"></div>
+  <div class="reg-id-box" id="regIdBox">
+    <span class="reg-id-label">YOUR REGISTRATION ID</span>
+    <div class="reg-id-val" id="regIdVal"></div>
+    <p style="font-size:11px;opacity:0.5;margin-top:12px;letter-spacing:2px;">Save this. You'll use it to view your scores.</p>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+
+document.getElementById('regForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+  msg.textContent = '';
+  msg.className = 'msg';
+
+  const body = {
+    action: 'register',
+    name: document.getElementById('name').value.trim(),
+    email: document.getElementById('email').value.trim(),
+    phone: document.getElementById('phone').value.trim(),
+    category: document.getElementById('category').value,
+  };
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('regForm').style.display = 'none';
+      msg.textContent = 'Registration successful!';
+      msg.className = 'msg success';
+      document.getElementById('regIdVal').textContent = data.reg_id;
+      document.getElementById('regIdBox').style.display = 'block';
+    } else {
+      throw new Error(data.error || 'Registration failed');
+    }
+  } catch (err) {
+    msg.textContent = err.message || 'Something went wrong. Please try again.';
+    msg.className = 'msg error';
+    btn.disabled = false;
+    btn.textContent = 'ENTER THE ARENA';
+  }
+});
+</script>
+</body>
+</html>
