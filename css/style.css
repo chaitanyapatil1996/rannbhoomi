@@ -175,8 +175,13 @@ section { padding:96px 5vw; position:relative; }
   color:var(--text); line-height:1.7; margin-bottom:20px; letter-spacing:.5px;
 }
 .about-body {
-  font-family:'Cinzel',serif; font-size:13px; color:var(--text);
-  opacity:0.7; line-height:2.1; margin-bottom:14px; letter-spacing:.4px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  color: var(--text);
+  opacity: 0.75;
+  line-height: 1.85;
+  margin-bottom: 14px;
+  letter-spacing: 0;
 }
 .about-stats {
   display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
@@ -425,10 +430,14 @@ section { padding:96px 5vw; position:relative; }
 .faq-item.open .faq-icon { transform:rotate(45deg); background:var(--crimson); color:var(--gold); }
 .faq-a {
   max-height:0; overflow:hidden; transition:max-height .4s ease;
-  font-family:'Cinzel',serif; font-size:13px; color:var(--text);
-  opacity:0.65; line-height:2; letter-spacing:.3px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  color: var(--text);
+  opacity: 0.72;
+  line-height: 1.8;
+  letter-spacing: 0;
 }
-.faq-item.open .faq-a { max-height:400px; padding-bottom:22px; }
+.faq-item.open .faq-a { max-height:400px; padding: 18px 24px 24px; }
 
 /* ══ CONTACT ══ */
 .contact-inner { max-width:720px; margin:0 auto; text-align:center; position:relative; z-index:1; }
@@ -506,4 +515,13 @@ footer::before {
   .tab-row { flex-direction:column; }
   .s-table { font-size:11px; }
   .venue-meta { grid-template-columns:1fr; }
+}
+
+a.c-box {
+  text-decoration: none;
+  cursor: pointer;
+}
+a.c-box:hover {
+  border-color: var(--crimson);
+  background: rgba(76,0,7,0.08);
 }
