@@ -66,14 +66,15 @@ function handleScore(body) {
 
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
   const totalIndex = headers.indexOf('total');
-  const scoreColumns = headers.slice(3, totalIndex);
+  const firstScoreIndex = headers.findIndex(h => !['athlete_id','name','category','wave','total','rank'].includes(h));
+  const scoreColumns = headers.slice(firstScoreIndex, totalIndex);
   const total = scoreColumns.reduce((sum, col) => sum + (Number(scores[col]) || 0), 0);
 
   const data = sheet.getDataRange().getValues();
   const existingRowIndex = data.findIndex((r, i) => i > 0 && r[0] === athlete_id);
   if (existingRowIndex > 0) {
     scoreColumns.forEach((col, i) => {
-      sheet.getRange(existingRowIndex + 1, 4 + i).setValue(Number(scores[col]) || 0);
+      sheet.getRange(existingRowIndex + 1, firstScoreIndex + 1 + i).setValue(Number(scores[col]) || 0);
     });
     sheet.getRange(existingRowIndex + 1, totalIndex + 1).setValue(total);
   } else {
@@ -83,7 +84,9 @@ function handleScore(body) {
     const name = athlete ? athlete[1] : 'Unknown';
     const category = athlete ? athlete[3] : '';
     const wave = athlete ? athlete[4] : '';
-    const row = [athlete_id, name, category, wave];
+    const row = round === '1'
+      ? [athlete_id, name, category, wave]
+      : [athlete_id, name, category];
     scoreColumns.forEach(col => row.push(Number(scores[col]) || 0));
     row.push(total, '');
     sheet.appendRow(row);

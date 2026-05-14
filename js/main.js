@@ -32,10 +32,12 @@ document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 const EVENT_DATE = new Date('2027-01-01T08:00:00+05:30');
 
 function updateCountdown() {
+  const wrap = document.getElementById('countdown');
+  if (!wrap) return;
   const now = new Date();
   const diff = EVENT_DATE - now;
   if (diff <= 0) {
-    document.getElementById('countdown').innerHTML = '<p class="cd-live">Event is Live!</p>';
+    wrap.innerHTML = '<p class="cd-live">Event is Live!</p>';
     return;
   }
   const days = Math.floor(diff / 86400000);

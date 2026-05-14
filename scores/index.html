@@ -65,7 +65,7 @@ body {
   <input type="text" id="search" placeholder="SEARCH ATHLETE NAME..." oninput="renderTable()">
 </div>
 
-<div id="tableWrap"><p class="loading">Loading scores...</p></div>
+<div id="tableWrap" style="overflow-x:auto;"><p class="loading">Loading scores...</p></div>
 
 <script>
 const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
@@ -87,6 +87,7 @@ async function loadScores() {
 }
 
 function renderTable() {
+  const esc = s => String(s ?? '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   const query = document.getElementById('search').value.toLowerCase();
   const filtered = allScores.filter(r => r.name.toLowerCase().includes(query));
   if (!filtered.length) {
@@ -101,8 +102,8 @@ function renderTable() {
   filtered.forEach((row, i) => {
     const rankClass = i === 0 ? 'rank-1' : '';
     html += `<tr class="${rankClass}">
-      <td><span class="rank-badge">${row.rank}</span></td>
-      ${headers.map(h => `<td>${row[h] ?? '—'}</td>`).join('')}
+      <td><span class="rank-badge">${esc(row.rank)}</span></td>
+      ${headers.map(h => `<td>${esc(row[h])}</td>`).join('')}
     </tr>`;
   });
   html += '</tbody></table>';
