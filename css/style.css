@@ -108,7 +108,7 @@ nav {
   pointer-events:none;
 }
 .hero-logo-img {
-  width:clamp(1000px, 130vw, 2700px);
+  width:clamp(390px, 96vw, 1080px);
   height:auto;
   mix-blend-mode:multiply;
   display:block;
@@ -204,7 +204,7 @@ nav {
 /* ══ SECTION BASE ══ */
 section { padding:96px 5vw; position:relative; }
 .s-label {
-  display:block; font-family:'Cinzel',serif; font-size:12px; font-weight:600; letter-spacing:6px;
+  display:block; font-family:'Cinzel',serif; font-size:15px; font-weight:600; letter-spacing:6px;
   color:var(--text); opacity:0.9; text-transform:uppercase; margin-bottom:14px;
 }
 .s-title {
@@ -233,7 +233,7 @@ section { padding:96px 5vw; position:relative; }
 }
 .about-body {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 15px;
+  font-size: 18px;
   color: var(--text);
   opacity: 0.88;
   line-height: 1.85;
@@ -253,7 +253,7 @@ section { padding:96px 5vw; position:relative; }
   color:var(--crimson); display:block;
 }
 .stat-lbl {
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:3px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:3px;
   color:var(--text); opacity:0.85; display:block; margin-top:2px;
 }
 
@@ -272,11 +272,11 @@ section { padding:96px 5vw; position:relative; }
   color:var(--crimson); margin-bottom:6px;
 }
 .founder-role {
-  font-family:'Cinzel',serif; font-size:12px; font-weight:600; letter-spacing:1.5px;
+  font-family:'Cinzel',serif; font-size:15px; font-weight:600; letter-spacing:1.5px;
   color:var(--text); opacity:1.0; margin-bottom:16px; line-height:1.7;
 }
 .founder-bio {
-  font-family:Georgia,'Times New Roman',serif; font-size:13.5px;
+  font-family:Georgia,'Times New Roman',serif; font-size:16.5px;
   color:var(--text); opacity:0.90; line-height:1.85;
 }
 
@@ -287,7 +287,7 @@ section { padding:96px 5vw; position:relative; }
   background:rgba(214,185,122,0.3);
 }
 .b3-label {
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:5px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:5px;
   color:var(--text); opacity:0.85; display:block; margin-bottom:14px;
   text-transform:uppercase;
 }
@@ -296,17 +296,17 @@ section { padding:96px 5vw; position:relative; }
   color:var(--crimson); margin-bottom:0;
 }
 .b3-body {
-  font-family:Georgia,'Times New Roman',serif; font-size:16px; color:var(--text);
+  font-family:Georgia,'Times New Roman',serif; font-size:19px; color:var(--text);
   opacity:0.92; line-height:1.85; margin:24px 0 14px;
 }
 .b3-sub {
-  font-family:'Cinzel',serif; font-size:12px; font-weight:600; color:var(--text);
+  font-family:'Cinzel',serif; font-size:15px; font-weight:600; color:var(--text);
   opacity:0.78; letter-spacing:1px; line-height:1.8;
 }
 
 /* ══ STATIONS NOTE ══ */
 .stations-note {
-  font-family:Georgia,'Times New Roman',serif; font-size:13px; color:var(--text);
+  font-family:Georgia,'Times New Roman',serif; font-size:16px; color:var(--text);
   opacity:0.88; margin-top:16px; text-align:center; letter-spacing:0.3px;
 }
 
@@ -392,23 +392,23 @@ section { padding:96px 5vw; position:relative; }
 .tab-panel.active { display:block; }
 .s-table { width:100%; border-collapse:collapse; }
 .s-table th {
-  font-family:'Cinzel',serif; font-size:12px; font-weight:700; letter-spacing:3px;
+  font-family:'Cinzel',serif; font-size:15px; font-weight:700; letter-spacing:3px;
   color:var(--text); text-align:left;
   padding:13px 16px; background:rgba(76,0,7,.12);
   border-bottom:1px solid var(--crimson-border); text-transform:uppercase;
 }
 .s-table td {
-  font-family:'Cinzel',serif; font-size:13px; font-weight:600; color:var(--text);
+  font-family:'Cinzel',serif; font-size:16px; font-weight:600; color:var(--text);
   padding:15px 16px; border-bottom:1px solid rgba(76,0,7,.1);
   vertical-align:top; line-height:1.6;
 }
 .s-table tr:hover td { background:rgba(76,0,7,.05); }
 .wm { color:var(--crimson); font-size:12px; font-weight:600; display:block; }
-.wf { color:var(--text); opacity:0.88; font-size:12px; font-weight:600; display:block; }
+.wf { color:var(--text); opacity:0.88; font-size:15px; font-weight:600; display:block; }
 .etag {
   display:inline-block; background:rgba(76,0,7,.1);
   border:1px solid var(--crimson-border); padding:2px 8px;
-  font-size:11px; font-weight:600; color:var(--text); letter-spacing:.8px; margin:2px;
+  font-size:14px; font-weight:600; color:var(--text); letter-spacing:.8px; margin:2px;
 }
 .st-wrap { max-width:1100px; margin:0 auto; }
 
@@ -430,7 +430,7 @@ section { padding:96px 5vw; position:relative; }
   color:var(--crimson); margin-bottom:10px;
 }
 .rule-text {
-  font-family:Georgia,'Times New Roman',serif; font-size:14px; color:var(--text);
+  font-family:Georgia,'Times New Roman',serif; font-size:17px; color:var(--text);
   opacity:0.92; line-height:1.85; letter-spacing:0;
 }
 
@@ -453,7 +453,7 @@ section { padding:96px 5vw; position:relative; }
 }
 .venue-map-external {
   display:inline-block; margin-top:14px;
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:3px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:3px;
   color:var(--text); opacity:0.82; text-decoration:none; transition:opacity .2s;
 }
 .venue-map-external:hover { opacity:1; }
@@ -465,7 +465,7 @@ section { padding:96px 5vw; position:relative; }
   padding:22px; text-align:center;
 }
 .vm-label {
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:4px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:4px;
   color:var(--text); opacity:0.85; display:block;
 }
 .vm-val {
@@ -489,7 +489,7 @@ section { padding:96px 5vw; position:relative; }
   background:var(--crimson); border-color:var(--crimson);
 }
 .reg-type {
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:5px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:5px;
   color:var(--text); opacity:0.88; display:block; margin-bottom:8px;
 }
 .reg-card.featured .reg-type { color:rgba(222,193,137,.6); opacity:1; }
@@ -505,7 +505,7 @@ section { padding:96px 5vw; position:relative; }
 .reg-card.featured .reg-price { color:var(--gold); }
 .reg-cur { font-family:'Cinzel',serif; font-size:20px; vertical-align:super; }
 .reg-note {
-  font-family:'Cinzel',serif; font-size:12px; font-weight:600; letter-spacing:2px;
+  font-family:'Cinzel',serif; font-size:15px; font-weight:600; letter-spacing:2px;
   color:var(--text); opacity:0.82; display:block; margin-top:8px;
 }
 .reg-card.featured .reg-note { color:rgba(222,193,137,.5); opacity:1; }
@@ -526,7 +526,7 @@ section { padding:96px 5vw; position:relative; }
   justify-content:space-between; cursor:pointer; gap:20px;
 }
 .faq-qt {
-  font-family:'Cinzel',serif; font-size:13px; font-weight:700;
+  font-family:'Cinzel',serif; font-size:16px; font-weight:700;
   color:var(--text); letter-spacing:.8px; line-height:1.5;
 }
 .faq-icon {
@@ -540,7 +540,7 @@ section { padding:96px 5vw; position:relative; }
 .faq-a {
   max-height:0; overflow:hidden; transition:max-height .4s ease;
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: 14px;
+  font-size: 17px;
   color: var(--text);
   opacity: 0.88;
   line-height: 1.8;
@@ -558,7 +558,7 @@ section { padding:96px 5vw; position:relative; }
 .c-box:hover { background:rgba(76,0,7,.1); }
 .c-icon { font-family:'Cinzel',serif; font-size:11px; letter-spacing:4px; color:var(--crimson); display:block; margin-bottom:10px; }
 .c-title { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px; color:var(--crimson); display:block; margin-bottom:8px; }
-.c-val { font-family:'Cinzel',serif; font-size:13px; font-weight:600; color:var(--text); opacity:0.90; line-height:1.7; }
+.c-val { font-family:'Cinzel',serif; font-size:16px; font-weight:600; color:var(--text); opacity:0.90; line-height:1.7; }
 
 /* ══ FOOTER ══ */
 footer {
@@ -576,7 +576,7 @@ footer::before {
   color:var(--gold); display:block; position:relative; margin-bottom:4px;
 }
 .ft-tag {
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:5px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:5px;
   color:var(--gold); opacity:0.78; margin-bottom:32px; display:block; position:relative;
 }
 .ft-links {
@@ -584,12 +584,12 @@ footer::before {
   position:relative;
 }
 .ft-links a {
-  font-family:'Cinzel',serif; font-size:11px; font-weight:600; letter-spacing:3px;
+  font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:3px;
   color:var(--gold); opacity:0.72; text-decoration:none; transition:opacity .2s;
 }
 .ft-links a:hover { opacity:0.75; }
 .ft-rule { width:100%; height:1px; background:rgba(222,193,137,.15); margin-bottom:20px; position:relative; }
-.ft-copy { font-family:'Cinzel',serif; font-size:10px; font-weight:600; letter-spacing:3px; color:var(--gold); opacity:0.62; position:relative; }
+.ft-copy { font-family:'Cinzel',serif; font-size:13px; font-weight:600; letter-spacing:3px; color:var(--gold); opacity:0.62; position:relative; }
 .ft-icon { display:flex; justify-content:center; margin-bottom:20px; }
 .ft-icon img { height:36px; opacity:0.6; }
 
@@ -664,7 +664,7 @@ a.c-box:hover {
 }
 .cd-lbl {
   font-family: 'Cinzel', serif;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: 3px;
   color: var(--crimson);
@@ -692,7 +692,7 @@ a.c-box:hover {
 }
 .hero-ei-sep { color: var(--crimson); opacity: 0.45; font-size: 16px; }
 .hero-ei-venue {
-  font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600; letter-spacing: 2px;
+  font-family: 'Cinzel', serif; font-size: 16px; font-weight: 600; letter-spacing: 2px;
   color: var(--crimson); opacity: 1; text-decoration: none;
   border-bottom: 1px solid rgba(76,0,7,0.35);
   transition: opacity .2s;
