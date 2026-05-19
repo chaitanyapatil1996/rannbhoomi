@@ -101,25 +101,23 @@ nav {
   position:absolute; inset:0; pointer-events:none;
   background:radial-gradient(ellipse 100% 85% at 50% 42%, transparent 45%, rgba(76,0,7,0.10) 100%);
 }
-/* Logo centered in the space between nav and bottom content strip */
+/* Logo fills the full hero height — overflow clipped by #hero */
 .hero-logo-wrap {
-  position:absolute; top:66px; left:0; right:0; bottom:180px;
+  position:absolute; top:66px; left:0; right:0; bottom:0;
   display:flex; align-items:center; justify-content:center;
-  padding:24px 5vw;
   pointer-events:none;
 }
 .hero-logo-img {
-  max-width:clamp(260px, 64vw, 720px);
-  max-height:100%;
-  width:auto; height:auto;
+  width:clamp(390px, 96vw, 1080px);
+  height:auto;
   mix-blend-mode:multiply;
   display:block;
 }
-/* Content strip hard-pinned to the very bottom */
+/* Content strip hard-pinned to the very bottom — transparent so parchment shows */
 .hero-content {
   position:absolute; bottom:0; left:0; right:0; z-index:2;
   text-align:center; padding:40px 5vw 36px;
-  background:linear-gradient(transparent, rgba(214,185,122,0.92) 28%);
+  background:transparent;
 }
 .hero-eyebrow {
   font-family:'Cinzel',serif; font-size:12px; letter-spacing:7px;
