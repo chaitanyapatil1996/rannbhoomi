@@ -93,21 +93,21 @@ nav {
 /* ══ HERO ══ */
 #hero {
   position:relative; min-height:100vh;
-  display:flex; align-items:center; justify-content:center; overflow:hidden;
-  background-image:url('../images/BAckground.png');
+  display:flex; align-items:flex-end; justify-content:center; overflow:hidden;
+  background-image:url('../images/Rannbhoomi Screenshot.png');
   background-size:cover; background-position:center;
 }
 .hero-vignette {
   position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(
-    rgba(214,185,122,0.72) 0%,
-    rgba(214,185,122,0.45) 40%,
-    rgba(214,185,122,0.62) 100%
+    transparent 35%,
+    rgba(214,185,122,0.6) 75%,
+    rgba(214,185,122,0.88) 100%
   );
 }
 .hero-content {
   position:relative; z-index:2;
-  text-align:center; padding:110px 24px 60px; max-width:980px; width:100%;
+  text-align:center; padding:0 24px 80px; max-width:980px; width:100%;
 }
 .hero-eyebrow {
   font-family:'Cinzel',serif; font-size:12px; letter-spacing:7px;
@@ -245,6 +245,35 @@ section { padding:96px 5vw; position:relative; }
 .stat-lbl {
   font-family:'Cinzel',serif; font-size:11px; letter-spacing:3px;
   color:var(--text); opacity:0.65; display:block; margin-top:2px;
+}
+
+/* ══ ABOUT (founders) ══ */
+.about-content { max-width:860px; margin:0 auto; }
+.about-founders {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:3px; margin-top:48px;
+}
+.founder-card {
+  border:1px solid var(--crimson-border); padding:32px 24px;
+  background:rgba(214,185,122,0.3);
+}
+.founder-name {
+  font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:3px;
+  color:var(--crimson); margin-bottom:6px;
+}
+.founder-role {
+  font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px;
+  color:var(--text); opacity:0.65; margin-bottom:16px; line-height:1.7;
+}
+.founder-bio {
+  font-family:Georgia,'Times New Roman',serif; font-size:13.5px;
+  color:var(--text); opacity:0.78; line-height:1.85;
+}
+
+/* ══ STATIONS NOTE ══ */
+.stations-note {
+  font-family:Georgia,'Times New Roman',serif; font-size:13px; color:var(--text);
+  opacity:0.72; margin-top:16px; text-align:center; letter-spacing:0.3px;
 }
 
 /* ══ FORMAT ══ */
@@ -631,7 +660,7 @@ a.c-box:hover {
 }
 .hero-ei-sep { color: var(--crimson); opacity: 0.45; font-size: 16px; }
 .hero-ei-venue {
-  font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px;
+  font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 2px;
   color: var(--crimson); opacity: 0.82; text-decoration: none;
   border-bottom: 1px solid rgba(76,0,7,0.35);
   transition: opacity .2s;
