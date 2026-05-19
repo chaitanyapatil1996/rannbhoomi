@@ -100,14 +100,13 @@ nav {
 .hero-vignette {
   position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(
-    transparent 38%,
-    rgba(214,185,122,0.82) 56%,
-    #d6b97a 72%
+    transparent 82%,
+    rgba(214,185,122,0.18) 100%
   );
 }
 .hero-content {
   position:relative; z-index:2;
-  text-align:center; padding:0 24px 56px; max-width:980px; width:100%;
+  text-align:center; padding:0 24px 48px; max-width:980px; width:100%;
 }
 .hero-eyebrow {
   font-family:'Cinzel',serif; font-size:12px; letter-spacing:7px;
