@@ -412,7 +412,7 @@ section { padding:96px 5vw; position:relative; }
 }
 .rule-n {
   font-family:'Bebas Neue',sans-serif; font-size:50px;
-  color:rgba(76,0,7,.15); line-height:1; margin-bottom:8px;
+  color:rgba(76,0,7,.22); line-height:1; margin-bottom:8px;
 }
 .rule-title {
   font-family:'Bebas Neue',sans-serif; font-size:17px; letter-spacing:3px;
@@ -428,28 +428,24 @@ section { padding:96px 5vw; position:relative; }
 .venue-addr {
   font-family:'Cinzel',serif; font-size:20px; letter-spacing:4px;
   color:var(--text); line-height:1.9; margin-bottom:10px;
+  text-transform:uppercase;
 }
 .venue-note {
   font-family:'Cinzel',serif; font-size:15px; letter-spacing:3px;
   color:var(--text); opacity:0.88; margin-bottom:40px; font-weight:600;
 }
-.venue-map-link { display:block; text-decoration:none; }
-.venue-placeholder {
-  border:1px solid var(--crimson-border); height:260px;
-  display:flex; align-items:center; justify-content:center;
-  background:rgba(214,185,122,0.3); position:relative; overflow:hidden;
+.venue-map {
+  height:260px; border:1px solid var(--crimson-border); overflow:hidden; position:relative;
 }
-.venue-placeholder::before {
-  content:''; position:absolute; inset:0;
-  background-image:url('../images/parchment.png');
-  background-size:cover; opacity:0.12; mix-blend-mode:multiply;
+.venue-map iframe {
+  position:absolute; top:0; left:0; width:100%; height:100%; border:0;
 }
-.venue-placeholder { transition:border-color .2s; }
-.venue-map-link:hover .venue-placeholder { border-color:rgba(76,0,7,0.55); }
-.venue-placeholder span {
-  font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:5px;
-  color:var(--text); opacity:0.55; position:relative;
+.venue-map-external {
+  display:inline-block; margin-top:14px;
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:3px;
+  color:var(--text); opacity:0.6; text-decoration:none; transition:opacity .2s;
 }
+.venue-map-external:hover { opacity:1; }
 .venue-meta {
   display:grid; grid-template-columns:repeat(3,1fr); gap:2px; margin-top:2px;
 }
@@ -539,7 +535,7 @@ section { padding:96px 5vw; position:relative; }
   line-height: 1.8;
   letter-spacing: 0;
 }
-.faq-item.open .faq-a { max-height:400px; padding: 18px 24px 24px; }
+.faq-item.open .faq-a { max-height:600px; padding: 18px 24px 24px; }
 
 /* ══ CONTACT ══ */
 .contact-inner { max-width:720px; margin:0 auto; text-align:center; position:relative; z-index:1; }
@@ -622,6 +618,7 @@ footer::before {
   .tab-row { flex-direction:column; }
   .s-table { font-size:11px; }
   .venue-meta { grid-template-columns:1fr; }
+  .vm-val { font-size:20px; }
 }
 
 a.c-box {
