@@ -93,32 +93,19 @@ nav {
 /* ══ HERO ══ */
 #hero {
   position:relative; min-height:100vh; overflow:hidden;
-  /* parchment texture flows in from body::before — no background-image needed */
+  background-image:url('../images/Rannbhoomi Screenshot.png');
+  background-size:cover; background-position:center top;
 }
-/* Subtle edge-darkening to spotlight the center */
 .hero-vignette {
   position:absolute; inset:0; pointer-events:none;
-  background:radial-gradient(ellipse 100% 85% at 50% 42%, transparent 45%, rgba(76,0,7,0.10) 100%);
+  background:linear-gradient(transparent 70%, rgba(214,185,122,0.08) 100%);
 }
-/* Logo centered in the space between nav and bottom content strip */
-.hero-logo-wrap {
-  position:absolute; top:66px; left:0; right:0; bottom:180px;
-  display:flex; align-items:center; justify-content:center;
-  padding:24px 5vw;
-  pointer-events:none;
-}
-.hero-logo-img {
-  width:clamp(260px, 64vw, 720px);
-  max-height:100%;
-  height:auto;
-  mix-blend-mode:multiply; /* white bg disappears on parchment */
-  display:block;
-}
-/* Content strip hard-pinned to the very bottom */
+/* Content strip hard-pinned to the very bottom of the hero */
 .hero-content {
   position:absolute; bottom:0; left:0; right:0; z-index:2;
-  text-align:center; padding:40px 5vw 36px;
-  background:linear-gradient(transparent, rgba(214,185,122,0.92) 28%);
+  text-align:center; padding:44px 5vw 40px;
+  /* local gradient behind only the content band — logo area above gets zero overlay */
+  background:linear-gradient(transparent, rgba(214,185,122,0.90) 26%);
 }
 .hero-eyebrow {
   font-family:'Cinzel',serif; font-size:12px; letter-spacing:7px;
