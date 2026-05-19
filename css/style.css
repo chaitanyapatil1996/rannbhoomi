@@ -93,7 +93,7 @@ nav {
 /* ══ HERO ══ */
 #hero {
   position:relative; min-height:100vh; overflow:hidden;
-  /* parchment texture flows in from body::before — no background-image needed */
+  background:#d6b97a url('../images/parchment.png') center/cover;
 }
 /* Subtle edge-darkening to spotlight the center */
 .hero-vignette {
