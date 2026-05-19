@@ -108,7 +108,7 @@ nav {
   pointer-events:none;
 }
 .hero-logo-img {
-  width:clamp(390px, 96vw, 1080px);
+  width:clamp(1000px, 130vw, 2700px);
   height:auto;
   mix-blend-mode:multiply;
   display:block;
