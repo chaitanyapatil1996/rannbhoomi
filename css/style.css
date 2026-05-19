@@ -92,21 +92,20 @@ nav {
 
 /* ══ HERO ══ */
 #hero {
-  position:relative; min-height:100vh;
-  display:flex; align-items:flex-end; justify-content:center; overflow:hidden;
+  position:relative; min-height:100vh; overflow:hidden;
   background-image:url('../images/Rannbhoomi Screenshot.png');
   background-size:cover; background-position:center top;
 }
 .hero-vignette {
   position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(
-    transparent 82%,
-    rgba(214,185,122,0.18) 100%
-  );
+  background:linear-gradient(transparent 70%, rgba(214,185,122,0.08) 100%);
 }
+/* Content strip hard-pinned to the very bottom of the hero */
 .hero-content {
-  position:relative; z-index:2;
-  text-align:center; padding:0 24px 48px; max-width:980px; width:100%;
+  position:absolute; bottom:0; left:0; right:0; z-index:2;
+  text-align:center; padding:44px 5vw 40px;
+  /* local gradient behind only the content band — logo area above gets zero overlay */
+  background:linear-gradient(transparent, rgba(214,185,122,0.90) 26%);
 }
 .hero-eyebrow {
   font-family:'Cinzel',serif; font-size:12px; letter-spacing:7px;
