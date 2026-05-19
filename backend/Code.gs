@@ -1,4 +1,4 @@
-const SPREADSHEET_ID = 'PASTE_YOUR_SPREADSHEET_ID_HERE';
+const SPREADSHEET_ID = '1KX7BtTBFBJkLW_Chl1Xi_WdWLjqUjUotZGrGQU3g9u8';
 
 function doGet(e) {
   const action = e.parameter.action;

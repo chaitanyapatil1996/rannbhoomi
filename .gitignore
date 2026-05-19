@@ -1,0 +1,9 @@
+# Node dependencies
+node_modules/
+
+# Microsoft Office lock/temp files
+~$*
+
+# Auto-generated Puppeteer screenshots
+images/sections/
+images/sections_v2/

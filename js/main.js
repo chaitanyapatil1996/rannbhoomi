@@ -10,9 +10,21 @@ function toggleFaq(btn) {
 function toggleNav(el) {
   const ul = document.querySelector('.nav-links');
   const open = ul.style.display === 'flex';
-  ul.style.cssText = open ? '' :
-    'display:flex;flex-direction:column;position:fixed;top:62px;left:0;right:0;background:rgba(214,185,122,0.98);padding:20px 5vw;gap:14px;border-bottom:1px solid rgba(76,0,7,.25);z-index:998;';
+  if (open) {
+    ul.style.cssText = '';
+    document.querySelectorAll('.nav-submenu').forEach(s => s.classList.remove('mobile-open'));
+  } else {
+    ul.style.cssText = 'display:flex;flex-direction:column;position:fixed;top:66px;left:0;right:0;background:rgba(76,0,7,0.98);padding:20px 5vw;gap:14px;border-bottom:1px solid rgba(222,193,137,.2);z-index:998;';
+  }
 }
+
+// Season 1 dropdown — mobile touch support
+document.querySelector('.nav-dropdown-toggle').addEventListener('click', function(e) {
+  if (window.innerWidth <= 900) {
+    e.preventDefault();
+    this.closest('.nav-dropdown').querySelector('.nav-submenu').classList.toggle('mobile-open');
+  }
+});
 
 // Close mobile nav when any nav link is clicked
 document.querySelectorAll('.nav-links a').forEach(link => {
@@ -28,8 +40,7 @@ const obs = new IntersectionObserver(es => es.forEach(e => {
 }), { threshold: 0.1 });
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-// Set to actual event date when confirmed. Placeholder: Jan 1, 2027 (IST).
-const EVENT_DATE = new Date('2027-01-01T08:00:00+05:30');
+const EVENT_DATE = new Date('2026-07-12T08:00:00+05:30');
 
 function updateCountdown() {
   const wrap = document.getElementById('countdown');
