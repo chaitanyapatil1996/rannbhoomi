@@ -100,14 +100,14 @@ nav {
 .hero-vignette {
   position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(
-    transparent 35%,
-    rgba(214,185,122,0.6) 75%,
-    rgba(214,185,122,0.88) 100%
+    transparent 38%,
+    rgba(214,185,122,0.82) 56%,
+    #d6b97a 72%
   );
 }
 .hero-content {
   position:relative; z-index:2;
-  text-align:center; padding:0 24px 80px; max-width:980px; width:100%;
+  text-align:center; padding:0 24px 56px; max-width:980px; width:100%;
 }
 .hero-eyebrow {
   font-family:'Cinzel',serif; font-size:12px; letter-spacing:7px;
@@ -639,7 +639,7 @@ a.c-box:hover {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 28px 0 0;
+  margin: 0;
   justify-content: center;
 }
 .cd-unit {
@@ -675,7 +675,7 @@ a.c-box:hover {
 .hero-event-info {
   display: flex; align-items: center; justify-content: center;
   gap: 10px; flex-wrap: wrap;
-  margin: 16px 0 32px;
+  margin: 12px 0 20px;
   animation: fadeUp .9s ease .78s both;
 }
 .hero-ei-date {
