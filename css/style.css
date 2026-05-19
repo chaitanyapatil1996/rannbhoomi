@@ -94,6 +94,7 @@ nav {
 #hero {
   position:relative; min-height:100vh; overflow:hidden;
   background:#d6b97a url('../images/parchment.png') center/cover;
+  isolation:isolate;
 }
 /* Subtle edge-darkening to spotlight the center */
 .hero-vignette {
@@ -108,10 +109,10 @@ nav {
   pointer-events:none;
 }
 .hero-logo-img {
-  width:clamp(260px, 64vw, 720px);
+  max-width:clamp(260px, 64vw, 720px);
   max-height:100%;
-  height:auto;
-  mix-blend-mode:multiply; /* white bg disappears on parchment */
+  width:auto; height:auto;
+  mix-blend-mode:multiply;
   display:block;
 }
 /* Content strip hard-pinned to the very bottom */
