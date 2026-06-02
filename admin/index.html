@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --border:rgba(76,0,7,0.22); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+.card { width:100%; max-width:420px; background:rgba(214,185,122,0.5); border:1px solid var(--border); padding:44px 36px; }
+.badge  { font-size:9px; letter-spacing:4px; opacity:.4; margin-bottom:10px; }
+.title  { font-family:'Bebas Neue',sans-serif; font-size:36px; letter-spacing:3px; margin-bottom:6px; }
+.rule   { width:44px; height:2px; background:var(--crimson); opacity:.28; margin:18px 0 32px; }
+label   { display:block; font-size:9px; letter-spacing:3px; opacity:.5; margin-bottom:8px; }
+.field  {
+  width:100%; padding:14px 16px; border:1px solid var(--border);
+  background:rgba(214,185,122,0.4); font-family:'Cinzel',serif;
+  font-size:14px; color:var(--crimson); outline:none; margin-bottom:24px;
+  -webkit-appearance:none; border-radius:0;
+}
+.field:focus { border-color:var(--crimson); background:rgba(214,185,122,0.7); }
+
+/* Action cards */
+.action-list { display:flex; flex-direction:column; gap:12px; }
+.action-card { border:1px solid var(--border); padding:18px 20px; background:rgba(214,185,122,0.3); }
+.action-card h3 { font-size:12px; letter-spacing:2px; margin-bottom:6px; }
+.action-card p  { font-size:10px; letter-spacing:.5px; opacity:.55; line-height:1.5; margin-bottom:14px; }
+.btn-danger {
+  width:100%; padding:14px; background:var(--crimson); color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:4px;
+  border:none; cursor:pointer; transition:opacity .15s;
+}
+.btn-danger:hover { opacity:.82; }
+.btn-danger:disabled { opacity:.3; cursor:not-allowed; }
+.btn-secondary {
+  width:100%; padding:14px; background:transparent; color:var(--crimson);
+  font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:3px;
+  border:1px solid var(--border); cursor:pointer; transition:opacity .15s;
+}
+.btn-secondary:hover { background:rgba(76,0,7,0.07); }
+
+/* Confirm overlay */
+.confirm-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(76,0,7,0.5); z-index:50;
+  align-items:center; justify-content:center; padding:20px;
+}
+.confirm-overlay.open { display:flex; }
+.confirm-box { background:#d6b97a; border:1px solid var(--border); padding:36px 32px; max-width:360px; width:100%; }
+.confirm-box h2 { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:2px; margin-bottom:12px; }
+.confirm-box p  { font-size:11px; letter-spacing:.5px; opacity:.65; line-height:1.6; margin-bottom:24px; }
+.confirm-btns { display:flex; gap:10px; }
+.confirm-btns .btn-danger    { flex:1; }
+.confirm-btns .btn-secondary { flex:1; }
+
+.msg { margin-top:16px; font-size:10px; letter-spacing:2px; min-height:18px; text-align:center; }
+.msg.ok  { color:#1a6b00; }
+.msg.err { color:var(--crimson); }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="badge">Admin Panel — Rannbhoomi 2026</div>
+  <div class="title">MASTER CONTROL</div>
+  <div class="rule"></div>
+
+  <label for="adminPin">Admin PIN</label>
+  <input class="field" type="password" id="adminPin" placeholder="••••••" maxlength="12" autocomplete="off">
+
+  <div class="action-list">
+
+    <div class="action-card">
+      <h3>CLEAR ALL SCORES</h3>
+      <p>Deletes every score row from Battle 1, 2, and 3 sheets and resets the leaderboard cache. Use this the morning of the event to wipe test data. <strong>Cannot be undone.</strong></p>
+      <button class="btn-danger" onclick="confirmAction('clear')">CLEAR ALL SCORES</button>
+    </div>
+
+    <div class="action-card">
+      <h3>RELEASE ALL WAVES</h3>
+      <p>Sets <em>release_all</em> to TRUE in Config. All complete athlete scores will appear on the public leaderboard within 60 seconds. Use this once at the start of the event.</p>
+      <button class="btn-danger" onclick="confirmAction('release')">RELEASE LEADERBOARD</button>
+    </div>
+
+    <div class="action-card">
+      <h3>REBUILD LEADERBOARD NOW</h3>
+      <p>Forces an immediate cache rebuild without waiting for the 1-minute trigger. Useful after manually editing scores in the Sheet.</p>
+      <button class="btn-secondary" onclick="rebuildNow()">REBUILD NOW</button>
+    </div>
+
+  </div>
+  <div class="msg" id="globalMsg"></div>
+</div>
+
+<!-- Confirm overlay -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <h2 id="confirmTitle">Are you sure?</h2>
+    <p id="confirmDesc">This action cannot be undone.</p>
+    <div class="confirm-btns">
+      <button class="btn-secondary" onclick="closeConfirm()">CANCEL</button>
+      <button class="btn-danger" id="confirmOkBtn" onclick="runConfirmedAction()">CONFIRM</button>
+    </div>
+    <div class="msg" id="confirmMsg"></div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
+
+let pendingAction = null;
+
+function getPin() { return document.getElementById('adminPin').value.trim(); }
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg ${type}`;
+}
+
+function confirmAction(action) {
+  if (!getPin()) { showMsg('globalMsg', 'Enter PIN first', 'err'); return; }
+  pendingAction = action;
+  const titles = { clear: 'Clear all scores?', release: 'Release leaderboard?' };
+  const descs  = {
+    clear:   'This will permanently delete all score rows from Battle 1, 2, and 3. Use only before the event to wipe test data.',
+    release: 'This will make all complete scores visible on the public leaderboard immediately.',
+  };
+  document.getElementById('confirmTitle').textContent = titles[action];
+  document.getElementById('confirmDesc').textContent  = descs[action];
+  document.getElementById('confirmMsg').textContent   = '';
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('open');
+  pendingAction = null;
+}
+
+async function runConfirmedAction() {
+  const btn = document.getElementById('confirmOkBtn');
+  btn.disabled = true;
+  btn.textContent = 'WORKING...';
+  showMsg('confirmMsg', '', '');
+
+  try {
+    if (pendingAction === 'clear') {
+      const res  = await post({ action: 'admin_clear', pin: getPin() });
+      if (res.success) {
+        showMsg('confirmMsg', 'All scores cleared.', 'ok');
+        setTimeout(closeConfirm, 1500);
+      } else {
+        throw new Error(res.error || 'Failed');
+      }
+    } else if (pendingAction === 'release') {
+      // Update release_all via Apps Script — uses release_wave as a proxy
+      // We call release_wave with wave='all' which the config handles via release_all flag
+      // Actually: we POST a config update. Simplest: just call clearAllScores with a flag.
+      // For release, we use a direct release_wave call with pin.
+      const res = await post({ action: 'set_release_all', pin: getPin(), value: 'true' });
+      if (res.success) {
+        showMsg('confirmMsg', 'Leaderboard released. Live within 60s.', 'ok');
+        setTimeout(closeConfirm, 1800);
+      } else {
+        throw new Error(res.error || 'Failed');
+      }
+    }
+  } catch (err) {
+    showMsg('confirmMsg', err.message, 'err');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'CONFIRM';
+}
+
+async function rebuildNow() {
+  if (!getPin()) { showMsg('globalMsg', 'Enter PIN first', 'err'); return; }
+  showMsg('globalMsg', 'Rebuilding...', '');
+  try {
+    const res = await post({ action: 'rebuild_leaderboard', pin: getPin() });
+    if (res.success) {
+      showMsg('globalMsg', 'Leaderboard rebuilt.', 'ok');
+    } else {
+      throw new Error(res.error || 'Failed');
+    }
+  } catch (err) {
+    showMsg('globalMsg', err.message, 'err');
+  }
+}
+
+async function post(body) {
+  const res = await fetch(APPS_SCRIPT_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body:    JSON.stringify(body),
+  });
+  return res.json();
+}
+</script>
+</body>
+</html>

@@ -90,7 +90,7 @@ select option { background: #d6b97a; }
 </style>
 </head>
 <body>
-<a class="back-link" href="../">← BACK TO RANNBHOOMI</a>
+<a class="back-link" href="../rannbhoomi_website_1.html">← BACK TO RANNBHOOMI</a>
 <div class="form-wrap">
   <span class="form-label">Join The Arena</span>
   <h1 class="form-title">REGISTER</h1>
@@ -147,7 +147,7 @@ document.getElementById('regForm').addEventListener('submit', async function(e) 
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(body),
     });
     const data = await res.json();

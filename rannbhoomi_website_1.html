@@ -28,7 +28,9 @@
       </ul>
     </li>
     <li><a href="#faq">FAQ</a></li>
-    <li><a href="#registration" class="nav-cta">Register</a></li>
+    <li><a href="scores/index.html">Leaderboard</a></li>
+    <li><a href="judge/index.html">Judge</a></li>
+    <li><a href="https://app.peakst8.club/event/slur-shy" target="_blank" rel="noopener" class="nav-cta">Register</a></li>
   </ul>
   <div class="hamburger" onclick="toggleNav(this)">
     <span></span><span></span><span></span>
@@ -51,7 +53,7 @@
     </div>
 
     <div class="hero-event-info">
-      <span class="hero-ei-date">12 July 2026</span>
+      <span class="hero-ei-date">19 July 2026</span>
       <span class="hero-ei-sep">·</span>
       <a href="https://share.google/pKppm0AAMges7dk7i" target="_blank" rel="noopener" class="hero-ei-venue">Rajaram Bhiku Pathare Stadium, Pune, MH</a>
     </div>
@@ -105,31 +107,193 @@
     </div>
 
     <div class="tab-panel active" id="tab0">
-      <table class="s-table">
-        <thead><tr><th>Workout</th><th>Equipment</th><th>Weight</th><th>Target</th><th>Scoring</th></tr></thead>
-        <tbody>
-          <tr><td>Static Burpees</td><td><span class="etag">Bodyweight</span></td><td>—</td><td>Max Reps</td><td>1 Burpee = 10 pts</td></tr>
-          <tr><td>Erg Bike</td><td><span class="etag">BikeERG</span></td><td>—</td><td>Max Distance</td><td>1 mtr = 1 pt</td></tr>
-          <tr><td>Deadlift</td><td><span class="etag">Dumbbell</span></td><td><span class="wm">M: 50 KG</span><span class="wf">F: 30 KG</span></td><td>Max Reps</td><td>1 Rep = 10 pts</td></tr>
-          <tr><td>Hands Release Push Ups</td><td><span class="etag">Bodyweight</span></td><td>—</td><td>Max Reps</td><td>1 Rep = 5 pts</td></tr>
-          <tr><td>Sprint with Weights</td><td><span class="etag">Weighted</span></td><td><span class="wm">M: 15 KG</span><span class="wf">F: 10 KG</span></td><td>Max Laps</td><td>1 Lap = 20 pts</td></tr>
-          <tr><td>Inch Worms</td><td><span class="etag">Bodyweight</span></td><td>—</td><td>Max Reps</td><td>1 Rep = 10 pts</td></tr>
-          <tr><td>DB Front Squats</td><td><span class="etag">Dumbbell</span></td><td><span class="wm">M: 12.5 KG</span><span class="wf">F: 5 KG</span></td><td>Max Reps</td><td>1 Rep = 5 pts</td></tr>
-        </tbody>
-      </table>
-      <p class="stations-note">All Battle 1 stations: 2 minutes per station · 30 seconds rest between stations.</p>
+      <!-- ROW 1: 01 → 02 → 03 → 04 -->
+      <div class="row1">
+        <div class="workout-card">
+          <span class="station-num">01</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Static Burpees.png" alt="Static Burpees"></div>
+          <div class="card-body">
+            <div class="card-name">Static Burpees</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Burpee = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">→</div>
+        <div class="workout-card">
+          <span class="station-num">02</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/BikeERG.png" alt="Erg Bike"></div>
+          <div class="card-body">
+            <div class="card-name">Erg Bike</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">BikeERG</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Distance</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 mtr = 1 pt</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">→</div>
+        <div class="workout-card">
+          <span class="station-num">03</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Deadlift.png" alt="Deadlift"></div>
+          <div class="card-body">
+            <div class="card-name">Deadlift</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 50 KG</span><span class="wf">F: 30 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">→</div>
+        <div class="workout-card">
+          <span class="station-num">04</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Hand Release Pushups.png" alt="Hands Release Push Ups"></div>
+          <div class="card-body">
+            <div class="card-name">Hands Release Push Ups</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 5 pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- CONNECTOR ROW: ↑ (7→1) left and ↓ (4→5) right — same horizontal line -->
+      <div class="connector-row">
+        <div class="connector-side">
+          <div class="connector-arrow-char">↑</div>
+          <div class="connector-line-v"></div>
+        </div>
+        <div class="connector-side">
+          <div class="connector-line-v"></div>
+          <div class="connector-arrow-char">↓</div>
+        </div>
+      </div>
+      <!-- ROW 2: 07 ← 06 ← 05 centred -->
+      <div class="row2">
+        <div class="workout-card">
+          <span class="station-num">07</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Dumbbell Front Squat.png" alt="DB Front Squats"></div>
+          <div class="card-body">
+            <div class="card-name">DB Front Squats</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 12.5 KG</span><span class="wf">F: 5 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 5 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">←</div>
+        <div class="workout-card">
+          <span class="station-num">06</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Inchworm.png" alt="Inch Worms"></div>
+          <div class="card-body">
+            <div class="card-name">Inch Worms</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">←</div>
+        <div class="workout-card">
+          <span class="station-num">05</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Sprint with Dumbbells.png" alt="Sprint with Weights"></div>
+          <div class="card-body">
+            <div class="card-name">Sprint with Weights</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Weighted</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 15 KG</span><span class="wf">F: 10 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Laps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Lap = 20 pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="stations-note">2 minutes per station &nbsp;·&nbsp; 30 seconds rest between stations</p>
+      <div class="disclaimer">
+        <div class="disclaimer-icon">⚑</div>
+        <div>
+          <div class="disclaimer-title">How Station Assignment Works</div>
+          <div class="disclaimer-body">Each athlete is randomly assigned a starting station on event day. You complete all 7 stations in sequence — wrapping around once you reach the last station. Every athlete completes every station; only your starting point differs.</div>
+          <div class="disclaimer-example">
+            <span class="ex-label">EXAMPLE — assigned Station 5:</span>
+            <span class="ex-station start">5 ★</span><span class="ex-arrow">→</span>
+            <span class="ex-station">6</span><span class="ex-arrow">→</span>
+            <span class="ex-station">7</span><span class="ex-arrow">→</span>
+            <span class="ex-station">1</span><span class="ex-arrow">→</span>
+            <span class="ex-station">2</span><span class="ex-arrow">→</span>
+            <span class="ex-station">3</span><span class="ex-arrow">→</span>
+            <span class="ex-station">4</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="tab-panel" id="tab1">
-      <table class="s-table">
-        <thead><tr><th>Workout</th><th>Equipment</th><th>Weight</th><th>Target</th><th>Scoring</th></tr></thead>
-        <tbody>
-          <tr><td>Rowing</td><td><span class="etag">RowERG</span></td><td>—</td><td>500 Mtrs (M &amp; F)</td><td>1 mtr = 1 pt</td></tr>
-          <tr><td>Devil's Press</td><td><span class="etag">Dumbbell</span></td><td><span class="wm">M: 10 KG × 2</span><span class="wf">F: 5 KG × 2</span></td><td>12 Reps</td><td>1 Rep = 10 pts</td></tr>
-          <tr><td>Overhead KB Walk</td><td><span class="etag">Kettlebell</span></td><td><span class="wm">M: 12 KG × 2</span><span class="wf">F: 6 KG × 2</span></td><td>100 Meters</td><td>20m = 20 pts</td></tr>
-          <tr><td>Burpee Box Jump</td><td><span class="etag">Box 45/60 cm</span></td><td>—</td><td>10 Reps</td><td>1 Rep = 10 pts</td></tr>
-        </tbody>
-      </table>
+      <div class="b2-row">
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Rowing.png" alt="Rowing"></div>
+          <div class="card-body">
+            <div class="card-name">Rowing</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">RowERG</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">500 Mtrs</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 mtr = 1 pt</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">→</div>
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Devil_s press.png" alt="Devil's Press"></div>
+          <div class="card-body">
+            <div class="card-name">Devil's Press</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 10 KG × 2</span><span class="wf">F: 5 KG × 2</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">12 Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">→</div>
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Overhead Kettlebell Walk.png" alt="Overhead KB Walk"></div>
+          <div class="card-body">
+            <div class="card-name">Overhead KB Walk</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Kettlebell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 12 KG × 2</span><span class="wf">F: 6 KG × 2</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">100 Meters</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">20m = 20 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">→</div>
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Burpee Box Jump.png" alt="Burpee Box Jump"></div>
+          <div class="card-body">
+            <div class="card-name">Burpee Box Jump</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Box 45/60 cm</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">10 Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="tab-panel" id="tab2">
@@ -220,38 +384,13 @@
     </div>
     <a href="https://share.google/pKppm0AAMges7dk7i" target="_blank" rel="noopener" class="venue-map-external">View on Google Maps &#8599;</a>
     <div class="venue-meta">
-      <div class="vm-box"><span class="vm-label">Date</span><span class="vm-val">12 July 2026</span></div>
+      <div class="vm-box"><span class="vm-label">Date</span><span class="vm-val">19 July 2026</span></div>
       <div class="vm-box"><span class="vm-label">Format</span><span class="vm-val">Solo</span></div>
       <div class="vm-box"><span class="vm-label">City</span><span class="vm-val">Pune</span></div>
     </div>
   </div>
 </section>
 
-<!-- REGISTRATION -->
-<section id="registration" class="tinted">
-  <div class="reg-scar"></div>
-  <div class="reg-inner reveal">
-    <span class="s-label" style="text-align:center;display:block;">Join the Arena</span>
-    <h2 class="s-title">REGISTER</h2>
-    <div class="s-rule" style="margin:18px auto 0;"></div>
-    <p style="font-family:'Cinzel',serif;font-size:13px;color:var(--text);opacity:0.55;margin-top:22px;letter-spacing:2px;line-height:1.9;">Step into the arena. Test your limits. Prove your strength.</p>
-    <div class="reg-cards">
-      <div class="reg-card">
-        <span class="reg-type">Category</span>
-        <span class="reg-title">Male</span>
-        <span class="reg-price"><span class="reg-cur">₹</span>TBA</span>
-        <span class="reg-note">Early bird pricing available</span>
-      </div>
-      <div class="reg-card featured">
-        <span class="reg-type">Category</span>
-        <span class="reg-title">Female</span>
-        <span class="reg-price"><span class="reg-cur">₹</span>TBA</span>
-        <span class="reg-note">Early bird pricing available</span>
-      </div>
-    </div>
-    <a href="register/" class="reg-btn">Register Now</a>
-  </div>
-</section>
 
 <!-- FAQ -->
 <section id="faq">

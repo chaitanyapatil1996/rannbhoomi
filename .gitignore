@@ -4,6 +4,29 @@ node_modules/
 # Microsoft Office lock/temp files
 ~$*
 
-# Auto-generated Puppeteer screenshots
+# Auto-generated Puppeteer / debug screenshots
 images/sections/
 images/sections_v2/
+images/dbg_*
+
+# Claude Code internal files
+.claude/
+.superpowers/
+CLAUDE.md
+
+# Dev-only scripts and notes
+remove_bg.js
+take_screenshots*.js
+changes_*.txt
+
+# Large non-web files
+*.xlsx
+*.docx
+*.rtf
+Social Media/
+docs/
+Rannbhoomi_Review_repaired.xlsx
+
+# Backup / dev HTML (index.html is the production copy)
+rannbhoomi_website_v2_backup.html
+test.html

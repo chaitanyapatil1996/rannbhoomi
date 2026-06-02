@@ -3,127 +3,497 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scores — RANNBHOOMI 2026</title>
+<title>Leaderboard — RANNBHOOMI 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="../images/logo-crimson.png">
 <style>
-:root { --crimson:#4c0007; --gold:#dec189; --text:#4c0007; --crimson-border:rgba(76,0,7,0.28); }
+:root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); }
 * { margin:0; padding:0; box-sizing:border-box; }
-body {
-  min-height:100vh;
-  background:#d6b97a url('../images/parchment.png') center/cover fixed;
-  font-family:'Cinzel',serif; color:var(--text);
-  padding:60px 5vw;
-}
-.back-link { font-size:11px; letter-spacing:3px; color:var(--crimson); opacity:0.6; text-decoration:none; }
+body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); padding:48px 5vw 80px; }
+
+/* ── Top nav ── */
+.top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:48px; flex-wrap:wrap; gap:12px; }
+.back-link { font-size:10px; letter-spacing:3px; color:var(--crimson); opacity:.55; text-decoration:none; }
 .back-link:hover { opacity:1; }
-.page-label { font-size:10px; letter-spacing:6px; opacity:0.4; margin:40px 0 14px; display:block; }
-.page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(44px,7vw,84px); letter-spacing:4px; color:var(--crimson); line-height:1; }
-.page-rule { width:70px; height:2px; background:var(--crimson); opacity:0.35; margin:18px 0 48px; }
-.controls { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:40px; }
+.refresh-info { font-size:9px; letter-spacing:2px; opacity:.4; }
+
+/* ── Page header ── */
+.page-label { font-size:9px; letter-spacing:6px; opacity:.4; display:block; margin-bottom:12px; }
+.page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,8vw,96px); letter-spacing:4px; color:var(--crimson); line-height:1; }
+.page-rule  { width:64px; height:2px; background:var(--crimson); opacity:.3; margin:18px 0 40px; }
+
+/* ── Controls ── */
+.controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
 .ctrl-btn {
-  padding:10px 22px; border:1px solid var(--crimson-border);
-  background:transparent; font-family:'Cinzel',serif; font-size:10px;
-  letter-spacing:3px; color:var(--crimson); cursor:pointer; transition:.2s;
+  padding:10px 22px; border:1px solid var(--border);
+  background:transparent; font-family:'Cinzel',serif; font-size:9px;
+  letter-spacing:3px; color:var(--crimson); cursor:pointer; transition:.18s;
 }
-.ctrl-btn.active { background:var(--crimson); color:var(--gold); }
-.ctrl-btn:hover:not(.active) { background:rgba(76,0,7,0.08); }
+.ctrl-btn.active { background:var(--crimson); color:var(--gold); border-color:var(--crimson); }
+.ctrl-btn:hover:not(.active) { background:rgba(76,0,7,0.07); }
 .search-wrap { margin-bottom:32px; }
-.search-wrap input {
-  width:100%; max-width:400px; padding:12px 16px;
-  border:1px solid var(--crimson-border); background:rgba(214,185,122,0.4);
-  font-family:'Cinzel',serif; font-size:13px; color:var(--crimson); outline:none;
+.search-input {
+  width:100%; max-width:380px; padding:12px 16px;
+  border:1px solid var(--border); background:rgba(214,185,122,0.4);
+  font-family:'Cinzel',serif; font-size:12px; color:var(--crimson); outline:none;
 }
-.search-wrap input:focus { border-color:var(--crimson); }
-.scores-table { width:100%; border-collapse:collapse; max-width:900px; }
+.search-input:focus { border-color:var(--crimson); }
+
+/* ── Podium ── */
+.podium { display:flex; gap:14px; margin-bottom:36px; flex-wrap:wrap; }
+.podium-card {
+  flex:1; min-width:140px; max-width:220px; padding:18px 16px;
+  border:1px solid var(--border); background:rgba(214,185,122,0.35);
+  position:relative; overflow:hidden;
+}
+.podium-card.p1 { background:rgba(222,193,137,0.55); border-color:rgba(76,0,7,0.35); }
+.podium-medal { font-family:'Bebas Neue',sans-serif; font-size:28px; opacity:.35; position:absolute; top:10px; right:14px; }
+.p1 .podium-medal { opacity:.6; }
+.podium-rank { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; opacity:.5; margin-bottom:4px; }
+.podium-name { font-size:13px; letter-spacing:1px; margin-bottom:2px; line-height:1.2; }
+.podium-cat  { font-size:9px; letter-spacing:2px; opacity:.45; margin-bottom:8px; }
+.podium-total { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--crimson); }
+.podium-total-label { font-size:8px; letter-spacing:2px; opacity:.4; }
+
+/* ── Table ── */
+.table-wrap { overflow-x:auto; max-width:1000px; }
+.scores-table { width:100%; border-collapse:collapse; }
 .scores-table th {
-  font-size:9px; letter-spacing:3px; opacity:0.5;
-  padding:10px 16px; text-align:left; border-bottom:1px solid var(--crimson-border);
+  font-size:8px; letter-spacing:3px; opacity:.45; text-align:left;
+  padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap;
 }
-.scores-table td { padding:14px 16px; border-bottom:1px solid rgba(76,0,7,0.08); font-size:13px; }
-.scores-table tr:hover td { background:rgba(76,0,7,0.04); }
-.rank-1 td:first-child { font-family:'Bebas Neue',sans-serif; font-size:22px; color:var(--gold); }
-.rank-badge { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; }
-.loading { font-size:12px; letter-spacing:3px; opacity:0.4; margin-top:40px; }
+.scores-table td { padding:13px 14px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:12px; cursor:pointer; }
+.scores-table tr:hover td { background:rgba(76,0,7,0.05); }
+.rank-num { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; }
+.in-progress { font-size:8px; letter-spacing:2px; background:rgba(76,0,7,0.08); padding:3px 7px; border:1px solid var(--border); white-space:nowrap; }
+.status-loading { font-size:11px; letter-spacing:3px; opacity:.4; padding:40px 0; }
+
+/* ── Analytics ── */
+.analytics-toggle {
+  margin-top:52px; margin-bottom:0; display:flex; align-items:center; gap:14px; cursor:pointer;
+  border:none; background:none; font-family:'Cinzel',serif; color:var(--crimson);
+  font-size:11px; letter-spacing:3px; padding:0;
+}
+.analytics-toggle .arrow { font-size:10px; transition:transform .2s; }
+.analytics-toggle.open .arrow { transform:rotate(90deg); }
+.analytics-section { display:none; margin-top:32px; max-width:1000px; }
+.analytics-section.open { display:block; }
+.analytics-block { margin-bottom:44px; }
+.analytics-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; margin-bottom:16px; opacity:.8; }
+.station-champs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
+.champ-card { border:1px solid var(--border); padding:16px; background:rgba(214,185,122,0.3); }
+.champ-station { font-size:8px; letter-spacing:3px; opacity:.45; margin-bottom:8px; }
+.champ-row { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; }
+.champ-pos { font-family:'Bebas Neue',sans-serif; font-size:13px; opacity:.4; margin-right:8px; min-width:20px; }
+.champ-name { font-size:11px; letter-spacing:.5px; flex:1; }
+.champ-val  { font-family:'Bebas Neue',sans-serif; font-size:18px; }
+
+.avg-table { border-collapse:collapse; width:100%; max-width:700px; }
+.avg-table th { font-size:8px; letter-spacing:3px; opacity:.45; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+.avg-table td { padding:10px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:12px; }
+.avg-m { color:var(--crimson); }
+.avg-f { opacity:.75; }
+
+.combined-table { border-collapse:collapse; width:100%; max-width:800px; }
+.combined-table th { font-size:8px; letter-spacing:3px; opacity:.45; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+.combined-table td { padding:11px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:12px; }
+
+/* ── Athlete detail modal ── */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(76,0,7,0.45); z-index:100;
+  align-items:flex-end; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal-panel {
+  background:#d6b97a; width:100%; max-width:640px; max-height:85vh;
+  overflow-y:auto; padding:36px 28px 48px;
+  animation:slideUp .25s ease-out;
+}
+@keyframes slideUp { from { transform:translateY(40px); opacity:0; } to { transform:none; opacity:1; } }
+.modal-close {
+  float:right; background:none; border:none; font-size:22px; cursor:pointer;
+  color:var(--crimson); opacity:.5; margin-top:-4px; line-height:1;
+}
+.modal-close:hover { opacity:1; }
+.modal-name { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:4px; }
+.modal-meta { font-size:9px; letter-spacing:3px; opacity:.45; margin-bottom:24px; }
+.modal-rule { width:48px; height:1px; background:var(--crimson); opacity:.25; margin-bottom:24px; }
+.modal-battle { margin-bottom:28px; }
+.modal-battle-title { font-size:10px; letter-spacing:3px; opacity:.5; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+.modal-station-row { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid rgba(76,0,7,0.06); }
+.modal-station-name { font-size:11px; letter-spacing:.5px; opacity:.7; }
+.modal-station-val  { font-family:'Bebas Neue',sans-serif; font-size:20px; }
+.modal-total-row { display:flex; justify-content:space-between; align-items:baseline; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+.modal-total-label { font-size:10px; letter-spacing:3px; }
+.modal-total-val   { font-family:'Bebas Neue',sans-serif; font-size:28px; }
+
+@media (max-width:600px) {
+  body { padding:32px 4vw 60px; }
+  .podium { gap:8px; }
+  .podium-card { min-width:100px; max-width:none; }
+}
 </style>
 </head>
 <body>
-<a class="back-link" href="../">← BACK TO RANNBHOOMI</a>
-<span class="page-label">Competition Results</span>
+
+<div class="top-bar">
+  <a class="back-link" href="../">← RANNBHOOMI 2026</a>
+  <span class="refresh-info" id="refreshInfo">Auto-refreshes every 60s</span>
+</div>
+
+<span class="page-label">Live Results</span>
 <h1 class="page-title">LEADERBOARD</h1>
 <div class="page-rule"></div>
 
 <div class="controls">
-  <button class="ctrl-btn active" onclick="setRound(1)">Round 1 — Qualifiers</button>
-  <button class="ctrl-btn" onclick="setRound(2)">Round 2 — Semi-Finals</button>
-  <button class="ctrl-btn" onclick="setRound(3)">Round 3 — Finals</button>
-  <button class="ctrl-btn" id="catBtn" onclick="toggleCategory()">Showing: Male</button>
+  <button class="ctrl-btn active" onclick="setBattle(1,this)">Battle 1</button>
+  <button class="ctrl-btn"        onclick="setBattle(2,this)">Battle 2</button>
+  <button class="ctrl-btn"        onclick="setBattle(3,this)">Battle 3</button>
+  <button class="ctrl-btn" id="catBtn" onclick="toggleCategory()">Male</button>
 </div>
 
 <div class="search-wrap">
-  <input type="text" id="search" placeholder="SEARCH ATHLETE NAME..." oninput="renderTable()">
+  <input class="search-input" type="text" id="search" placeholder="Search athlete name..." oninput="renderTable()">
 </div>
 
-<div id="tableWrap" style="overflow-x:auto;"><p class="loading">Loading scores...</p></div>
+<!-- Podium -->
+<div class="podium" id="podium"></div>
+
+<!-- Table -->
+<div class="table-wrap" id="tableWrap"><p class="status-loading">Loading scores...</p></div>
+
+<!-- Analytics toggle -->
+<button class="analytics-toggle" id="analyticsToggle" onclick="toggleAnalytics()">
+  <span class="arrow">▶</span> ANALYTICS &amp; INSIGHTS
+</button>
+<div class="analytics-section" id="analyticsSection">
+  <div class="analytics-block" id="champBlock">
+    <div class="analytics-title">Station Champions</div>
+    <div class="station-champs-grid" id="champGrid"><p class="status-loading">Loading...</p></div>
+  </div>
+  <div class="analytics-block" id="combinedBlock">
+    <div class="analytics-title">Combined Ranking — All Battles</div>
+    <div id="combinedTable"><p class="status-loading">Loading...</p></div>
+  </div>
+  <div class="analytics-block" id="avgBlock">
+    <div class="analytics-title">Category Averages</div>
+    <div id="avgTable"><p class="status-loading">Loading...</p></div>
+  </div>
+</div>
+
+<!-- Athlete detail modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnBg(event)">
+  <div class="modal-panel" id="modalPanel">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-name" id="modalName">—</div>
+    <div class="modal-meta" id="modalMeta">—</div>
+    <div class="modal-rule"></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
 
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
-let allScores = [];
-let currentRound = 1;
-let currentCategory = 'male';
+
+const STATION_LABELS = {
+  s1_burpees:   'Burpees',
+  s2_bike:      'Erg Bike',
+  s3_lunges:    'Lunges',
+  s4_pushups:   'Push Ups',
+  s5_sprint:    'Sprint',
+  s6_inchworms: 'Inch Worms',
+  s7_squats:    'DB Front Squats',
+  rowing:       'Rowing',
+  devils_press: "Devil's Press",
+  kb_walk:      'KB Walk',
+  box_jump:     'Box Jumps',
+  weight_total: 'Total Weight',
+  time_seconds: 'Finish Time',
+};
+
+const BATTLE_STATIONS = {
+  '1': ['s1_burpees','s2_bike','s3_lunges','s4_pushups','s5_sprint','s6_inchworms','s7_squats'],
+  '2': ['rowing','devils_press','kb_walk','box_jump'],
+  '3': ['weight_total','time_seconds'],
+};
+
+const SKIP_COLS = new Set(['rank','athlete_id','name','category','wave','zone','complete','submitted_at','total']);
+
+let allScores    = [];
+let lastUpdated  = null;
+let currentBattle = 1;
+let currentCat   = 'male';
+let analyticsOpen = false;
+let secondsSince = 0;
+let analyticsLoaded = false;
+
+// ── Data loading ──────────────────────────────────────────────────────────────
 
 async function loadScores() {
-  document.getElementById('tableWrap').innerHTML = '<p class="loading">Loading...</p>';
   try {
-    const url = `${APPS_SCRIPT_URL}?action=scores&round=${currentRound}&category=${currentCategory}`;
-    const res = await fetch(url);
+    const url  = `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&category=${currentCat}`;
+    const res  = await fetch(url);
     const data = await res.json();
-    allScores = data.scores || [];
-    renderTable();
-  } catch (e) {
-    document.getElementById('tableWrap').innerHTML = '<p class="loading">Failed to load scores. Check back later.</p>';
+    allScores   = data.scores || [];
+    lastUpdated = data.last_updated ? new Date(data.last_updated) : new Date();
+    secondsSince = 0;
+    renderAll();
+  } catch {
+    document.getElementById('tableWrap').innerHTML = '<p class="status-loading">Unable to load scores. Check connection.</p>';
   }
 }
 
+async function loadAnalytics() {
+  try {
+    const url  = `${APPS_SCRIPT_URL}?action=analytics&round=${currentBattle}`;
+    const res  = await fetch(url);
+    const data = await res.json();
+    renderStationChamps(data.station_champions || {});
+    renderCombined(data.combined_ranking || []);
+    renderAvgTable(data.category_averages || {});
+  } catch {
+    document.getElementById('champGrid').innerHTML = '<p class="status-loading">Failed to load analytics.</p>';
+  }
+}
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+
+function renderAll() {
+  renderPodium();
+  renderTable();
+}
+
+function renderPodium() {
+  const medals = ['🥇','🥈','🥉'];
+  const top3   = allScores.slice(0, 3);
+  if (!top3.length) { document.getElementById('podium').innerHTML = ''; return; }
+
+  const html = top3.map((r, i) => `
+    <div class="podium-card ${i===0?'p1':''}">
+      <div class="podium-medal">${medals[i]}</div>
+      <div class="podium-rank">#${esc(r.rank ?? i+1)}</div>
+      <div class="podium-name">${esc(r.name)}</div>
+      <div class="podium-cat">${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))} · Wave ${esc(r.wave??'—')}</div>
+      <div class="podium-total">${esc(r.total??'—')}</div>
+      <div class="podium-total-label">TOTAL POINTS</div>
+    </div>`).join('');
+
+  document.getElementById('podium').innerHTML = html;
+}
+
 function renderTable() {
-  const esc = s => String(s ?? '—').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  const query = document.getElementById('search').value.toLowerCase();
-  const filtered = allScores.filter(r => r.name.toLowerCase().includes(query));
+  const query    = document.getElementById('search').value.toLowerCase();
+  const filtered = allScores.filter(r => String(r.name||'').toLowerCase().includes(query));
+
   if (!filtered.length) {
-    document.getElementById('tableWrap').innerHTML = '<p class="loading">No scores yet.</p>';
+    document.getElementById('tableWrap').innerHTML = '<p class="status-loading">No scores released yet for this battle.</p>';
     return;
   }
-  const headers = Object.keys(filtered[0]).filter(k => k !== 'rank');
+
+  const stations = BATTLE_STATIONS[String(currentBattle)] || [];
+
   let html = `<table class="scores-table"><thead><tr>
-    <th>RANK</th>
-    ${headers.map(h => `<th>${h.replace(/_/g,' ').toUpperCase()}</th>`).join('')}
+    <th>RANK</th><th>ATHLETE</th><th>WAVE</th>
+    ${stations.map(s => `<th>${(STATION_LABELS[s]||s).toUpperCase()}</th>`).join('')}
+    <th>TOTAL</th>
   </tr></thead><tbody>`;
-  filtered.forEach((row, i) => {
-    const rankClass = i === 0 ? 'rank-1' : '';
-    html += `<tr class="${rankClass}">
-      <td><span class="rank-badge">${esc(row.rank)}</span></td>
-      ${headers.map(h => `<td>${esc(row[h])}</td>`).join('')}
+
+  filtered.forEach(row => {
+    const isComplete = row.complete === true || row.complete === 'TRUE';
+    html += `<tr onclick="openModal('${esc(row.athlete_id)}')">
+      <td><span class="rank-num">${esc(row.rank??'—')}</span></td>
+      <td>${esc(row.name)}</td>
+      <td>${esc(row.wave??'—')}</td>
+      ${stations.map(s => `<td>${row[s]!==''&&row[s]!==undefined ? esc(row[s]) : '—'}</td>`).join('')}
+      <td>${isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>'}</td>
     </tr>`;
   });
+
   html += '</tbody></table>';
   document.getElementById('tableWrap').innerHTML = html;
 }
 
-function setRound(r) {
-  currentRound = r;
-  document.querySelectorAll('.ctrl-btn').forEach((b, i) => {
-    if (i < 3) b.classList.toggle('active', i === r - 1);
+// ── Analytics rendering ───────────────────────────────────────────────────────
+
+function renderStationChamps(champs) {
+  const stations = BATTLE_STATIONS[String(currentBattle)] || [];
+  if (!stations.length) { document.getElementById('champGrid').innerHTML = ''; return; }
+
+  const medals = ['1ST','2ND','3RD'];
+  const html = stations.map(st => {
+    const list = (champs[st] || []);
+    const rows = list.length ? list.map((e, i) => `
+      <div class="champ-row">
+        <span class="champ-pos">${medals[i]||''}</span>
+        <span class="champ-name">${esc(e.name)}</span>
+        <span class="champ-val">${esc(e.value)}</span>
+      </div>`).join('') : '<div style="opacity:.4;font-size:11px;margin-top:6px;">No data yet</div>';
+    return `<div class="champ-card">
+      <div class="champ-station">${(STATION_LABELS[st]||st).toUpperCase()}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
+  document.getElementById('champGrid').innerHTML = html;
+}
+
+function renderCombined(ranking) {
+  if (!ranking.length) {
+    document.getElementById('combinedTable').innerHTML = '<p style="opacity:.4;font-size:11px;">Data available once athletes compete in multiple battles.</p>';
+    return;
+  }
+  let html = `<table class="combined-table"><thead><tr>
+    <th>RANK</th><th>ATHLETE</th><th>CATEGORY</th><th>B1</th><th>B2</th><th>B3</th><th>TOTAL</th>
+  </tr></thead><tbody>`;
+  ranking.forEach(r => {
+    html += `<tr>
+      <td><strong>${esc(r.rank)}</strong></td>
+      <td>${esc(r.name)}</td>
+      <td>${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))}</td>
+      <td>${r.r1||'—'}</td><td>${r.r2||'—'}</td><td>${r.r3||'—'}</td>
+      <td><strong>${esc(r.combined_total)}</strong></td>
+    </tr>`;
   });
+  html += '</tbody></table>';
+  document.getElementById('combinedTable').innerHTML = html;
+}
+
+function renderAvgTable(avgs) {
+  const stations = BATTLE_STATIONS[String(currentBattle)] || [];
+  if (!stations.length || (!avgs.male && !avgs.female)) {
+    document.getElementById('avgTable').innerHTML = '<p style="opacity:.4;font-size:11px;">No data yet.</p>';
+    return;
+  }
+  let html = `<table class="avg-table"><thead><tr>
+    <th>STATION</th><th>MALE AVG</th><th>FEMALE AVG</th>
+  </tr></thead><tbody>`;
+  stations.forEach(st => {
+    const m = avgs.male   ? (avgs.male[st]   ?? '—') : '—';
+    const f = avgs.female ? (avgs.female[st] ?? '—') : '—';
+    html += `<tr>
+      <td>${STATION_LABELS[st]||st}</td>
+      <td class="avg-m">${m}</td>
+      <td class="avg-f">${f}</td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  document.getElementById('avgTable').innerHTML = html;
+}
+
+// ── Athlete modal ─────────────────────────────────────────────────────────────
+
+async function openModal(athleteId) {
+  document.getElementById('modalName').textContent = 'Loading...';
+  document.getElementById('modalMeta').textContent = '';
+  document.getElementById('modalBody').innerHTML   = '';
+  document.getElementById('modalOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?action=athlete&athlete_id=${encodeURIComponent(athleteId)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    const a = data.athlete || {};
+    document.getElementById('modalName').textContent = a.name || athleteId;
+    document.getElementById('modalMeta').textContent = [
+      String(a.category||'').charAt(0).toUpperCase() + String(a.category||'').slice(1),
+      a.wave ? `Wave ${a.wave}` : null,
+      a.athlete_id,
+    ].filter(Boolean).join('  ·  ');
+
+    let bodyHtml = '';
+    const battles = { '1':'Battle 1 — Qualifiers', '2':'Battle 2 — Semi Finals', '3':'Battle 3 — Finals' };
+    Object.entries(battles).forEach(([round, title]) => {
+      const scores = (data.rounds || {})[round];
+      if (!scores) return;
+      const stations = BATTLE_STATIONS[round] || [];
+      bodyHtml += `<div class="modal-battle">
+        <div class="modal-battle-title">${title}</div>
+        ${stations.map(st => `
+          <div class="modal-station-row">
+            <span class="modal-station-name">${STATION_LABELS[st]||st}</span>
+            <span class="modal-station-val">${scores[st]!==undefined&&scores[st]!=='' ? esc(scores[st]) : '—'}</span>
+          </div>`).join('')}
+        <div class="modal-total-row">
+          <span class="modal-total-label">TOTAL</span>
+          <span class="modal-total-val">${scores.complete===true||scores.complete==='TRUE' ? esc(scores.total) : 'In Progress'}</span>
+        </div>
+      </div>`;
+    });
+
+    document.getElementById('modalBody').innerHTML = bodyHtml || '<p style="opacity:.4;font-size:12px;">No scores recorded yet.</p>';
+
+  } catch (err) {
+    document.getElementById('modalBody').innerHTML = `<p style="opacity:.5;font-size:12px;">Could not load athlete data.</p>`;
+  }
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeModalOnBg(e) {
+  if (e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+// ── Controls ──────────────────────────────────────────────────────────────────
+
+function setBattle(n, btn) {
+  currentBattle = n;
+  document.querySelectorAll('.ctrl-btn').forEach(b => {
+    if (['Battle 1','Battle 2','Battle 3'].some(t => b.textContent.trim() === t)) b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  analyticsLoaded = false;
   loadScores();
+  if (analyticsOpen) loadAnalytics();
 }
 
 function toggleCategory() {
-  currentCategory = currentCategory === 'male' ? 'female' : 'male';
-  document.getElementById('catBtn').textContent = `Showing: ${currentCategory === 'male' ? 'Male' : 'Female'}`;
+  currentCat = currentCat === 'male' ? 'female' : 'male';
+  document.getElementById('catBtn').textContent = currentCat === 'male' ? 'Male' : 'Female';
   loadScores();
 }
 
+function toggleAnalytics() {
+  analyticsOpen = !analyticsOpen;
+  const toggle  = document.getElementById('analyticsToggle');
+  const section = document.getElementById('analyticsSection');
+  toggle.classList.toggle('open', analyticsOpen);
+  section.classList.toggle('open', analyticsOpen);
+  if (analyticsOpen && !analyticsLoaded) {
+    analyticsLoaded = true;
+    loadAnalytics();
+  }
+}
+
+// ── Auto-refresh ──────────────────────────────────────────────────────────────
+
+function updateRefreshLabel() {
+  secondsSince++;
+  const s = secondsSince;
+  document.getElementById('refreshInfo').textContent = s < 60
+    ? `Updated ${s}s ago · auto-refresh in ${60 - s}s`
+    : `Refreshing...`;
+}
+
+setInterval(() => {
+  updateRefreshLabel();
+  if (secondsSince >= 60) loadScores();
+}, 1000);
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function esc(s) {
+  return String(s ?? '—')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
 loadScores();
 </script>
 </body>

@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rannbhoomi 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  /* ── NAV overrides — parchment bg, maroon text, maroon Register ── */
+  nav {
+    background: #d6b97a !important;
+    border-bottom: 1.5px solid rgba(76,0,7,0.18) !important;
+  }
+  .nav-brand { color: #4c0007 !important; }
+  .nav-links a { color: #4c0007 !important; }
+  .nav-links a:hover { color: #4c0007 !important; background: rgba(76,0,7,0.08) !important; }
+  /* Specificity 0,2,1 beats .nav-links a (0,1,1) — fixes invisible Register text */
+  .nav-links a.nav-cta { background: #4c0007 !important; color: #d6b97a !important; }
+  .nav-links a.nav-cta:hover { background: rgba(76,0,7,0.82) !important; color: #d6b97a !important; }
+  .hamburger span { background: #4c0007 !important; }
+  .nav-submenu { background: #d6b97a !important; border-color: rgba(76,0,7,0.2) !important; }
+  .nav-submenu li a { color: #4c0007 !important; border-bottom-color: rgba(76,0,7,0.1) !important; }
+  .nav-submenu li a:hover { background: #4c0007 !important; color: #dec189 !important; }
+
+  /* ── All directional arrows — filled triangles, consistent size ── */
+  .connector-arrow-char { font-size: 14px !important; line-height: 1 !important; }
+  .connector-line-v { height: 20px !important; }
+  .h-arrow { font-size: 14px !important; }
+
+  /* ── Stations — clip horizontal scroll without forcing overflow-y ── */
+  /* overflow-x:clip unlike hidden does NOT create a new BFC, so sticker
+     pop-out and hover scale are not clipped vertically */
+  .tab-panel { overflow-x: clip !important; }
+
+  /* ── Gym Battle — push first card row down so stickers clear the tab buttons ── */
+  .div-tab-panel > .b2-row:first-child { margin-top: 48px; }
+
+  /* ── Rules grid — centre incomplete last row ── */
+  /* Flexbox centres partial last rows; grid justify-content only centres tracks */
+  .rules-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .rule-card {
+    flex: 0 0 340px;
+    max-width: 340px;
+  }
+
+  /* ── Prize Money section ── */
+  .prize-total-wrap {
+    text-align: center;
+    padding: 8px 0 40px;
+  }
+  .prize-total-label {
+    font-family: 'Cinzel', serif;
+    font-size: 13px; font-weight: 600; letter-spacing: 5px;
+    color: var(--text); opacity: 0.65; text-transform: uppercase;
+    display: block; margin-bottom: 10px;
+  }
+  .prize-total-amt {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 80px; color: var(--crimson);
+    letter-spacing: 4px; line-height: 1;
+  }
+  .prize-grid {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 2fr 1fr; gap: 3px;
+  }
+  .prize-card {
+    border: 1px solid var(--crimson-border);
+    background: rgba(214,185,122,0.3); padding: 32px 28px;
+  }
+  .prize-card-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+    letter-spacing: 4px; color: var(--crimson); text-align: center;
+    border-bottom: 1px solid rgba(76,0,7,0.15);
+    padding-bottom: 14px; margin-bottom: 24px;
+  }
+  .prize-split { display: flex; gap: 0; }
+  .prize-gender-col { flex: 1; padding: 0 20px; }
+  .prize-gender-col:first-child { padding-left: 0; }
+  .prize-gender-col:last-child { padding-right: 0; }
+  .prize-col-divider { width: 1px; background: rgba(76,0,7,0.12); flex-shrink: 0; }
+  .prize-gender-label {
+    font-family: 'Cinzel', serif; font-size: 17px; font-weight: 400;
+    letter-spacing: 4px; color: var(--crimson);
+    text-transform: uppercase; text-align: center; margin-bottom: 16px;
+  }
+  .prize-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid rgba(76,0,7,0.08);
+  }
+  .prize-row:last-child { border-bottom: none; }
+  .prize-rank {
+    font-family: 'Cinzel', serif; font-size: 16px; font-weight: 600;
+    letter-spacing: 2px; color: var(--text); opacity: 0.75;
+  }
+  .prize-amt {
+    font-family: 'Bebas Neue', sans-serif; font-size: 22px;
+    color: var(--crimson); letter-spacing: 1px;
+  }
+  .prize-gold { color: var(--crimson); font-size: 25px; }
+  /* Gym Battle card */
+  .prize-card-gym {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .prize-gym-inner { text-align: center; }
+  .prize-gym-rank {
+    font-family: 'Cinzel', serif; font-size: 14px; font-weight: 600;
+    letter-spacing: 4px; color: var(--text); opacity: 0.7;
+    text-transform: uppercase; margin-bottom: 10px;
+  }
+  .prize-gym-sub {
+    font-family: 'Cinzel', serif; font-size: 16px; font-weight: 600;
+    letter-spacing: 2px; color: var(--text); opacity: 0.75;
+    margin-bottom: 10px;
+  }
+  .prize-gym-amt {
+    font-family: 'Bebas Neue', sans-serif; font-size: 56px;
+    color: var(--crimson); letter-spacing: 3px; line-height: 1;
+  }
+
+  /* ── Division tabs (Solo / Gym Battle) ── */
+  .div-tab-row { margin-bottom: 6px; }
+  .div-tab-btn {
+    flex: 1; min-width: 160px; background: rgba(76,0,7,0.08);
+    border: 1px solid var(--crimson-border); padding: 16px 10px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px;
+    color: var(--text); cursor: pointer; transition: all .25s; text-align: center;
+  }
+  .div-tab-btn.active { background: var(--crimson); color: var(--gold); border-color: var(--crimson); }
+  .div-tab-btn:hover:not(.active) { background: rgba(76,0,7,.15); }
+  .div-tab-panel { display: none; }
+  .div-tab-panel.active { display: block; }
+  /* Inner Battle tabs inside Solo panel get a top margin */
+  .div-tab-panel .tab-row { margin-top: 24px; }
+
+  /* ── Rules tabs — scoped so they don't interfere with Stations tabs ── */
+  .rule-tab-row { margin-bottom: 36px; }
+  .rule-tab-btn {
+    flex: 1; min-width: 160px; background: rgba(214,185,122,0.35);
+    border: 1px solid var(--crimson-border); padding: 14px 10px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 15px; letter-spacing: 2px;
+    color: var(--text); cursor: pointer; transition: all .25s; text-align: center;
+  }
+  .rule-tab-btn.active { background: var(--crimson); color: var(--gold); border-color: var(--crimson); }
+  .rule-tab-btn:hover:not(.active) { background: rgba(76,0,7,.1); }
+  .rule-tab-panel { display: none; }
+  .rule-tab-panel.active { display: block; }
+
+  /* ── Nav logo — specificity 0,2,0 beats .nav-logo img (0,1,1) ── */
+  .nav-logo .nav-rb-logo {
+    display: block;
+    width: 160px;
+    height: 44px;
+    object-fit: cover;
+    object-position: center 45%;
+    align-self: center;
+  }
+
+  /* ── Hero carousel ── */
+  .hero-carousel {
+    position: relative;
+    height: 100vh;
+    padding-top: 66px;
+    background: #000;
+    overflow: hidden;
+  }
+  .carousel-track {
+    display: flex;
+    height: 100%;
+    transition: transform 0.6s ease;
+    will-change: transform;
+  }
+  .carousel-slide {
+    flex: 0 0 100%;
+    height: 100%;
+  }
+  .carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    filter: grayscale(100%);
+    display: block;
+  }
+  .overlay {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    pointer-events: none;
+  }
+  .rb-logo {
+    width: clamp(320px, 40vw, 560px);
+    height: auto;
+    display: block;
+  }
+  .tagline {
+    font-family: 'Cinzel', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: #dec189;
+    white-space: nowrap;
+    line-height: 1;
+    margin-left: 0;
+    margin-top: -5px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 8px 10px 8px 0;
+    background: rgba(160, 160, 160, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 4px;
+    font-size: 40px;
+  }
+
+  /* ── Hero right column (countdown + event date) ── */
+  .hero-right {
+    position: absolute;
+    bottom: 40px;
+    right: 100px;
+    pointer-events: none;
+  }
+  .countdown-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px 10px;
+    background: rgba(160, 160, 160, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 4px;
+  }
+  .event-date-box {
+    font-family: 'TrajanPro', serif;
+    font-weight: bold;
+    font-size: 24px;
+    letter-spacing: 2px;
+    color: #dec189;
+    line-height: 1;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(222, 193, 137, 0.3);
+    width: 100%;
+    text-align: center;
+  }
+  .countdown-right .cd-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .countdown-right .cd-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 52px;
+  }
+  .countdown-right .cd-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    color: #dec189;
+    line-height: 1;
+    letter-spacing: 2px;
+  }
+  .countdown-right .cd-lbl {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: #dec189;
+    opacity: 0.8;
+    margin-top: 4px;
+  }
+  .countdown-right .cd-sep {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 38px;
+    color: #dec189;
+    opacity: 0.5;
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav id="navbar">
+  <a class="nav-logo" href="#hero">
+    <img src="images/RB Logo.png" alt="Rannbhoomi" class="nav-rb-logo">
+  </a>
+  <ul class="nav-links">
+    <li><a href="#about">About</a></li>
+    <li><a href="#stations">Stations</a></li>
+    <li><a href="#rules">Rules</a></li>
+    <li class="nav-dropdown">
+      <a href="#venue" class="nav-dropdown-toggle">Season 1 &#9660;</a>
+      <ul class="nav-submenu">
+        <li><a href="#venue">Pune</a></li>
+        <li><a href="#">Mumbai - TBA</a></li>
+        <li><a href="#">Gujarat - TBA</a></li>
+        <li><a href="#">Haryana - TBA</a></li>
+        <li><a href="#">Bangalore - TBA</a></li>
+        <li><a href="#">Hyderabad - TBA</a></li>
+        <li><a href="#">Kolkata - TBA</a></li>
+      </ul>
+    </li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="scores/index.html">Scores</a></li>
+    <li><a href="https://app.peakst8.club/event/slur-shy" target="_blank" rel="noopener" class="nav-cta">Register</a></li>
+  </ul>
+  <div class="hamburger" onclick="toggleNav(this)">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero-carousel" id="hero">
+  <div class="carousel-track" id="carouselTrack">
+    <div class="carousel-slide">
+      <img src="images/athletes_combined.png" alt="Rannbhoomi Athletes">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/1.png" alt="">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/2.png" alt="">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/3.png" alt="">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/4.png" alt="">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/5.png" alt="">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/6.png" alt="">
+    </div>
+    <div class="carousel-slide">
+      <img src="images/Websit Images - RB/Website Images - RB/7.png" alt="">
+    </div>
+  </div>
+  <div class="overlay">
+    <img class="rb-logo" src="images/RB_white_logo_trimmed.png" alt="Rannbhoomi">
+    <span class="tagline">Built by Athletes, for Athletes</span>
+  </div>
+  <div class="hero-right">
+    <div class="countdown-right" id="countdown">
+      <div class="cd-row">
+        <div class="cd-unit"><span class="cd-num" id="cd-days">--</span><span class="cd-lbl">Days</span></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><span class="cd-num" id="cd-hours">--</span><span class="cd-lbl">Hours</span></div>
+        <div class="cd-sep">:</div>
+        <div class="cd-unit"><span class="cd-num" id="cd-mins">--</span><span class="cd-lbl">Mins</span></div>
+      </div>
+      <div class="event-date-box">Sunday, 19th July 2026</div>
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="s-header centered reveal">
+    <h2 class="s-title">ABOUT RANNBHOOMI</h2>
+    <div class="s-rule"></div>
+  </div>
+  <div class="about-content">
+    <p class="about-lead reveal">What happens when preparation ends and instinct takes over?</p>
+    <p class="about-body reveal">Rannbhoomi is Pune's first structured multi-stage fitness race — built to expose what you're truly made of. Athletes progress through three stages of competition, facing eliminations at every level. The final challenge is revealed only on race day: because real performance means showing up for what you didn't see coming.</p>
+    <p class="about-body reveal">Pune has always had warriors — athletes who train before sunrise, who lift when no one's watching, who run when it rains. They just never had an arena worthy of them. This is fitness with purpose: fitness that prepares you for sport, work, family, life, and the unexpected. Welcome to The Arena Within.</p>
+    <div class="about-founders">
+      <div class="founder-card reveal">
+        <div class="founder-name">Shubham Toonwal</div>
+        <div class="founder-role">Hybrid Athlete · CrossFit Competitor · Performance Coach</div>
+        <p class="founder-bio">Currently Top 5 among the Top 100 Male finishers this season — 1st Runner Up at Yoddha Race Mumbai (44:57) and Semi Finalist Rank 7, still hunting the season title. Shubham built Rannbhoomi because he knows what it feels like to stand at the start line with everything on the line, and he wants more athletes to know that feeling.</p>
+      </div>
+      <div class="founder-card reveal">
+        <div class="founder-name">Veenita Johnson</div>
+        <div class="founder-role">HYROX Performance Coach · Adaptive Athlete · Community Builder</div>
+        <p class="founder-bio">Founder of FORGE X COLLECTIVE and the coach who brought Pune its first-ever HYROX challenge. A 1st Place finisher at HYROX Bangalore (Adaptive Category), Veenita has built communities of 300+ athletes across her events. Her role at Rannbhoomi: design experiences that challenge athletes holistically — physically, mentally, and emotionally.</p>
+      </div>
+      <div class="founder-card reveal">
+        <div class="founder-name">Neha Barman</div>
+        <div class="founder-role">HR & Branding Leader · Fitness Entrepreneur</div>
+        <p class="founder-bio">After 17 years in corporate HR and brand leadership, Neha stepped into the arena herself — HYROX Mixed Doubles in 1:29:27, Women's Open in 1:42:08 (33rd in India, 7th in age category). She built Rannbhoomi for every person who ever looked at a race and thought "that's not for me" — then proved themselves wrong.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATIONS / DIVISIONS -->
+<section id="stations">
+  <div class="s-header centered reveal">
+    <span class="s-label">Competition Format</span>
+    <h2 class="s-title">DIVISIONS</h2>
+    <div class="s-rule"></div>
+  </div>
+  <div class="st-wrap">
+
+    <!-- Top-level: Solo | Gym Battle -->
+    <div class="tab-row div-tab-row">
+      <button class="div-tab-btn active" onclick="switchDivTab(0)">Solo</button>
+      <button class="div-tab-btn" onclick="switchDivTab(1)">Gym Battle</button>
+    </div>
+
+    <!-- ── SOLO ── -->
+    <div class="div-tab-panel active">
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab(0)">Battle 1 — Qualifiers</button>
+      <button class="tab-btn" onclick="switchTab(1)">Battle 2 — Semi-Finals</button>
+      <button class="tab-btn" onclick="switchTab(2)">Battle 3 — Finals</button>
+    </div>
+
+    <div class="tab-panel active" id="tab0">
+      <div class="row1">
+        <div class="workout-card">
+          <span class="station-num">01</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Static Burpees.png" alt="Static Burpees"></div>
+          <div class="card-body">
+            <div class="card-name">Static Burpees</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Burpee = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <span class="station-num">02</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/BikeERG.png" alt="Erg Bike"></div>
+          <div class="card-body">
+            <div class="card-name">Erg Bike</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">BikeERG</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Distance</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 mtr = 1 pt</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <span class="station-num">03</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Deadlift.png" alt="Deadlift"></div>
+          <div class="card-body">
+            <div class="card-name">Deadlift</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 50 KG</span><span class="wf">F: 30 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <span class="station-num">04</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Hand Release Pushups.png" alt="Hands Release Push Ups"></div>
+          <div class="card-body">
+            <div class="card-name">Hands Release Push Ups</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 5 pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="connector-row">
+        <div class="connector-side">
+          <div class="connector-arrow-char">▲</div>
+          <div class="connector-line-v"></div>
+        </div>
+        <div class="connector-side">
+          <div class="connector-line-v"></div>
+          <div class="connector-arrow-char">▼</div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="workout-card">
+          <span class="station-num">07</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Dumbbell Front Squat.png" alt="DB Front Squats"></div>
+          <div class="card-body">
+            <div class="card-name">DB Front Squats</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 12.5 KG</span><span class="wf">F: 5 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 5 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">◀</div>
+        <div class="workout-card">
+          <span class="station-num">06</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Inchworm.png" alt="Inch Worms"></div>
+          <div class="card-body">
+            <div class="card-name">Inch Worms</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">◀</div>
+        <div class="workout-card">
+          <span class="station-num">05</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Sprint with Dumbbells.png" alt="Sprint with Weights"></div>
+          <div class="card-body">
+            <div class="card-name">Sprint with Weights</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Weighted</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 15 KG</span><span class="wf">F: 10 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Laps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Lap = 20 pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="stations-note">2 minutes per station &nbsp;·&nbsp; 30 seconds rest between stations</p>
+      <div class="disclaimer">
+        <div class="disclaimer-icon">⚑</div>
+        <div>
+          <div class="disclaimer-title">How Station Assignment Works</div>
+          <div class="disclaimer-body">Each athlete is randomly assigned a starting station on event day. You complete all 7 stations in sequence — wrapping around once you reach the last station. Every athlete completes every station; only your starting point differs.</div>
+          <div class="disclaimer-example">
+            <span class="ex-label">EXAMPLE — assigned Station 5:</span>
+            <span class="ex-station start">5 ★</span><span class="ex-arrow">→</span>
+            <span class="ex-station">6</span><span class="ex-arrow">→</span>
+            <span class="ex-station">7</span><span class="ex-arrow">→</span>
+            <span class="ex-station">1</span><span class="ex-arrow">→</span>
+            <span class="ex-station">2</span><span class="ex-arrow">→</span>
+            <span class="ex-station">3</span><span class="ex-arrow">→</span>
+            <span class="ex-station">4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab1">
+      <div class="b2-row">
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Rowing.png" alt="Rowing"></div>
+          <div class="card-body">
+            <div class="card-name">Rowing</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">RowERG</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">500 Mtrs</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 mtr = 1 pt</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Devil_s press.png" alt="Devil's Press"></div>
+          <div class="card-body">
+            <div class="card-name">Devil's Press</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 10 KG × 2</span><span class="wf">F: 5 KG × 2</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">12 Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Overhead Kettlebell Walk.png" alt="Overhead KB Walk"></div>
+          <div class="card-body">
+            <div class="card-name">Overhead KB Walk</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Kettlebell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 12 KG × 2</span><span class="wf">F: 6 KG × 2</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">100 Meters</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">20m = 20 pts</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <div class="card-sticker"><img src="images/stickers_transparent/Burpee Box Jump.png" alt="Burpee Box Jump"></div>
+          <div class="card-body">
+            <div class="card-name">Burpee Box Jump</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Box 45/60 cm</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">10 Reps</span></div>
+              <div class="card-row"><span class="card-lbl">Scoring</span><span class="card-val">1 Rep = 10 pts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="disclaimer">
+        <div class="disclaimer-icon">⚑</div>
+        <div>
+          <div class="disclaimer-title">How Battle 2 Scoring Works</div>
+          <div class="disclaimer-body">Each athlete gets 20 minutes on the floor. Complete all 4 stations in sequence to finish one round — Rowing → Devil's Press → Overhead KB Walk → Burpee Box Jump. Your score is the total number of complete rounds finished within the time cap. The more rounds you cover, the higher your score.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab2">
+      <div class="b3-reveal" style="padding:0; overflow:hidden; position:relative;">
+        <img src="images/battle 3.png" alt="Battle 3" style="width:100%; height:auto; display:block;">
+        <div style="position:absolute; inset:0; background:transparent;">
+          <!-- Top: label + title -->
+          <div style="position:absolute; top:32px; left:0; right:0; text-align:center; padding:0 24px;">
+            <span style="font-family:'Cinzel',serif; font-size:13px; font-weight:600; letter-spacing:6px; color:#4c0007; text-transform:uppercase; display:block; margin-bottom:12px;">Battle 3 · Finals</span>
+            <div style="font-family:'Cinzel',serif; font-size:36px; font-weight:700; letter-spacing:6px; color:#4c0007; text-transform:uppercase;">Workout Classified</div>
+          </div>
+          <!-- Bottom: body + sub -->
+          <div style="position:absolute; bottom:36px; left:0; right:0; text-align:center; padding:0 40px;">
+            <div style="width:60px; height:1px; background:#4c0007; opacity:0.35; margin:0 auto 20px;"></div>
+            <p style="font-family:'Cinzel',serif; font-size:19px; font-weight:400; color:#1a1a1a; line-height:1.9; margin:0 0 14px; letter-spacing:1px;">The Final Battle workout will be revealed after Battle 2 on event day.</p>
+            <p style="font-family:'Cinzel',serif; font-size:17px; font-weight:600; color:#4c0007; letter-spacing:1.5px; line-height:1.8; margin:0;">Only the top 10 Male &amp; 10 Female athletes who advance from Battle 2 will compete.<br>Full circuit · Minimum time · Athlete selected weights.</p>
+          </div>
+        </div>
+      </div>
+    </div><!-- /.tab-panel Battle 3 -->
+    </div><!-- /.div-tab-panel Solo -->
+
+    <!-- ── GYM BATTLE ── -->
+    <div class="div-tab-panel">
+      <div class="b2-row">
+        <div class="workout-card">
+          <span class="station-num">01</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Dumbbell Front Squat.png" alt="Front Squats"></div>
+          <div class="card-body">
+            <div class="card-name">Front Squats</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 60 KG</span><span class="wf">F: 40 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <span class="station-num">02</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Devil_s press.png" alt="Devil's Press"></div>
+          <div class="card-body">
+            <div class="card-name">Devil's Press</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Dumbbell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 15 KG</span><span class="wf">F: 7.5 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">▶</div>
+        <div class="workout-card">
+          <span class="station-num">03</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Rowing.png" alt="Rower"></div>
+          <div class="card-body">
+            <div class="card-name">Rower</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">RowERG</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">—</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Distance</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- connector: Rower (03) → down → BBJ (04), mirroring Solo layout -->
+      <div class="connector-row" style="max-width:684px;">
+        <div class="connector-side">
+          <div class="connector-arrow-char">▲</div>
+          <div class="connector-line-v"></div>
+        </div>
+        <div class="connector-side">
+          <div class="connector-line-v"></div>
+          <div class="connector-arrow-char">▼</div>
+        </div>
+      </div>
+      <!-- row 2 reversed (05 KB Hold ← 04 BBJ) so the right-side connector aligns with station 04 -->
+      <div class="b2-row">
+        <div class="workout-card">
+          <span class="station-num">05</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Battle of gym - kettlebell hold.png" alt="KB Hold" style="transform:scale(1);"></div>
+          <div class="card-body">
+            <div class="card-name">KB Hold</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Kettlebell</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val"><span class="wm">M: 24 KG</span><span class="wf">F: 16 KG</span></span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Time</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="h-arrow">◀</div>
+        <div class="workout-card">
+          <span class="station-num">04</span>
+          <div class="card-sticker"><img src="images/stickers_transparent/Burpee Box Jump.png" alt="Burpee Box Jumps"></div>
+          <div class="card-body">
+            <div class="card-name">Burpee Box Jumps</div>
+            <div class="card-rows">
+              <div class="card-row"><span class="card-lbl">Equipment</span><span class="card-val">Box 45/60 cm</span></div>
+              <div class="card-row"><span class="card-lbl">Weight</span><span class="card-val">Bodyweight</span></div>
+              <div class="card-row"><span class="card-lbl">Target</span><span class="card-val">Max Reps</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="disclaimer">
+        <div class="disclaimer-icon">⚑</div>
+        <div>
+          <div class="disclaimer-title">Rules &amp; Format</div>
+          <div class="disclaimer-body">One athlete from the team holds the KB for max time while the rest perform the other exercises. Every athlete rotates through the KB hold while the other team members continue their stations. Each athlete must complete each station once.</div>
+        </div>
+      </div>
+    </div><!-- /.div-tab-panel Gym Battle -->
+
+  </div>
+</section>
+
+<!-- PRIZE MONEY -->
+<section id="prizes" class="tinted">
+  <div class="s-header centered reveal">
+    <span class="s-label">Awards</span>
+    <h2 class="s-title">PRIZE MONEY</h2>
+    <div class="s-rule"></div>
+  </div>
+
+  <div class="prize-total-wrap reveal">
+    <span class="prize-total-label">Total Prize Pool</span>
+    <div class="prize-total-amt">₹2,00,000</div>
+  </div>
+
+  <div class="prize-grid reveal">
+
+    <!-- Solo -->
+    <div class="prize-card">
+      <div class="prize-card-title">Solo Battle</div>
+      <div class="prize-split">
+        <div class="prize-gender-col">
+          <div class="prize-gender-label">Male</div>
+          <div class="prize-row"><span class="prize-rank">1st</span><span class="prize-amt prize-gold">₹35,000</span></div>
+          <div class="prize-row"><span class="prize-rank">2nd</span><span class="prize-amt">₹15,000</span></div>
+          <div class="prize-row"><span class="prize-rank">3rd</span><span class="prize-amt">₹10,000</span></div>
+        </div>
+        <div class="prize-col-divider"></div>
+        <div class="prize-gender-col">
+          <div class="prize-gender-label">Female</div>
+          <div class="prize-row"><span class="prize-rank">1st</span><span class="prize-amt prize-gold">₹35,000</span></div>
+          <div class="prize-row"><span class="prize-rank">2nd</span><span class="prize-amt">₹15,000</span></div>
+          <div class="prize-row"><span class="prize-rank">3rd</span><span class="prize-amt">₹10,000</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gym Battle -->
+    <div class="prize-card prize-card-gym">
+      <div class="prize-card-title">Gym Battle</div>
+      <div class="prize-gym-inner">
+        <div class="prize-gym-sub">Winning Gym</div>
+        <div class="prize-gym-amt">₹50,000</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- RULES -->
+<section id="rules" class="tinted">
+  <div class="s-header centered reveal">
+    <span class="s-label">Workout Standards</span>
+    <h2 class="s-title">RULES</h2>
+    <div class="s-rule"></div>
+  </div>
+  <div class="st-wrap">
+    <div class="tab-row rule-tab-row">
+      <button class="rule-tab-btn active" onclick="switchRuleTab(0)">Battle 1 — Qualifiers</button>
+      <button class="rule-tab-btn" onclick="switchRuleTab(1)">Battle 2 — Semi-Finals</button>
+    </div>
+
+    <!-- Battle 1 rules -->
+    <div class="rule-tab-panel active">
+      <div class="rules-grid">
+        <div class="rule-card reveal"><div class="rule-n">01</div><div class="rule-title">Burpee Standards</div><div class="rule-text">Chest must clearly touch the ground at the bottom. Both feet must leave the ground during the jump. Full body extension at the top required.<br><strong>1 Burpee = 10 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">02</div><div class="rule-title">Hands Release Push Up</div><div class="rule-text">Chest must fully contact the floor on every rep. Hands must visibly leave the floor at the bottom before the next rep. Full elbow lockout required at the top. No resting at the bottom.<br><strong>1 Rep = 5 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">03</div><div class="rule-title">Deadlift Standards</div><div class="rule-text">Full hip and knee extension at lockout on every rep. Dumbbells must touch the floor between reps. Back must remain neutral throughout — no rounding. Hips may not rise before the weight moves.<br><strong>1 Rep = 10 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">04</div><div class="rule-title">DB Front Squat Standards</div><div class="rule-text">Dumbbells must remain at shoulder height throughout the movement. Hip crease must pass below the top of the knee at the bottom. Full hip and knee extension required at the top.<br><strong>1 Rep = 5 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">05</div><div class="rule-title">Inch Worm Standards</div><div class="rule-text">Start standing with feet hip-width. Walk hands forward to a fully locked-out plank position, then walk feet up to meet the hands. Full plank lockout and feet at hands both required for the rep to count.<br><strong>1 Rep = 10 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">06</div><div class="rule-title">Sprint Standards</div><div class="rule-text">Athlete must cross or touch the line on both ends. Both feet must cross the line for the rep to count.<br><strong>1 way = 20 metres = 20 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">07</div><div class="rule-title">Erg Bike Standards</div><div class="rule-text">Athlete may dismount only after referee confirmation. Machine must reach target distance before rider dismounts.<br><strong>1 metre = 1 pt</strong></div></div>
+      </div>
+      <div class="disclaimer reveal">
+        <div class="disclaimer-icon">⚑</div>
+        <div>
+          <div class="disclaimer-title">General Rules</div>
+          <div class="disclaimer-body">All movements subject to referee judgment. No-rep decisions are final. Unsportsmanlike behaviour will result in penalties or disqualification.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Battle 2 rules -->
+    <div class="rule-tab-panel">
+      <div class="rules-grid">
+        <div class="rule-card reveal"><div class="rule-n">01</div><div class="rule-title">Rowing Standards</div><div class="rule-text">Complete 500 metres on the RowERG before dismounting. Athlete must remain seated with feet strapped in throughout. Machine must display target completion; referee confirms before athlete stands.<br><strong>1 metre = 1 pt</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">02</div><div class="rule-title">Devil's Press Standards</div><div class="rule-text">Start standing with a dumbbell in each hand. Perform a full burpee — chest to floor — then swing both dumbbells overhead to a locked-out finish. Arms, hips and knees must be fully extended at the top. Dumbbells must touch the floor at the bottom of each rep.<br><strong>1 Rep = 10 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">03</div><div class="rule-title">Overhead KB Walk</div><div class="rule-text">Athlete must cross the line with both feet completely outside at each turn. Full elbow lockout overhead must be maintained throughout the walk. Any break in lockout requires the athlete to stop and re-establish before continuing.<br><strong>20 metres = 20 pts</strong></div></div>
+        <div class="rule-card reveal"><div class="rule-n">04</div><div class="rule-title">Burpee Box Jump Standards</div><div class="rule-text">Perform a burpee — chest must touch the floor — then jump onto the box with both feet landing simultaneously. Full hip and knee extension required at the top of the box. Step-downs are permitted; jump-downs are allowed.<br><strong>1 Rep = 10 pts</strong></div></div>
+      </div>
+      <div class="disclaimer reveal">
+        <div class="disclaimer-icon">⚑</div>
+        <div>
+          <div class="disclaimer-title">General Rules</div>
+          <div class="disclaimer-body">All movements subject to referee judgment. No-rep decisions are final. Unsportsmanlike behaviour will result in penalties or disqualification.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- VENUE -->
+<section id="venue">
+  <div class="s-header centered reveal">
+    <span class="s-label">Location</span>
+    <h2 class="s-title">VENUE</h2>
+    <div class="s-rule"></div>
+  </div>
+  <div class="venue-inner reveal">
+    <p class="venue-addr">Rajaram Bhiku Pathare Stadium</p>
+    <p class="venue-note">Pune, Maharashtra — India</p>
+    <div class="venue-map">
+      <iframe src="https://maps.google.com/maps?q=Rajaram+Bhiku+Pathare+Stadium,+Pune,+Maharashtra,+India&output=embed&z=15" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Rajaram Bhiku Pathare Stadium, Pune"></iframe>
+    </div>
+    <a href="https://share.google/pKppm0AAMges7dk7i" target="_blank" rel="noopener" class="venue-map-external">View on Google Maps &#8599;</a>
+    <div class="venue-meta">
+      <div class="vm-box"><span class="vm-label">Date</span><span class="vm-val">19 July 2026</span></div>
+      <div class="vm-box"><span class="vm-label">Format</span><span class="vm-val">Solo</span></div>
+      <div class="vm-box"><span class="vm-label">City</span><span class="vm-val">Pune</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="s-header centered reveal">
+    <span class="s-label">Questions</span>
+    <h2 class="s-title">FAQ</h2>
+    <div class="s-rule"></div>
+  </div>
+  <div class="faq-wrap reveal">
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">Who can participate in RANNBHOOMI 2026?</span><span class="faq-icon">+</span></button><div class="faq-a">RANNBHOOMI 2026 is open to all adults who are physically fit and ready to challenge themselves. Both male and female athletes compete in separate categories. Athletes must be capable of performing the programmed movements safely and with proper form.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">What is the competition format?</span><span class="faq-icon">+</span></button><div class="faq-a">Three battles: Battle 1 (Qualifiers) — As Many Rounds As Possible (AMRAP) across 7 stations, 2 min per station, 12-min time cap, top 30 each gender advance. Battle 2 (Semi-Finals) — AMRAP in 20 minutes: Rowing + Devil's Press + KB Walk + Box Jumps. Battle 3 (Finals) — workout revealed after Battle 2 on competition day, top 10 each gender compete.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">How is scoring determined?</span><span class="faq-icon">+</span></button><div class="faq-a">Scoring varies by movement. Battle 1: Burpees = 10 pts/rep · Hands Release Push Ups = 5 pts/rep · Deadlift = 10 pts/rep · DB Front Squats = 5 pts/rep · Inch Worms = 10 pts/rep · Sprint with Weights = 20 pts/lap · Erg Bike = 1 pt/metre. Battle 2: Rowing = 1 pt/metre · Devil's Press = 10 pts/rep · Overhead KB Walk = 20 pts per 20m · Burpee Box Jump = 10 pts/rep. Battle 3 scoring will be revealed on competition day.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">Are movement standards strictly enforced?</span><span class="faq-icon">+</span></button><div class="faq-a">Yes. All movements are subject to referee judgment. No-rep decisions by the referee are final and binding. Athletes are encouraged to review the full movement standards document before competing. Unsportsmanlike behaviour will result in penalties or disqualification.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">When will the Battle 3 workout be announced?</span><span class="faq-icon">+</span></button><div class="faq-a">The Battle 3 workout will be revealed after Battle 2 on competition day. Only the top 10 Male &amp; 10 Female athletes who advance from Battle 2 will find out. Strategic strength, endurance, and the ability to adapt to the unknown are all tested.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">What should I bring on competition day?</span><span class="faq-icon">+</span></button><div class="faq-a">All competition equipment is provided at the venue. Athletes should bring appropriate athletic footwear, workout attire, personal chalk if preferred, a water bottle, and their competitive spirit. All machines, barbells, dumbbells, kettlebells, sleds, sandbags, and boxes are supplied.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">What is the registration fee?</span><span class="faq-icon">+</span></button><div class="faq-a">Registration pricing will be announced soon. Early bird pricing will be available for a limited period. Follow @rannbhoomi_ on Instagram or check back on this page for updates. Refund and cancellation terms will be published alongside pricing.</div></div>
+    <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span class="faq-qt">How long does the event take?</span><span class="faq-icon">+</span></button><div class="faq-a">Battle 1 runs 4 athletes at a time across 7 stations (2 minutes per station, 30 seconds rest between). Each wave takes approximately 20 minutes. The full Battle 1 qualifier is scheduled to run over approximately 2 hours 40 minutes. Battle 2 and Battle 3 timing will be confirmed closer to the event. Plan to arrive at least 30 minutes before your wave.</div></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact" class="tinted">
+  <div class="contact-inner reveal">
+    <span class="s-label" style="text-align:center;display:block;">Get in Touch</span>
+    <h2 class="s-title">CONTACT</h2>
+    <div class="s-rule" style="margin:18px auto 0;"></div>
+    <div class="contact-grid">
+      <a class="c-box" href="https://instagram.com/rannbhoomi_" target="_blank" rel="noopener"><span class="c-icon">&#9670;</span><span class="c-title">Instagram</span><div class="c-val">@rannbhoomi_<br>Updates &amp; announcements</div></a>
+      <a class="c-box" href="mailto:frontline@rannbhoomi.com"><span class="c-icon">&#9670;</span><span class="c-title">Email</span><div class="c-val">frontline@rannbhoomi.com<br>Enquiries</div></a>
+      <a class="c-box" href="https://wa.me/919146996969" target="_blank" rel="noopener"><span class="c-icon">&#9670;</span><span class="c-title">Contact Us</span><div class="c-val">+91 91469 96969<br>WhatsApp / Call</div></a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-brand"><img src="images/RB_white_logo_trimmed.png" alt="Rannbhoomi"></div>
+  <div class="ft-partners">
+    <div class="ft-partner-logo"></div>
+    <div class="ft-partner-logo"></div>
+    <div class="ft-partner-logo"></div>
+    <div class="ft-partner-logo"></div>
+    <div class="ft-partner-logo"></div>
+  </div>
+  <div class="ft-rule"></div>
+  <p class="ft-copy">© 2026 Rannbhoomi. All rights reserved. Forged through battle.</p>
+</footer>
+
+<a href="https://wa.me/919146996969" class="whatsapp-float" aria-label="Contact on WhatsApp" target="_blank" rel="noopener">
+  <img src="images/WhatsApp_icon.png" alt="WhatsApp">
+</a>
+
+<script src="js/main.js"></script>
+<script>
+  function switchDivTab(i) {
+    document.querySelectorAll('.div-tab-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+    document.querySelectorAll('.div-tab-panel').forEach((p, j) => p.classList.toggle('active', i === j));
+  }
+  function switchRuleTab(i) {
+    document.querySelectorAll('.rule-tab-btn').forEach((b, j) => b.classList.toggle('active', i === j));
+    document.querySelectorAll('.rule-tab-panel').forEach((p, j) => p.classList.toggle('active', i === j));
+  }
+</script>
+<script>
+  (function () {
+    var track = document.getElementById('carouselTrack');
+    if (!track) return;
+    var slides = track.querySelectorAll('.carousel-slide');
+    if (slides.length <= 1) return;
+
+    var total = slides.length;
+    var current = 0;
+    var busy = false;
+
+    // Clone first slide and append — lets us transition INTO it smoothly,
+    // then snap back to the real slide 1 without a visible jump.
+    track.appendChild(slides[0].cloneNode(true));
+
+    setInterval(function () {
+      if (busy) return;
+      busy = true;
+      current++;
+      track.style.transform = 'translateX(-' + (current * 100) + '%)';
+    }, 2000);
+
+    track.addEventListener('transitionend', function () {
+      if (current >= total) {
+        // Landed on the clone — silently jump to real slide 1
+        track.style.transition = 'none';
+        current = 0;
+        track.style.transform = 'translateX(0%)';
+        requestAnimationFrame(function () {
+          requestAnimationFrame(function () {
+            track.style.transition = '';
+            busy = false;
+          });
+        });
+      } else {
+        busy = false;
+      }
+    });
+  })();
+</script>
+</body>
+</html>
