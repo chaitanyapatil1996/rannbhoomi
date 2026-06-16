@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gallery — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); padding:48px 5vw 80px; }
+
+/* ── Top nav ── */
+.top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:48px; flex-wrap:wrap; gap:12px; }
+.back-link { font-size:15px; letter-spacing:3px; color:var(--crimson); text-decoration:none; }
+.nav-tag { font-size:14px; letter-spacing:3px; }
+
+/* ── Page header ── */
+.page-label { font-size:14px; letter-spacing:6px; display:block; margin-bottom:12px; }
+.page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,8vw,96px); letter-spacing:4px; color:var(--crimson); line-height:1; }
+.page-rule  { width:64px; height:2px; background:var(--crimson); opacity:.3; margin:18px 0 40px; }
+
+/* ── Photo grid (CSS columns for masonry) ── */
+.photo-grid { columns:3 260px; column-gap:10px; }
+.photo-item {
+  break-inside:avoid; margin-bottom:10px;
+  border:1px solid var(--border); overflow:hidden;
+  cursor:pointer; display:block; position:relative;
+}
+.photo-item img { width:100%; display:block; transition:transform .28s ease; }
+.photo-item:hover img { transform:scale(1.04); }
+.photo-hover {
+  position:absolute; inset:0; background:rgba(76,0,7,0);
+  display:flex; align-items:flex-end; padding:14px;
+  transition:background .22s;
+}
+.photo-item:hover .photo-hover { background:rgba(76,0,7,0.38); }
+.photo-caption {
+  font-size:9px; letter-spacing:2px; color:var(--gold);
+  opacity:0; transition:opacity .22s; text-transform:uppercase; line-height:1.4;
+}
+.photo-item:hover .photo-caption { opacity:1; }
+
+/* ── Lightbox ── */
+.lightbox {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(76,0,7,0.94); align-items:center; justify-content:center;
+  padding:20px;
+}
+.lightbox.open { display:flex; }
+.lb-inner { position:relative; display:flex; flex-direction:column; align-items:center; }
+.lb-img { max-width:min(90vw,1200px); max-height:82vh; object-fit:contain; display:block; border:1px solid rgba(222,193,137,0.2); }
+.lb-close {
+  position:absolute; top:-42px; right:0;
+  font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:3px;
+  color:var(--gold); cursor:pointer; opacity:.65; border:none; background:none;
+  padding:4px 0;
+}
+.lb-close:hover { opacity:1; }
+.lb-caption {
+  font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px;
+  color:var(--gold); opacity:.55; margin-top:14px; text-align:center;
+}
+.lb-nav {
+  position:fixed; top:50%; transform:translateY(-50%);
+  font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--gold);
+  cursor:pointer; background:none; border:none; opacity:.5; padding:16px 20px;
+  transition:opacity .15s;
+}
+.lb-nav:hover { opacity:1; }
+.lb-prev { left:0; }
+.lb-next { right:0; }
+.lb-counter {
+  position:absolute; top:-42px; left:0;
+  font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px;
+  color:var(--gold); opacity:.4;
+}
+
+/* ── Section divider ── */
+.section-head { margin:72px 0 28px; }
+.section-head .page-label { margin-bottom:8px; }
+.section-head h2 {
+  font-family:'Bebas Neue',sans-serif; font-size:clamp(32px,5vw,56px); letter-spacing:3px;
+}
+.section-rule { width:44px; height:2px; background:var(--crimson); opacity:.28; margin:14px 0 0; }
+
+/* ── Video grid ── */
+.video-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; margin-top:24px; }
+.video-wrap { border:1px solid var(--border); overflow:hidden; background:rgba(214,185,122,0.3); }
+.video-wrap iframe { display:block; width:100%; aspect-ratio:16/9; border:none; }
+.video-label { padding:12px 14px; font-size:14px; letter-spacing:2.5px; }
+
+/* ── Empty state ── */
+.empty-note { font-size:17px; letter-spacing:1.5px; padding:40px 0; font-family:Georgia,serif; line-height:1.7; text-align:center; }
+
+@media(max-width:540px) {
+  body { padding:32px 4vw 60px; }
+  .lb-nav { font-size:24px; padding:12px 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a class="back-link" href="../index.html">&#8592; RANNBHOOMI 2026</a>
+  <span class="nav-tag">MEDIA</span>
+</div>
+
+<span class="page-label">RANNBHOOMI 2026</span>
+<h1 class="page-title">GALLERY</h1>
+<div class="page-rule"></div>
+
+<div class="photo-grid" id="photoGrid"></div>
+
+<div class="section-head">
+  <span class="page-label">VIDEO HIGHLIGHTS</span>
+  <h2>WATCH</h2>
+  <div class="section-rule"></div>
+</div>
+<div class="video-grid" id="videoGrid"></div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="handleLbClick(event)">
+  <div class="lb-inner">
+    <span class="lb-counter" id="lbCounter"></span>
+    <button class="lb-close" onclick="closeLightbox()">&#10005; CLOSE</button>
+    <img class="lb-img" id="lbImg" src="" alt="">
+    <div class="lb-caption" id="lbCaption"></div>
+  </div>
+  <button class="lb-nav lb-prev" onclick="stepLightbox(-1,event)">&#8592;</button>
+  <button class="lb-nav lb-next" onclick="stepLightbox(1,event)">&#8594;</button>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+//  PHOTOS
+//  Add an object per photo: { src, caption, cat }
+//  cat options: 'athletes' | 'workouts' | 'event'
+//  src is relative to gallery/index.html (one level up = ../)
+// ─────────────────────────────────────────────────────────────────────────────
+const PHOTOS = [
+  { src:'Website%20gallery/Website%20gallery/Battle1_V.png',        caption:'Battle 1 — Qualifiers'   },
+  { src:'Website%20gallery/Website%20gallery/Battle2_Neha.png',     caption:'Battle 2 — Semi-Finals'  },
+  { src:'Website%20gallery/Website%20gallery/Final_battle_shu.png', caption:'Battle 3 — Finals'       },
+  { src:'Website%20gallery/Website%20gallery/All%203%20Pull%20over%20RB.png', caption:'All Three — Pull-overs' },
+  { src:'Website%20gallery/Website%20gallery/RB%20Post-07.jpg',     caption:'Rannbhoomi 2026'         },
+  { src:'Website%20gallery/Website%20gallery/RB%20Post-08.jpg',     caption:'Rannbhoomi 2026'         },
+  { src:'Website%20gallery/Website%20gallery/RB%20Post-09.jpg',     caption:'Rannbhoomi 2026'         },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  VIDEOS — paste YouTube video IDs here, e.g. { id:'dQw4w9WgXcQ', label:'...' }
+// ─────────────────────────────────────────────────────────────────────────────
+const VIDEOS = [
+  // { id:'YOUTUBE_VIDEO_ID', label:'Rannbhoomi 2026 — Event Promo' },
+  // { id:'YOUTUBE_VIDEO_ID', label:'Battle 1 Highlights' },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  State
+// ─────────────────────────────────────────────────────────────────────────────
+let visible = [];
+let lbIdx   = 0;
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Grid
+// ─────────────────────────────────────────────────────────────────────────────
+function buildGrid() {
+  visible = PHOTOS;
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+
+  visible.forEach((photo, i) => {
+    const div = document.createElement('div');
+    div.className = 'photo-item';
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-label', photo.caption);
+    div.setAttribute('tabindex', '0');
+    div.innerHTML = `
+      <img src="${photo.src}" alt="${photo.caption}" loading="lazy">
+      <div class="photo-hover">
+        <span class="photo-caption">${photo.caption}</span>
+      </div>`;
+    div.onclick = () => openLightbox(i);
+    div.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') openLightbox(i); };
+    grid.appendChild(div);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Videos
+// ─────────────────────────────────────────────────────────────────────────────
+function buildVideos() {
+  const grid = document.getElementById('videoGrid');
+  if (!VIDEOS.length) {
+    grid.innerHTML = '<p class="empty-note">Video highlights will be posted after the event — 19 July 2026.</p>';
+    return;
+  }
+  VIDEOS.forEach(v => {
+    const wrap = document.createElement('div');
+    wrap.className = 'video-wrap';
+    wrap.innerHTML = `
+      <iframe src="https://www.youtube.com/embed/${v.id}"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen loading="lazy"></iframe>
+      <div class="video-label">${v.label}</div>`;
+    grid.appendChild(wrap);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Lightbox
+// ─────────────────────────────────────────────────────────────────────────────
+function openLightbox(i) {
+  lbIdx = i;
+  renderLightbox();
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function renderLightbox() {
+  const p = visible[lbIdx];
+  document.getElementById('lbImg').src       = p.src;
+  document.getElementById('lbImg').alt       = p.caption;
+  document.getElementById('lbCaption').textContent = p.caption;
+  document.getElementById('lbCounter').textContent = `${lbIdx + 1} / ${visible.length}`;
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleLbClick(e) {
+  if (e.target === document.getElementById('lightbox')) closeLightbox();
+}
+
+function stepLightbox(dir, e) {
+  if (e) e.stopPropagation();
+  lbIdx = (lbIdx + dir + visible.length) % visible.length;
+  renderLightbox();
+}
+
+document.addEventListener('keydown', e => {
+  if (!document.getElementById('lightbox').classList.contains('open')) return;
+  if (e.key === 'ArrowRight' || e.key === 'l') stepLightbox(1, null);
+  if (e.key === 'ArrowLeft'  || e.key === 'h') stepLightbox(-1, null);
+  if (e.key === 'Escape')                       closeLightbox();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  Init
+// ─────────────────────────────────────────────────────────────────────────────
+buildGrid();
+buildVideos();
+</script>
+</body>
+</html>

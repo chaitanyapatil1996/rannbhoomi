@@ -20,6 +20,7 @@ take_screenshots*.js
 changes_*.txt
 
 # Large non-web files
+*.zip
 *.xlsx
 *.docx
 *.rtf

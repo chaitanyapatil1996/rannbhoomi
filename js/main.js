@@ -40,7 +40,7 @@ const obs = new IntersectionObserver(es => es.forEach(e => {
 }), { threshold: 0.1 });
 document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-const EVENT_DATE = new Date('2026-07-19T08:00:00+05:30');
+const EVENT_DATE = new Date('2026-08-02T08:00:00+05:30');
 
 function updateCountdown() {
   const wrap = document.getElementById('countdown');
