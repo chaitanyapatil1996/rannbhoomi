@@ -288,21 +288,31 @@
   }
 
   @media(max-width:540px) {
-    /* Logo — smaller, moved up so it doesn't collide with countdown */
-    .overlay { left:16px; bottom:130px; }
-    .rb-logo { width:58vw; }
-    /* Tagline is too wide at 40px with nowrap — hide on mobile */
+    /* Hero — landscape height matches 16:9 image ratio (2823×1672).
+       Content area = 60vw ≈ 234px ≈ image natural height at 390px wide → no cropping. */
+    .hero-carousel { height:calc(60vw + 66px); }
+    /* Logo — bottom-left corner */
+    .overlay { left:12px; bottom:16px; }
+    .rb-logo { width:36vw; }
     .tagline { display:none; }
-    /* Countdown — tuck into bottom right, clear of WhatsApp button (right:90px keeps 4px gap) */
-    .hero-right { bottom:20px; right:90px; }
-    .countdown-right { padding:8px 14px 8px; }
-    .countdown-right .cd-num { font-size:36px; }
-    .countdown-right .cd-lbl { font-size:9px; letter-spacing:2px; }
-    .countdown-right .cd-unit { min-width:40px; }
-    .countdown-right .cd-sep { font-size:26px; }
-    .event-date-box { font-size:15px; letter-spacing:1px; }
-    /* Cover fills the hero fully — no empty bars */
+    /* Countdown — bottom-right, right:75px keeps clear of 46px WhatsApp button at right:18px */
+    .hero-right { bottom:16px; right:75px; }
+    .countdown-right { padding:6px 10px; }
+    .countdown-right .cd-num { font-size:28px; }
+    .countdown-right .cd-lbl { font-size:8px; letter-spacing:2px; }
+    .countdown-right .cd-unit { min-width:30px; }
+    .countdown-right .cd-sep { font-size:20px; }
+    .event-date-box { font-size:12px; letter-spacing:1px; }
     .carousel-slide img { object-fit:cover; object-position:center center; }
+    /* B3 Finals — stack title → image → body vertically instead of overlapping */
+    .b3-reveal { display:flex!important; flex-direction:column; overflow:visible!important; padding:8px 0!important; }
+    .b3-reveal > img { order:2; }
+    #b3box { display:contents; }
+    #b3top { order:1; position:static!important; padding:16px 20px 8px!important; text-align:center!important; }
+    #b3top > div { font-size:22px!important; letter-spacing:3px!important; }
+    #b3bot { order:3; position:static!important; padding:8px 20px 16px!important; text-align:center!important; }
+    #b3bot > div:first-child { display:none!important; }
+    #b3bot p { font-size:14px!important; line-height:1.7!important; margin-bottom:10px!important; }
   }
 </style>
 </head>
@@ -633,14 +643,14 @@
     <div class="tab-panel" id="tab2">
       <div class="b3-reveal" style="padding:0; overflow:hidden; position:relative;">
         <img src="images/battle 3.png" alt="Battle 3" style="width:100%; height:auto; display:block;">
-        <div style="position:absolute; inset:0; background:transparent;">
+        <div id="b3box" style="position:absolute; inset:0; background:transparent;">
           <!-- Top: label + title -->
-          <div style="position:absolute; top:32px; left:0; right:0; text-align:center; padding:0 24px;">
+          <div id="b3top" style="position:absolute; top:32px; left:0; right:0; text-align:center; padding:0 24px;">
             <span style="font-family:'Cinzel',serif; font-size:13px; font-weight:600; letter-spacing:6px; color:#4c0007; text-transform:uppercase; display:block; margin-bottom:12px;">Battle 3 · Finals</span>
             <div style="font-family:'Cinzel',serif; font-size:36px; font-weight:700; letter-spacing:6px; color:#4c0007; text-transform:uppercase;">Workout Classified</div>
           </div>
           <!-- Bottom: body + sub -->
-          <div style="position:absolute; bottom:36px; left:0; right:0; text-align:center; padding:0 40px;">
+          <div id="b3bot" style="position:absolute; bottom:36px; left:0; right:0; text-align:center; padding:0 40px;">
             <div style="width:60px; height:1px; background:#4c0007; opacity:0.35; margin:0 auto 20px;"></div>
             <p style="font-family:'Cinzel',serif; font-size:19px; font-weight:400; color:#1a1a1a; line-height:1.9; margin:0 0 14px; letter-spacing:1px;">The Final Battle workout will be revealed after Battle 2 on event day.</p>
             <p style="font-family:'Cinzel',serif; font-size:17px; font-weight:600; color:#4c0007; letter-spacing:1.5px; line-height:1.8; margin:0;">Only the top 10 Male &amp; 10 Female athletes who advance from Battle 2 will compete.<br>Full circuit · Minimum time · Athlete selected weights.</p>
