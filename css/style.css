@@ -787,6 +787,12 @@ footer::before {
   /* Gym Battle row 2 HTML is 05→04 (desktop circuit right-to-left); reorder for mobile */
   .div-tab-panel:last-child > div:nth-child(3) > .workout-card:nth-child(1) { order:2; }
   .div-tab-panel:last-child > div:nth-child(3) > .workout-card:nth-child(3) { order:1; }
+  /* Prize — stack Solo + Gym Battle cards vertically so amounts don't overflow */
+  .prize-grid { grid-template-columns: 1fr !important; }
+  .prize-gym-amt { font-size:40px; }
+  .prize-gender-col { padding:0 10px; }
+  .prize-gender-col:first-child { padding-left:0; }
+  .prize-gender-col:last-child { padding-right:0; }
 }
 
 @media(max-width:540px) {
