@@ -12,9 +12,11 @@ function toggleNav(el) {
   const open = ul.style.display === 'flex';
   if (open) {
     ul.style.cssText = '';
+    ul.classList.remove('mobile-open');
     document.querySelectorAll('.nav-submenu').forEach(s => s.classList.remove('mobile-open'));
   } else {
     ul.style.cssText = 'display:flex;flex-direction:column;position:fixed;top:66px;left:0;right:0;background:rgba(76,0,7,0.98);padding:20px 5vw;gap:14px;border-bottom:1px solid rgba(222,193,137,.2);z-index:998;';
+    ul.classList.add('mobile-open');
   }
 }
 
@@ -31,6 +33,7 @@ document.querySelectorAll('.nav-links a').forEach(link => {
   link.addEventListener('click', () => {
     const ul = document.querySelector('.nav-links');
     ul.style.cssText = '';
+    ul.classList.remove('mobile-open');
   });
 });
 
