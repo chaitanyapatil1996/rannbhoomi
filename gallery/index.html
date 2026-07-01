@@ -7,29 +7,40 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<link rel="stylesheet" href="../css/style.css">
 <style>
+/* ── Nav overrides (parchment bg, maroon text) ── */
+nav { background:#d6b97a !important; border-bottom:1.5px solid rgba(76,0,7,0.18) !important; }
+.nav-logo .nav-rb-logo { display:block; width:160px; height:44px; object-fit:cover; object-position:center 45%; align-self:center; }
+.nav-links a { color:#4c0007 !important; }
+.nav-links a:hover { color:#4c0007 !important; background:rgba(76,0,7,0.08) !important; }
+.nav-links a.nav-cta { background:#4c0007 !important; color:#d6b97a !important; }
+.nav-links a.nav-cta:hover { background:rgba(76,0,7,0.82) !important; color:#d6b97a !important; }
+.hamburger span { background:#4c0007 !important; }
+.nav-submenu { background:#d6b97a !important; border-color:rgba(76,0,7,0.2) !important; }
+.nav-submenu li a { color:#4c0007 !important; border-bottom-color:rgba(76,0,7,0.1) !important; }
+.nav-submenu li a:hover { background:#4c0007 !important; color:#dec189 !important; }
+
 :root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); padding:48px 5vw 80px; }
-
-/* ── Top nav ── */
-.top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:48px; flex-wrap:wrap; gap:12px; }
-.back-link { font-size:15px; letter-spacing:3px; color:var(--crimson); text-decoration:none; }
-.nav-tag { font-size:14px; letter-spacing:3px; }
+body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); padding:90px 5vw 80px; }
 
 /* ── Page header ── */
 .page-label { font-size:14px; letter-spacing:6px; display:block; margin-bottom:12px; }
 .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,8vw,96px); letter-spacing:4px; color:var(--crimson); line-height:1; }
 .page-rule  { width:64px; height:2px; background:var(--crimson); opacity:.3; margin:18px 0 40px; }
 
-/* ── Photo grid (CSS columns for masonry) ── */
-.photo-grid { columns:3 260px; column-gap:10px; }
+/* ── Media grid (photos + videos unified) ── */
+.media-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+@media(max-width:700px) { .media-grid { grid-template-columns:repeat(2,1fr); } }
+@media(max-width:420px) { .media-grid { grid-template-columns:1fr; } }
+
+/* Photo items — portrait */
 .photo-item {
-  break-inside:avoid; margin-bottom:10px;
   border:1px solid var(--border); overflow:hidden;
   cursor:pointer; display:block; position:relative;
 }
-.photo-item img { width:100%; display:block; transition:transform .28s ease; }
+.photo-item img { width:100%; height:100%; object-fit:cover; aspect-ratio:3/4; display:block; transition:transform .28s ease; }
 .photo-item:hover img { transform:scale(1.04); }
 .photo-hover {
   position:absolute; inset:0; background:rgba(76,0,7,0);
@@ -43,7 +54,18 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 }
 .photo-item:hover .photo-caption { opacity:1; }
 
+/* Video items — landscape, span 2 cols */
+.video-item {
+  grid-column: span 2;
+  border:1px solid var(--border); overflow:hidden; background:rgba(214,185,122,0.3);
+}
+@media(max-width:700px) { .video-item { grid-column: span 2; } }
+@media(max-width:420px) { .video-item { grid-column: span 1; } }
+.video-item iframe { display:block; width:100%; aspect-ratio:16/9; border:none; }
+.video-label { padding:10px 14px; font-size:12px; letter-spacing:2.5px; }
+
 /* ── Lightbox ── */
+
 .lightbox {
   display:none; position:fixed; inset:0; z-index:200;
   background:rgba(76,0,7,0.94); align-items:center; justify-content:center;
@@ -78,20 +100,6 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   color:var(--gold); opacity:.4;
 }
 
-/* ── Section divider ── */
-.section-head { margin:72px 0 28px; }
-.section-head .page-label { margin-bottom:8px; }
-.section-head h2 {
-  font-family:'Bebas Neue',sans-serif; font-size:clamp(32px,5vw,56px); letter-spacing:3px;
-}
-.section-rule { width:44px; height:2px; background:var(--crimson); opacity:.28; margin:14px 0 0; }
-
-/* ── Video grid ── */
-.video-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; margin-top:24px; }
-.video-wrap { border:1px solid var(--border); overflow:hidden; background:rgba(214,185,122,0.3); }
-.video-wrap iframe { display:block; width:100%; aspect-ratio:16/9; border:none; }
-.video-label { padding:12px 14px; font-size:14px; letter-spacing:2.5px; }
-
 /* ── Empty state ── */
 .empty-note { font-size:17px; letter-spacing:1.5px; padding:40px 0; font-family:Georgia,serif; line-height:1.7; text-align:center; }
 
@@ -103,23 +111,39 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 </head>
 <body>
 
-<div class="top-bar">
-  <a class="back-link" href="../index.html">&#8592; RANNBHOOMI 2026</a>
-  <span class="nav-tag">MEDIA</span>
-</div>
+<nav id="navbar">
+  <a class="nav-logo" href="../index.html">
+    <img src="../images/RB Logo.png" alt="Rannbhoomi" class="nav-rb-logo">
+  </a>
+  <ul class="nav-links">
+    <li><a href="../index.html#about">About</a></li>
+    <li><a href="../index.html#stations">Stations</a></li>
+    <li><a href="../index.html#rules">Rules</a></li>
+    <li class="nav-dropdown">
+      <a href="../index.html#venue" class="nav-dropdown-toggle">Season 1 &#9660;</a>
+      <ul class="nav-submenu">
+        <li><a href="../index.html#venue">Pune — 2 Aug '26</a></li>
+        <li><a href="#">Mumbai — TBD</a></li>
+        <li><a href="#">Delhi — TBD</a></li>
+        <li><a href="#">Bangalore — TBD</a></li>
+        <li><a href="#">Kolkata — TBD</a></li>
+      </ul>
+    </li>
+    <li><a href="../index.html#faq">FAQ</a></li>
+    <li><a href="index.html">Gallery</a></li>
+    <li><a href="../scores/index.html">Scores</a></li>
+    <li><a href="https://app.peakst8.club/event/slur-shy" target="_blank" rel="noopener" class="nav-cta">Register</a></li>
+  </ul>
+  <div class="hamburger" onclick="toggleNav(this)">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
 
 <span class="page-label">RANNBHOOMI 2026</span>
 <h1 class="page-title">GALLERY</h1>
 <div class="page-rule"></div>
 
-<div class="photo-grid" id="photoGrid"></div>
-
-<div class="section-head">
-  <span class="page-label">VIDEO HIGHLIGHTS</span>
-  <h2>WATCH</h2>
-  <div class="section-rule"></div>
-</div>
-<div class="video-grid" id="videoGrid"></div>
+<div class="media-grid" id="mediaGrid"></div>
 
 <!-- Lightbox -->
 <div class="lightbox" id="lightbox" onclick="handleLbClick(event)">
@@ -135,78 +159,61 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 
 <script>
 // ─────────────────────────────────────────────────────────────────────────────
-//  PHOTOS
-//  Add an object per photo: { src, caption, cat }
-//  cat options: 'athletes' | 'workouts' | 'event'
-//  src is relative to gallery/index.html (one level up = ../)
+//  MEDIA — unified photos + videos in display order
+//  Photo:  { type:'photo', src:'...', caption:'...' }
+//  Video:  { type:'video', id:'YOUTUBE_VIDEO_ID', label:'...' }
+//  Videos span 2 columns automatically.
 // ─────────────────────────────────────────────────────────────────────────────
-const PHOTOS = [
-  { src:'Website%20gallery/Website%20gallery/Battle1_V.png',        caption:'Battle 1 — Qualifiers'   },
-  { src:'Website%20gallery/Website%20gallery/Battle2_Neha.png',     caption:'Battle 2 — Semi-Finals'  },
-  { src:'Website%20gallery/Website%20gallery/Final_battle_shu.png', caption:'Battle 3 — Finals'       },
-  { src:'Website%20gallery/Website%20gallery/All%203%20Pull%20over%20RB.png', caption:'All Three — Pull-overs' },
-  { src:'Website%20gallery/Website%20gallery/RB%20Post-07.jpg',     caption:'Rannbhoomi 2026'         },
-  { src:'Website%20gallery/Website%20gallery/RB%20Post-08.jpg',     caption:'Rannbhoomi 2026'         },
-  { src:'Website%20gallery/Website%20gallery/RB%20Post-09.jpg',     caption:'Rannbhoomi 2026'         },
+const MEDIA = [
+  { type:'photo', src:'Website%20gallery/Website%20gallery/Battle1_V.png',        caption:'Battle 1 — Qualifiers'   },
+  { type:'photo', src:'Website%20gallery/Website%20gallery/Battle2_Neha.png',     caption:'Battle 2 — Semi-Finals'  },
+  { type:'photo', src:'Website%20gallery/Website%20gallery/Final_battle_shu.png', caption:'Battle 3 — Finals'       },
+  // Add videos here when you have YouTube IDs:
+  // { type:'video', id:'YOUTUBE_VIDEO_ID', label:'Rannbhoomi 2026 — Event Promo' },
+  { type:'photo', src:'Website%20gallery/Website%20gallery/All%203%20Pull%20over%20RB.png', caption:'All Three — Pull-overs' },
+  { type:'photo', src:'Website%20gallery/Website%20gallery/RB%20Post-07.jpg',     caption:'Rannbhoomi 2026'         },
+  { type:'photo', src:'Website%20gallery/Website%20gallery/RB%20Post-08.jpg',     caption:'Rannbhoomi 2026'         },
+  { type:'photo', src:'Website%20gallery/Website%20gallery/RB%20Post-09.jpg',     caption:'Rannbhoomi 2026'         },
 ];
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  VIDEOS — paste YouTube video IDs here, e.g. { id:'dQw4w9WgXcQ', label:'...' }
-// ─────────────────────────────────────────────────────────────────────────────
-const VIDEOS = [
-  // { id:'YOUTUBE_VIDEO_ID', label:'Rannbhoomi 2026 — Event Promo' },
-  // { id:'YOUTUBE_VIDEO_ID', label:'Battle 1 Highlights' },
-];
+// Photos only — used for lightbox navigation (videos not included)
+const photos = MEDIA.filter(m => m.type === 'photo');
+let lbIdx = 0;
 
 // ─────────────────────────────────────────────────────────────────────────────
-//  State
-// ─────────────────────────────────────────────────────────────────────────────
-let visible = [];
-let lbIdx   = 0;
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Grid
+//  Build unified media grid
 // ─────────────────────────────────────────────────────────────────────────────
 function buildGrid() {
-  visible = PHOTOS;
-  const grid = document.getElementById('photoGrid');
+  const grid = document.getElementById('mediaGrid');
   grid.innerHTML = '';
+  let photoIdx = 0;
 
-  visible.forEach((photo, i) => {
-    const div = document.createElement('div');
-    div.className = 'photo-item';
-    div.setAttribute('role', 'button');
-    div.setAttribute('aria-label', photo.caption);
-    div.setAttribute('tabindex', '0');
-    div.innerHTML = `
-      <img src="${photo.src}" alt="${photo.caption}" loading="lazy">
-      <div class="photo-hover">
-        <span class="photo-caption">${photo.caption}</span>
-      </div>`;
-    div.onclick = () => openLightbox(i);
-    div.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') openLightbox(i); };
-    grid.appendChild(div);
-  });
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-//  Videos
-// ─────────────────────────────────────────────────────────────────────────────
-function buildVideos() {
-  const grid = document.getElementById('videoGrid');
-  if (!VIDEOS.length) {
-    grid.innerHTML = '<p class="empty-note">Video highlights will be posted after the event — 19 July 2026.</p>';
-    return;
-  }
-  VIDEOS.forEach(v => {
-    const wrap = document.createElement('div');
-    wrap.className = 'video-wrap';
-    wrap.innerHTML = `
-      <iframe src="https://www.youtube.com/embed/${v.id}"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen loading="lazy"></iframe>
-      <div class="video-label">${v.label}</div>`;
-    grid.appendChild(wrap);
+  MEDIA.forEach(item => {
+    if (item.type === 'photo') {
+      const i = photoIdx++;
+      const div = document.createElement('div');
+      div.className = 'photo-item';
+      div.setAttribute('role', 'button');
+      div.setAttribute('aria-label', item.caption);
+      div.setAttribute('tabindex', '0');
+      div.innerHTML = `
+        <img src="${item.src}" alt="${item.caption}" loading="lazy">
+        <div class="photo-hover">
+          <span class="photo-caption">${item.caption}</span>
+        </div>`;
+      div.onclick = () => openLightbox(i);
+      div.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') openLightbox(i); };
+      grid.appendChild(div);
+    } else if (item.type === 'video') {
+      const div = document.createElement('div');
+      div.className = 'video-item';
+      div.innerHTML = `
+        <iframe src="https://www.youtube.com/embed/${item.id}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen loading="lazy"></iframe>
+        <div class="video-label">${item.label}</div>`;
+      grid.appendChild(div);
+    }
   });
 }
 
@@ -221,11 +228,11 @@ function openLightbox(i) {
 }
 
 function renderLightbox() {
-  const p = visible[lbIdx];
+  const p = photos[lbIdx];
   document.getElementById('lbImg').src       = p.src;
   document.getElementById('lbImg').alt       = p.caption;
   document.getElementById('lbCaption').textContent = p.caption;
-  document.getElementById('lbCounter').textContent = `${lbIdx + 1} / ${visible.length}`;
+  document.getElementById('lbCounter').textContent = `${lbIdx + 1} / ${photos.length}`;
 }
 
 function closeLightbox() {
@@ -239,7 +246,7 @@ function handleLbClick(e) {
 
 function stepLightbox(dir, e) {
   if (e) e.stopPropagation();
-  lbIdx = (lbIdx + dir + visible.length) % visible.length;
+  lbIdx = (lbIdx + dir + photos.length) % photos.length;
   renderLightbox();
 }
 
@@ -250,11 +257,8 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape')                       closeLightbox();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-//  Init
-// ─────────────────────────────────────────────────────────────────────────────
 buildGrid();
-buildVideos();
 </script>
+<script src="../js/main.js"></script>
 </body>
 </html>

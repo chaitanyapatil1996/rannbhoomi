@@ -7,38 +7,39 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<link rel="stylesheet" href="../css/style.css">
 <style>
+/* ── Nav overrides (parchment bg, maroon text) ── */
+nav { background:#d6b97a !important; border-bottom:1.5px solid rgba(76,0,7,0.18) !important; }
+.nav-logo .nav-rb-logo { display:block; width:160px; height:44px; object-fit:cover; object-position:center 45%; align-self:center; }
+.nav-links a { color:#4c0007 !important; }
+.nav-links a:hover { color:#4c0007 !important; background:rgba(76,0,7,0.08) !important; }
+.nav-links a.nav-cta { background:#4c0007 !important; color:#d6b97a !important; }
+.nav-links a.nav-cta:hover { background:rgba(76,0,7,0.82) !important; color:#d6b97a !important; }
+.hamburger span { background:#4c0007 !important; }
+.nav-submenu { background:#d6b97a !important; border-color:rgba(76,0,7,0.2) !important; }
+.nav-submenu li a { color:#4c0007 !important; border-bottom-color:rgba(76,0,7,0.1) !important; }
+.nav-submenu li a:hover { background:#4c0007 !important; color:#dec189 !important; }
+
 :root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); padding:48px 5vw 80px; }
-
-/* ── Top nav ── */
-.top-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:48px; flex-wrap:wrap; gap:12px; }
-.back-link { font-size:10px; letter-spacing:3px; color:var(--crimson); opacity:.55; text-decoration:none; }
-.back-link:hover { opacity:1; }
-.refresh-info { font-size:9px; letter-spacing:2px; opacity:.4; }
+body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); padding:90px 5vw 80px; }
+.refresh-info { font-size:12px; letter-spacing:2px; opacity:.90; margin-bottom:28px; display:block; }
 
 /* ── Page header ── */
-.page-label { font-size:9px; letter-spacing:6px; opacity:.4; display:block; margin-bottom:12px; }
+.page-label { font-size:14px; letter-spacing:6px; display:block; margin-bottom:12px; }
 .page-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(48px,8vw,96px); letter-spacing:4px; color:var(--crimson); line-height:1; }
 .page-rule  { width:64px; height:2px; background:var(--crimson); opacity:.3; margin:18px 0 40px; }
 
 /* ── Controls ── */
-.controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+.controls { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:32px; }
 .ctrl-btn {
   padding:10px 22px; border:1px solid var(--border);
-  background:transparent; font-family:'Cinzel',serif; font-size:9px;
+  background:transparent; font-family:'Cinzel',serif; font-size:14px;
   letter-spacing:3px; color:var(--crimson); cursor:pointer; transition:.18s;
 }
 .ctrl-btn.active { background:var(--crimson); color:var(--gold); border-color:var(--crimson); }
 .ctrl-btn:hover:not(.active) { background:rgba(76,0,7,0.07); }
-.search-wrap { margin-bottom:32px; }
-.search-input {
-  width:100%; max-width:380px; padding:12px 16px;
-  border:1px solid var(--border); background:rgba(214,185,122,0.4);
-  font-family:'Cinzel',serif; font-size:12px; color:var(--crimson); outline:none;
-}
-.search-input:focus { border-color:var(--crimson); }
 
 /* ── Podium ── */
 .podium { display:flex; gap:14px; margin-bottom:36px; flex-wrap:wrap; }
@@ -50,32 +51,32 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .podium-card.p1 { background:rgba(222,193,137,0.55); border-color:rgba(76,0,7,0.35); }
 .podium-medal { font-family:'Bebas Neue',sans-serif; font-size:28px; opacity:.35; position:absolute; top:10px; right:14px; }
 .p1 .podium-medal { opacity:.6; }
-.podium-rank { font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; opacity:.5; margin-bottom:4px; }
-.podium-name { font-size:13px; letter-spacing:1px; margin-bottom:2px; line-height:1.2; }
-.podium-cat  { font-size:9px; letter-spacing:2px; opacity:.45; margin-bottom:8px; }
+.podium-rank { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; opacity:.6; margin-bottom:4px; }
+.podium-name { font-size:15px; letter-spacing:1px; margin-bottom:2px; line-height:1.2; }
+.podium-cat  { font-size:12px; letter-spacing:2px; opacity:.6; margin-bottom:8px; }
 .podium-total { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--crimson); }
-.podium-total-label { font-size:8px; letter-spacing:2px; opacity:.4; }
+.podium-total-label { font-size:11px; letter-spacing:2px; opacity:.55; }
 
 /* ── Table ── */
 .table-wrap { overflow-x:auto; max-width:1000px; }
 .scores-table { width:100%; border-collapse:collapse; }
 .scores-table th {
-  font-size:8px; letter-spacing:3px; opacity:.45; text-align:left;
+  font-size:12px; letter-spacing:3px; opacity:.6; text-align:left;
   padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap;
 }
-.scores-table td { padding:13px 14px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:12px; cursor:pointer; }
+.scores-table td { padding:13px 14px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:14px; cursor:pointer; }
 .scores-table tr:hover td { background:rgba(76,0,7,0.05); }
-.rank-num { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; }
-.in-progress { font-size:8px; letter-spacing:2px; background:rgba(76,0,7,0.08); padding:3px 7px; border:1px solid var(--border); white-space:nowrap; }
-.status-loading { font-size:11px; letter-spacing:3px; opacity:.4; padding:40px 0; }
+.rank-num { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; }
+.in-progress { font-size:11px; letter-spacing:2px; background:rgba(76,0,7,0.08); padding:3px 7px; border:1px solid var(--border); white-space:nowrap; }
+.status-loading { font-size:14px; letter-spacing:3px; opacity:.90; padding:40px 0; }
 
 /* ── Analytics ── */
 .analytics-toggle {
   margin-top:52px; margin-bottom:0; display:flex; align-items:center; gap:14px; cursor:pointer;
   border:none; background:none; font-family:'Cinzel',serif; color:var(--crimson);
-  font-size:11px; letter-spacing:3px; padding:0;
+  font-size:13px; letter-spacing:3px; padding:0;
 }
-.analytics-toggle .arrow { font-size:10px; transition:transform .2s; }
+.analytics-toggle .arrow { font-size:12px; transition:transform .2s; }
 .analytics-toggle.open .arrow { transform:rotate(90deg); }
 .analytics-section { display:none; margin-top:32px; max-width:1000px; }
 .analytics-section.open { display:block; }
@@ -83,21 +84,21 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .analytics-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; margin-bottom:16px; opacity:.8; }
 .station-champs-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:14px; }
 .champ-card { border:1px solid var(--border); padding:16px; background:rgba(214,185,122,0.3); }
-.champ-station { font-size:8px; letter-spacing:3px; opacity:.45; margin-bottom:8px; }
+.champ-station { font-size:12px; letter-spacing:3px; opacity:.6; margin-bottom:8px; }
 .champ-row { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:6px; }
-.champ-pos { font-family:'Bebas Neue',sans-serif; font-size:13px; opacity:.4; margin-right:8px; min-width:20px; }
-.champ-name { font-size:11px; letter-spacing:.5px; flex:1; }
+.champ-pos { font-family:'Bebas Neue',sans-serif; font-size:13px; opacity:.5; margin-right:8px; min-width:20px; }
+.champ-name { font-size:13px; letter-spacing:.5px; flex:1; }
 .champ-val  { font-family:'Bebas Neue',sans-serif; font-size:18px; }
 
 .avg-table { border-collapse:collapse; width:100%; max-width:700px; }
-.avg-table th { font-size:8px; letter-spacing:3px; opacity:.45; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
-.avg-table td { padding:10px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:12px; }
+.avg-table th { font-size:12px; letter-spacing:3px; opacity:.6; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+.avg-table td { padding:10px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:14px; }
 .avg-m { color:var(--crimson); }
 .avg-f { opacity:.75; }
 
 .combined-table { border-collapse:collapse; width:100%; max-width:800px; }
-.combined-table th { font-size:8px; letter-spacing:3px; opacity:.45; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
-.combined-table td { padding:11px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:12px; }
+.combined-table th { font-size:12px; letter-spacing:3px; opacity:.6; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
+.combined-table td { padding:11px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:14px; }
 
 /* ── Athlete detail modal ── */
 .modal-overlay {
@@ -118,15 +119,15 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 }
 .modal-close:hover { opacity:1; }
 .modal-name { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:2px; margin-bottom:4px; }
-.modal-meta { font-size:9px; letter-spacing:3px; opacity:.45; margin-bottom:24px; }
+.modal-meta { font-size:12px; letter-spacing:3px; opacity:.6; margin-bottom:24px; }
 .modal-rule { width:48px; height:1px; background:var(--crimson); opacity:.25; margin-bottom:24px; }
 .modal-battle { margin-bottom:28px; }
-.modal-battle-title { font-size:10px; letter-spacing:3px; opacity:.5; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
+.modal-battle-title { font-size:12px; letter-spacing:3px; opacity:.6; margin-bottom:12px; border-bottom:1px solid var(--border); padding-bottom:8px; }
 .modal-station-row { display:flex; justify-content:space-between; align-items:baseline; padding:8px 0; border-bottom:1px solid rgba(76,0,7,0.06); }
-.modal-station-name { font-size:11px; letter-spacing:.5px; opacity:.7; }
+.modal-station-name { font-size:14px; letter-spacing:.5px; opacity:.8; }
 .modal-station-val  { font-family:'Bebas Neue',sans-serif; font-size:20px; }
 .modal-total-row { display:flex; justify-content:space-between; align-items:baseline; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
-.modal-total-label { font-size:10px; letter-spacing:3px; }
+.modal-total-label { font-size:13px; letter-spacing:3px; }
 .modal-total-val   { font-family:'Bebas Neue',sans-serif; font-size:28px; }
 
 @media (max-width:600px) {
@@ -134,28 +135,170 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   .podium { gap:8px; }
   .podium-card { min-width:100px; max-width:none; }
 }
+
+/* ── Certificate section ── */
+.cert-section { margin-top:0; margin-bottom:40px; max-width:600px; }
+.cert-section-head { font-family:'Bebas Neue',sans-serif; font-size:32px; letter-spacing:4px; margin-bottom:6px; }
+.cert-section-desc { font-family:Georgia,serif; font-size:15px; opacity:.7; margin-bottom:24px; line-height:1.6; }
+.cert-search-wrap { position:relative; max-width:420px; }
+.cert-search-input {
+  width:100%; padding:14px 18px; border:1px solid var(--border);
+  background:rgba(214,185,122,0.4); font-family:'Cinzel',serif;
+  font-size:14px; color:var(--crimson); outline:none; letter-spacing:1px;
+}
+.cert-search-input:focus { border-color:var(--crimson); }
+.cert-search-input::placeholder { opacity:.5; }
+.cert-dropdown {
+  display:none; position:absolute; top:100%; left:0; right:0; z-index:50;
+  background:#d6b97a; border:1px solid var(--border); border-top:none;
+  max-height:280px; overflow-y:auto;
+}
+.cert-dropdown.open { display:block; }
+.cert-dd-item {
+  padding:13px 18px; font-family:'Cinzel',serif; font-size:14px;
+  cursor:pointer; letter-spacing:.5px; border-bottom:1px solid rgba(76,0,7,0.08);
+}
+.cert-dd-item:hover { background:rgba(76,0,7,0.08); }
+.cert-dd-empty { opacity:.5; cursor:default; font-family:Georgia,serif; }
+.cert-dd-empty:hover { background:none; }
+
+/* ── Certificate overlay ── */
+.cert-overlay {
+  display:none; position:fixed; inset:0; z-index:300;
+  background:rgba(10,0,2,0.92); overflow-y:auto;
+  padding:24px 20px 40px;
+}
+.cert-overlay.open { display:block; }
+.cert-actions {
+  display:flex; justify-content:center; gap:12px; margin-bottom:20px;
+}
+.cert-action-btn {
+  padding:11px 28px; font-family:'Cinzel',serif; font-size:13px; letter-spacing:3px;
+  cursor:pointer; border:1px solid rgba(222,193,137,0.45); background:transparent;
+  color:#dec189; transition:.18s;
+}
+.cert-action-btn:hover { background:rgba(222,193,137,0.12); }
+.cert-action-btn.primary { background:#dec189; color:#4c0007; border-color:#dec189; }
+.cert-action-btn.primary:hover { opacity:.88; }
+
+/* ── Certificate paper ── */
+.cert-paper {
+  background:#4c0007; color:#dec189; font-family:'Cinzel',serif;
+  width:100%; max-width:860px; margin:0 auto;
+  padding:48px 52px 44px;
+  position:relative;
+  border:1px solid rgba(222,193,137,0.25);
+}
+/* Corner marks */
+.cert-paper::before { content:''; position:absolute; top:14px; left:14px; width:22px; height:22px; border-top:1px solid rgba(222,193,137,0.45); border-left:1px solid rgba(222,193,137,0.45); }
+.cert-paper::after  { content:''; position:absolute; bottom:14px; right:14px; width:22px; height:22px; border-bottom:1px solid rgba(222,193,137,0.45); border-right:1px solid rgba(222,193,137,0.45); }
+.cert-corner-tr { position:absolute; top:14px; right:14px; width:22px; height:22px; border-top:1px solid rgba(222,193,137,0.45); border-right:1px solid rgba(222,193,137,0.45); }
+.cert-corner-bl { position:absolute; bottom:14px; left:14px; width:22px; height:22px; border-bottom:1px solid rgba(222,193,137,0.45); border-left:1px solid rgba(222,193,137,0.45); }
+
+/* Header */
+.cert-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+.cert-logo { height:32px; filter:brightness(0) invert(1); opacity:.85; }
+.cert-header-right { text-align:right; }
+.cert-event-name { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:6px; }
+.cert-event-detail { font-size:10px; letter-spacing:2px; opacity:.5; margin-top:3px; }
+.cert-divider { width:100%; height:1px; background:rgba(222,193,137,0.18); margin:20px 0; }
+
+/* Title block */
+.cert-title-block { text-align:center; padding:20px 0 24px; }
+.cert-cert-label { font-size:10px; letter-spacing:7px; opacity:.45; margin-bottom:18px; }
+.cert-athlete-name { font-family:'Bebas Neue',sans-serif; font-size:clamp(40px,6vw,68px); letter-spacing:4px; color:#d6b97a; line-height:1; margin-bottom:8px; }
+.cert-athlete-meta { font-size:11px; letter-spacing:4px; opacity:.45; }
+
+/* Battle panels */
+.cert-battles { display:flex; flex-direction:column; gap:14px; }
+.cert-battle { border:1px solid rgba(222,193,137,0.15); padding:18px 22px 14px; }
+.cert-battle-hdr { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; padding-bottom:10px; border-bottom:1px solid rgba(222,193,137,0.12); }
+.cert-battle-name { font-size:10px; letter-spacing:5px; opacity:.6; }
+.cert-battle-total-wrap { display:flex; align-items:baseline; gap:8px; }
+.cert-battle-total-label { font-size:9px; letter-spacing:3px; opacity:.4; }
+.cert-battle-total-val { font-family:'Bebas Neue',sans-serif; font-size:22px; color:#dec189; }
+.cert-stations { display:flex; flex-wrap:wrap; gap:0; }
+.cert-station { flex:1; min-width:90px; padding:6px 14px 6px 0; border-right:1px solid rgba(222,193,137,0.1); margin-bottom:4px; }
+.cert-station:last-child { border-right:none; }
+.cert-st-label { font-size:8px; letter-spacing:2px; opacity:.4; text-transform:uppercase; margin-bottom:3px; }
+.cert-st-val { font-family:'Bebas Neue',sans-serif; font-size:26px; line-height:1; }
+
+/* Footer */
+.cert-footer { display:flex; align-items:flex-end; justify-content:space-between; margin-top:6px; }
+.cert-sig { flex:1; }
+.cert-sig-line { width:100px; height:1px; background:rgba(222,193,137,0.3); margin-bottom:10px; }
+.cert-sig-name { font-size:12px; letter-spacing:.5px; opacity:.8; margin-bottom:3px; }
+.cert-sig-role { font-size:9px; letter-spacing:3px; opacity:.38; }
+.cert-seal { width:60px; height:60px; border:1px solid rgba(222,193,137,0.28); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; flex-shrink:0; margin:0 32px 0; }
+.cert-seal-rb { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:2px; }
+.cert-seal-yr { font-size:8px; letter-spacing:2px; opacity:.45; margin-top:1px; }
+
+.cert-loading { padding:100px 0; text-align:center; font-size:14px; letter-spacing:3px; color:#dec189; opacity:.5; }
+.cert-no-data { opacity:.45; font-family:Georgia,serif; font-size:14px; text-align:center; padding:28px 0; }
+
+@media (max-width:580px) {
+  .cert-paper { padding:36px 28px 32px; }
+  .cert-stations { gap:0; }
+  .cert-station { min-width:70px; }
+}
+@media print {
+  body > *:not(.cert-overlay) { display:none !important; }
+  .cert-overlay { position:static; background:none; padding:0; display:block !important; }
+  .cert-actions { display:none !important; }
+  .cert-paper { border:1px solid #8a6a3a; max-width:none; }
+}
 </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <a class="back-link" href="../">← RANNBHOOMI 2026</a>
-  <span class="refresh-info" id="refreshInfo">Auto-refreshes every 60s</span>
-</div>
+<nav id="navbar">
+  <a class="nav-logo" href="../index.html">
+    <img src="../images/RB Logo.png" alt="Rannbhoomi" class="nav-rb-logo">
+  </a>
+  <ul class="nav-links">
+    <li><a href="../index.html#about">About</a></li>
+    <li><a href="../index.html#stations">Stations</a></li>
+    <li><a href="../index.html#rules">Rules</a></li>
+    <li class="nav-dropdown">
+      <a href="../index.html#venue" class="nav-dropdown-toggle">Season 1 &#9660;</a>
+      <ul class="nav-submenu">
+        <li><a href="../index.html#venue">Pune — 2 Aug '26</a></li>
+        <li><a href="#">Mumbai — TBD</a></li>
+        <li><a href="#">Delhi — TBD</a></li>
+        <li><a href="#">Bangalore — TBD</a></li>
+        <li><a href="#">Kolkata — TBD</a></li>
+      </ul>
+    </li>
+    <li><a href="../index.html#faq">FAQ</a></li>
+    <li><a href="../gallery/index.html">Gallery</a></li>
+    <li><a href="index.html">Scores</a></li>
+    <li><a href="https://app.peakst8.club/event/slur-shy" target="_blank" rel="noopener" class="nav-cta">Register</a></li>
+  </ul>
+  <div class="hamburger" onclick="toggleNav(this)">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
 
 <span class="page-label">Live Results</span>
 <h1 class="page-title">LEADERBOARD</h1>
 <div class="page-rule"></div>
+<span class="refresh-info" id="refreshInfo">Auto-refreshes every 60s</span>
+
+<!-- Certificate search section -->
+<div class="cert-section">
+  <div class="cert-section-head">YOUR CERTIFICATE</div>
+  <p class="cert-section-desc">Search your name to view and print your personal performance certificate.</p>
+  <div class="cert-search-wrap">
+    <input class="cert-search-input" id="certSearch" type="text" placeholder="Enter your name..." oninput="searchCertAthlete()" autocomplete="off">
+    <div class="cert-dropdown" id="certDropdown"></div>
+  </div>
+</div>
 
 <div class="controls">
   <button class="ctrl-btn active" onclick="setBattle(1,this)">Battle 1</button>
   <button class="ctrl-btn"        onclick="setBattle(2,this)">Battle 2</button>
   <button class="ctrl-btn"        onclick="setBattle(3,this)">Battle 3</button>
-  <button class="ctrl-btn" id="catBtn" onclick="toggleCategory()">Male</button>
-</div>
-
-<div class="search-wrap">
-  <input class="search-input" type="text" id="search" placeholder="Search athlete name..." oninput="renderTable()">
+  <button class="ctrl-btn"        onclick="setGym(this)">Gym Battle</button>
 </div>
 
 <!-- Podium -->
@@ -180,6 +323,19 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   <div class="analytics-block" id="avgBlock">
     <div class="analytics-title">Category Averages</div>
     <div id="avgTable"><p class="status-loading">Loading...</p></div>
+  </div>
+</div>
+
+<!-- Certificate overlay -->
+<div class="cert-overlay" id="certOverlay">
+  <div class="cert-actions">
+    <button class="cert-action-btn primary" onclick="printCert()">PRINT / SAVE PDF</button>
+    <button class="cert-action-btn" onclick="closeCert()">&#10005; CLOSE</button>
+  </div>
+  <div class="cert-paper" id="certPaper">
+    <div class="cert-corner-tr"></div>
+    <div class="cert-corner-bl"></div>
+    <div class="cert-loading">Loading...</div>
   </div>
 </div>
 
@@ -221,19 +377,21 @@ const BATTLE_STATIONS = {
 
 const SKIP_COLS = new Set(['rank','athlete_id','name','category','wave','zone','complete','submitted_at','total']);
 
-let allScores    = [];
-let lastUpdated  = null;
+let allScores     = [];
+let lastUpdated   = null;
 let currentBattle = 1;
-let currentCat   = 'male';
+let currentDivision = 'solo';
 let analyticsOpen = false;
-let secondsSince = 0;
+let secondsSince  = 0;
 let analyticsLoaded = false;
 
 // ── Data loading ──────────────────────────────────────────────────────────────
 
 async function loadScores() {
   try {
-    const url  = `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&category=${currentCat}`;
+    const url  = currentDivision === 'gym'
+      ? `${APPS_SCRIPT_URL}?action=scores&division=gym`
+      : `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&division=solo`;
     const res  = await fetch(url);
     const data = await res.json();
     allScores   = data.scores || [];
@@ -284,8 +442,7 @@ function renderPodium() {
 }
 
 function renderTable() {
-  const query    = document.getElementById('search').value.toLowerCase();
-  const filtered = allScores.filter(r => String(r.name||'').toLowerCase().includes(query));
+  const filtered = allScores;
 
   if (!filtered.length) {
     document.getElementById('tableWrap').innerHTML = '<p class="status-loading">No scores released yet for this battle.</p>';
@@ -443,20 +600,22 @@ function closeModalOnBg(e) {
 // ── Controls ──────────────────────────────────────────────────────────────────
 
 function setBattle(n, btn) {
-  currentBattle = n;
-  document.querySelectorAll('.ctrl-btn').forEach(b => {
-    if (['Battle 1','Battle 2','Battle 3'].some(t => b.textContent.trim() === t)) b.classList.remove('active');
-  });
+  currentBattle   = n;
+  currentDivision = 'solo';
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   analyticsLoaded = false;
   loadScores();
   if (analyticsOpen) loadAnalytics();
 }
 
-function toggleCategory() {
-  currentCat = currentCat === 'male' ? 'female' : 'male';
-  document.getElementById('catBtn').textContent = currentCat === 'male' ? 'Male' : 'Female';
+function setGym(btn) {
+  currentDivision = 'gym';
+  document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  analyticsLoaded = false;
   loadScores();
+  if (analyticsOpen) loadAnalytics();
 }
 
 function toggleAnalytics() {
@@ -493,8 +652,160 @@ function esc(s) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Certificate ───────────────────────────────────────────────────────────────
+
+let athleteList  = [];
+let certMatches  = [];
+let certListLoaded = false;
+
+async function loadAthleteList() {
+  if (certListLoaded) return;
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?action=scores&round=1&division=solo`);
+    const data = await res.json();
+    athleteList = (data.scores || []).map(r => ({ name: r.name, athlete_id: r.athlete_id }));
+    certListLoaded = true;
+  } catch {}
+}
+
+function searchCertAthlete() {
+  const q  = document.getElementById('certSearch').value.trim().toLowerCase();
+  const dd = document.getElementById('certDropdown');
+  if (q.length < 2) { dd.innerHTML = ''; dd.classList.remove('open'); return; }
+
+  loadAthleteList().then(() => {
+    certMatches = athleteList.filter(a => a.name.toLowerCase().includes(q)).slice(0, 8);
+    if (!certMatches.length) {
+      dd.innerHTML = '<div class="cert-dd-item cert-dd-empty">No athletes found</div>';
+    } else {
+      dd.innerHTML = certMatches.map((a, i) =>
+        `<div class="cert-dd-item" onclick="generateCert(${i})">${esc(a.name)}</div>`
+      ).join('');
+    }
+    dd.classList.add('open');
+  });
+}
+
+async function generateCert(idx) {
+  const athlete = certMatches[idx];
+  document.getElementById('certDropdown').classList.remove('open');
+  document.getElementById('certSearch').value = athlete.name;
+  document.getElementById('certPaper').innerHTML = '<div class="cert-corner-tr"></div><div class="cert-corner-bl"></div><div class="cert-loading">Loading...</div>';
+  document.getElementById('certOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?action=athlete&athlete_id=${encodeURIComponent(athlete.athlete_id)}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    renderCertificate(data);
+  } catch {
+    document.getElementById('certPaper').innerHTML = '<div class="cert-corner-tr"></div><div class="cert-corner-bl"></div><div class="cert-loading">Could not load athlete data.</div>';
+  }
+}
+
+function renderCertificate(data) {
+  const a = data.athlete || {};
+  const BATTLES = [
+    { round:'1', title:'BATTLE 1 — QUALIFIERS',   stations: BATTLE_STATIONS['1'] },
+    { round:'2', title:'BATTLE 2 — SEMI FINALS',  stations: BATTLE_STATIONS['2'] },
+    { round:'3', title:'BATTLE 3 — FINALS',       stations: BATTLE_STATIONS['3'] },
+  ];
+
+  let battlesHtml = '';
+  BATTLES.forEach(b => {
+    const scores = (data.rounds || {})[b.round];
+    if (!scores) return;
+    const isComplete = scores.complete === true || scores.complete === 'TRUE';
+    const stationsHtml = b.stations.map(st => `
+      <div class="cert-station">
+        <div class="cert-st-label">${STATION_LABELS[st] || st}</div>
+        <div class="cert-st-val">${scores[st] !== undefined && scores[st] !== '' ? esc(scores[st]) : '—'}</div>
+      </div>`).join('');
+
+    battlesHtml += `
+      <div class="cert-battle">
+        <div class="cert-battle-hdr">
+          <span class="cert-battle-name">${b.title}</span>
+          <div class="cert-battle-total-wrap">
+            <span class="cert-battle-total-label">TOTAL</span>
+            <span class="cert-battle-total-val">${isComplete ? esc(scores.total) : 'IN PROGRESS'}</span>
+          </div>
+        </div>
+        <div class="cert-stations">${stationsHtml}</div>
+      </div>`;
+  });
+
+  const cat  = String(a.category || '').toUpperCase();
+  const wave = a.wave ? `WAVE ${a.wave}` : '';
+  const meta = [cat, wave].filter(Boolean).join(' · ');
+
+  document.getElementById('certPaper').innerHTML = `
+    <div class="cert-corner-tr"></div>
+    <div class="cert-corner-bl"></div>
+
+    <div class="cert-header">
+      <img src="../images/RB_white_logo_trimmed.png" class="cert-logo" alt="Rannbhoomi">
+      <div class="cert-header-right">
+        <div class="cert-event-name">RANNBHOOMI 2026</div>
+        <div class="cert-event-detail">2 August 2026 &nbsp;·&nbsp; Rajaram Bhiku Pathare Stadium, Pune</div>
+      </div>
+    </div>
+
+    <div class="cert-divider"></div>
+
+    <div class="cert-title-block">
+      <div class="cert-cert-label">CERTIFICATE OF PERFORMANCE</div>
+      <div class="cert-athlete-name">${esc(a.name || 'ATHLETE')}</div>
+      ${meta ? `<div class="cert-athlete-meta">${meta}</div>` : ''}
+    </div>
+
+    <div class="cert-battles">${battlesHtml || '<p class="cert-no-data">No scores recorded yet.</p>'}</div>
+
+    <div class="cert-divider"></div>
+
+    <div class="cert-footer">
+      <div class="cert-sig">
+        <div class="cert-sig-line"></div>
+        <div class="cert-sig-name">Shubham Toonwal</div>
+        <div class="cert-sig-role">Co-Founder</div>
+      </div>
+      <div class="cert-seal">
+        <div class="cert-seal-rb">RB</div>
+        <div class="cert-seal-yr">2026</div>
+      </div>
+      <div class="cert-sig" style="text-align:right;">
+        <div class="cert-sig-line" style="margin-left:auto;"></div>
+        <div class="cert-sig-name">Veenita Johnson</div>
+        <div class="cert-sig-role">Co-Founder</div>
+      </div>
+    </div>`;
+}
+
+function closeCert() {
+  document.getElementById('certOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function printCert() {
+  window.print();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && document.getElementById('certOverlay').classList.contains('open')) closeCert();
+});
+
+// Close cert dropdown when clicking outside
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('certSearch')?.closest('.cert-search-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('certDropdown').classList.remove('open');
+  }
+});
+
 // ── Boot ──────────────────────────────────────────────────────────────────────
 loadScores();
 </script>
+<script src="../js/main.js"></script>
 </body>
 </html>
