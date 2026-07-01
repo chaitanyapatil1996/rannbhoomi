@@ -15,7 +15,7 @@ function toggleNav(el) {
     ul.classList.remove('mobile-open');
     document.querySelectorAll('.nav-submenu').forEach(s => s.classList.remove('mobile-open'));
   } else {
-    ul.style.cssText = 'display:flex;flex-direction:column;position:fixed;top:66px;left:0;right:0;background:rgba(76,0,7,0.98);padding:20px 5vw;gap:14px;border-bottom:1px solid rgba(222,193,137,.2);z-index:998;';
+    ul.style.cssText = 'display:flex;flex-direction:column;position:fixed;top:66px;right:0;width:240px;background:rgba(76,0,7,0.98);padding:20px 24px;gap:14px;border-left:1px solid rgba(222,193,137,.15);border-bottom:1px solid rgba(222,193,137,.2);z-index:998;';
     ul.classList.add('mobile-open');
   }
 }
