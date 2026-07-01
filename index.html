@@ -286,6 +286,22 @@
     align-self: flex-start;
     margin-top: 4px;
   }
+
+  @media(max-width:540px) {
+    /* Logo — smaller, moved up so it doesn't collide with countdown */
+    .overlay { left:16px; bottom:130px; }
+    .rb-logo { width:58vw; }
+    /* Tagline is too wide at 40px with nowrap — hide on mobile */
+    .tagline { display:none; }
+    /* Countdown — tuck into bottom right, clear of WhatsApp button (right:90px keeps 4px gap) */
+    .hero-right { bottom:20px; right:90px; }
+    .countdown-right { padding:8px 14px 8px; }
+    .countdown-right .cd-num { font-size:36px; }
+    .countdown-right .cd-lbl { font-size:9px; letter-spacing:2px; }
+    .countdown-right .cd-unit { min-width:40px; }
+    .countdown-right .cd-sep { font-size:26px; }
+    .event-date-box { font-size:15px; letter-spacing:1px; }
+  }
 </style>
 </head>
 <body>

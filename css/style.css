@@ -767,8 +767,60 @@ footer::before {
 @media(max-width:600px) {
   .tab-row { flex-direction:column; }
   .s-table { font-size:11px; }
+  .s-table th, .s-table td { padding:10px 10px; }
+  .s-table { display:block; overflow-x:auto; }
   .venue-meta { grid-template-columns:1fr; }
   .vm-val { font-size:20px; }
+
+  /* Station circuit → 2-column card grid */
+  .row1, .row2, .b2-row { flex-wrap:wrap; gap:6px; justify-content:flex-start; }
+  .workout-card { width:calc(50% - 3px); flex-shrink:1; }
+  .h-arrow { display:none; }
+  .connector-row { display:none; }
+  .tab-panel { overflow-x:visible; }
+}
+
+@media(max-width:540px) {
+  /* WhatsApp button — smaller on mobile so it doesn't crowd the hero */
+  .whatsapp-float { width:46px; height:46px; bottom:18px; right:18px; }
+  .whatsapp-float img { width:46px; height:46px; }
+}
+
+@media(max-width:480px) {
+  /* Section padding */
+  section { padding:56px 5vw; }
+
+  /* Hero content — tighter spacing so everything fits in one screen */
+  .hero-content { padding:14px 4vw 18px; }
+  .hero-eyebrow { font-size:10px; letter-spacing:4px; margin-bottom:12px; }
+  .hero-subtitle { font-size:12px; letter-spacing:5px; margin-top:6px; }
+  .hero-rule { margin:12px auto; }
+  .hero-tagline { font-size:12px; letter-spacing:3px; margin-bottom:18px; }
+
+  /* Wordmark — block so it's constrained to content width, never overflows */
+  .wordmark-wrap { display:block; width:100%; overflow:hidden; }
+  .wordmark-text { font-size:10vw; letter-spacing:0; }
+
+  /* Pills — tighten up */
+  .hero-pills { gap:0; margin-bottom:18px; }
+  .pill { padding:8px 12px; font-size:10px; letter-spacing:2px; }
+
+  /* Event info */
+  .hero-ei-date { font-size:12px; letter-spacing:2px; }
+  .hero-ei-venue { font-size:13px; letter-spacing:1px; }
+
+  /* Countdown */
+  .cd-num { font-size:38px; }
+  .cd-lbl { font-size:9px; letter-spacing:2px; }
+  .cd-unit { min-width:40px; }
+  .cd-sep { font-size:26px; }
+  .hero-countdown { gap:4px; }
+
+  /* CTA button */
+  .hero-cta { padding:13px 28px; font-size:11px; letter-spacing:4px; }
+
+  /* Hide scroll indicator on mobile — saves vertical space */
+  .hero-scroll { display:none; }
 }
 
 a.c-box {
