@@ -295,14 +295,14 @@
     .overlay { left:12px; bottom:16px; }
     .rb-logo { width:36vw; }
     .tagline { display:none; }
-    /* Countdown — bottom-right, right:75px keeps clear of 46px WhatsApp button at right:18px */
-    .hero-right { bottom:16px; right:75px; }
+    /* Countdown — bottom-right, max-width prevents date text from overlapping logo */
+    .hero-right { bottom:16px; right:75px; max-width:130px; }
     .countdown-right { padding:6px 10px; }
     .countdown-right .cd-num { font-size:28px; }
     .countdown-right .cd-lbl { font-size:8px; letter-spacing:2px; }
     .countdown-right .cd-unit { min-width:30px; }
     .countdown-right .cd-sep { font-size:20px; }
-    .event-date-box { font-size:12px; letter-spacing:1px; }
+    .event-date-box { font-size:10px; letter-spacing:0.5px; white-space:normal; text-align:center; }
     .carousel-slide img { object-fit:cover; object-position:center center; }
     /* B3 Finals — stack title → image → body vertically instead of overlapping */
     .b3-reveal { display:flex!important; flex-direction:column; overflow:visible!important; padding:8px 0!important; }
