@@ -288,22 +288,27 @@
   }
 
   @media(max-width:540px) {
-    /* Hero — landscape height matches 16:9 image ratio (2823×1672).
-       Content area = 60vw ≈ 234px ≈ image natural height at 390px wide → no cropping. */
-    .hero-carousel { height:calc(60vw + 66px); }
-    /* Logo — bottom-left corner */
-    .overlay { left:12px; bottom:16px; }
-    .rb-logo { width:36vw; }
+    /* Hero — image at natural 2823×1672 landscape ratio (59vw).
+       Info bar (88px) sits below image in a dark strip.
+       Must override #hero in css/style.css which has min-height:100vh and parchment bg. */
+    #hero, .hero-carousel { min-height:0; height:calc(66px + 59vw + 88px); overflow:hidden; background:#111; }
+    .carousel-track { height:59vw; }
+    .carousel-slide { height:59vw; }
+    .carousel-slide img { height:59vw; width:100%; object-fit:cover; object-position:center center; }
+    /* Logo — info bar left side, anchored below image */
+    .overlay { top:calc(66px + 59vw); bottom:auto; left:16px; right:auto; height:88px;
+               flex-direction:row; align-items:center; }
+    .rb-logo { width:38vw; }
     .tagline { display:none; }
-    /* Countdown — bottom-right, max-width prevents date text from overlapping logo */
-    .hero-right { bottom:16px; right:75px; max-width:130px; }
-    .countdown-right { padding:6px 10px; }
-    .countdown-right .cd-num { font-size:28px; }
-    .countdown-right .cd-lbl { font-size:8px; letter-spacing:2px; }
-    .countdown-right .cd-unit { min-width:30px; }
-    .countdown-right .cd-sep { font-size:20px; }
-    .event-date-box { font-size:10px; letter-spacing:0.5px; white-space:normal; text-align:center; }
-    .carousel-slide img { object-fit:cover; object-position:center center; }
+    /* Countdown — info bar right side, anchored below image */
+    .hero-right { top:calc(66px + 59vw); bottom:auto; right:12px; left:auto;
+                  height:88px; display:flex; align-items:center; max-width:160px; }
+    .countdown-right { padding:4px 8px; }
+    .countdown-right .cd-num { font-size:24px; }
+    .countdown-right .cd-lbl { font-size:7px; letter-spacing:1.5px; }
+    .countdown-right .cd-unit { min-width:24px; }
+    .countdown-right .cd-sep { font-size:16px; }
+    .event-date-box { font-size:9px; letter-spacing:0.5px; white-space:normal; text-align:center; }
     /* B3 Finals — stack title → image → body vertically instead of overlapping */
     .b3-reveal { display:flex!important; flex-direction:column; overflow:visible!important; padding:8px 0!important; }
     .b3-reveal > img { order:2; }
