@@ -31,6 +31,7 @@ document.querySelector('.nav-dropdown-toggle').addEventListener('click', functio
 // Close mobile nav when any nav link is clicked
 document.querySelectorAll('.nav-links a').forEach(link => {
   link.addEventListener('click', () => {
+    if (link.classList.contains('nav-dropdown-toggle')) return;
     const ul = document.querySelector('.nav-links');
     ul.style.cssText = '';
     ul.classList.remove('mobile-open');
