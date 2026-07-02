@@ -779,7 +779,7 @@ footer::before {
   .connector-row { display:none; }
   .tab-panel { overflow-x:visible; }
   /* Solo row2 HTML is 07→06→05 (desktop circuit reads right-to-left); reorder for mobile */
-  .row2 > .workout-card:nth-child(1) { order:3; }
+  .row2 > .workout-card:nth-child(1) { order:3; width:100%; }
   .row2 > .workout-card:nth-child(3) { order:2; }
   .row2 > .workout-card:nth-child(5) { order:1; }
   /* Gym Battle row 1: card-03 (Rower) wraps alone — make it full width */
