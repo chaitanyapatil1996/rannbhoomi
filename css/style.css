@@ -762,7 +762,7 @@ footer::before {
   .nav-links.mobile-open a { color:rgba(255,255,255,0.85) !important; }
   .nav-submenu { position:static; box-shadow:none; border:none; background:rgba(255,255,255,0.06); }
   .nav-dropdown:hover .nav-submenu { display:none; }
-  .nav-submenu.mobile-open { display:block; }
+  .nav-submenu.mobile-open { display:block !important; }
 }
 @media(max-width:600px) {
   .tab-row { flex-direction:column; }
