@@ -23,6 +23,12 @@
   .nav-submenu { background: #d6b97a !important; border-color: rgba(76,0,7,0.2) !important; }
   .nav-submenu li a { color: #4c0007 !important; border-bottom-color: rgba(76,0,7,0.1) !important; }
   .nav-submenu li a:hover { background: #4c0007 !important; color: #dec189 !important; }
+  /* Mobile hamburger panel is crimson — restore white text for submenu items */
+  @media(max-width:900px) {
+    .nav-submenu { background: rgba(255,255,255,0.06) !important; border-color: rgba(222,193,137,0.15) !important; }
+    .nav-submenu li a { color: rgba(255,255,255,0.85) !important; border-bottom-color: rgba(222,193,137,0.12) !important; }
+    .nav-submenu li a:hover { background: rgba(255,255,255,0.08) !important; color: #dec189 !important; }
+  }
 
   /* ── All directional arrows — filled triangles, consistent size ── */
   .connector-arrow-char { font-size: 14px !important; line-height: 1 !important; }
