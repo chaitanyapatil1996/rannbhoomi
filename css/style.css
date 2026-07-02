@@ -760,6 +760,7 @@ footer::before {
   .hamburger { display:flex; }
   /* Mobile nav link overrides for crimson background */
   .nav-links.mobile-open a { color:rgba(255,255,255,0.85) !important; }
+  .nav-links.mobile-open a:hover { color:rgba(255,255,255,0.85) !important; background:rgba(255,255,255,0.08) !important; }
   .nav-submenu { position:static; box-shadow:none; border:none; background:rgba(255,255,255,0.06); }
   .nav-dropdown:hover .nav-submenu { display:none; }
   .nav-submenu.mobile-open { display:block !important; }
