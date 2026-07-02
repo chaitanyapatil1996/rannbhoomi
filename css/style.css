@@ -216,7 +216,7 @@ nav {
 }
 
 /* ══ SECTION BASE ══ */
-section { padding:96px 5vw; position:relative; }
+section { padding:96px 5vw; position:relative; scroll-margin-top:80px; }
 .s-label {
   display:block; font-family:'Cinzel',serif; font-size:15px; font-weight:600; letter-spacing:6px;
   color:var(--text); opacity:0.9; text-transform:uppercase; margin-bottom:14px;
@@ -804,6 +804,8 @@ footer::before {
 @media(max-width:480px) {
   /* Section padding */
   section { padding:56px 5vw; }
+  /* Section heading — smaller size + tighter spacing so long words (RANNBHOOMI) fit at 390px */
+  .s-title { font-size:36px; letter-spacing:1px; }
 
   /* Hero content — tighter spacing so everything fits in one screen */
   .hero-content { padding:14px 4vw 18px; }

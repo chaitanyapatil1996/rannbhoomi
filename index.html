@@ -288,21 +288,20 @@
   }
 
   @media(max-width:540px) {
-    /* Hero — image at natural 2823×1672 landscape ratio (59vw).
-       Info bar (88px) sits below image in a dark strip.
+    /* Hero — landscape image, logo + countdown overlay ON the image (no dark bar below).
        Must override #hero in css/style.css which has min-height:100vh and parchment bg. */
-    #hero, .hero-carousel { min-height:0; height:calc(66px + 59vw + 88px); overflow:hidden; background:#111; }
+    #hero, .hero-carousel { min-height:0; height:calc(66px + 59vw); overflow:hidden; background:#000; }
     .carousel-track { height:59vw; }
     .carousel-slide { height:59vw; }
     .carousel-slide img { height:59vw; width:100%; object-fit:cover; object-position:center center; }
-    /* Logo — info bar left side, anchored below image */
-    .overlay { top:calc(66px + 59vw); bottom:auto; left:16px; right:auto; height:88px;
-               flex-direction:row; align-items:center; }
-    .rb-logo { width:38vw; }
+    /* Logo — bottom-left, over the image */
+    .overlay { top:auto; bottom:12px; left:12px; right:auto; height:auto;
+               flex-direction:column; align-items:flex-start; }
+    .rb-logo { width:36vw; }
     .tagline { display:none; }
-    /* Countdown — info bar right side, anchored below image */
-    .hero-right { top:calc(66px + 59vw); bottom:auto; right:12px; left:auto;
-                  height:88px; display:flex; align-items:center; max-width:160px; }
+    /* Countdown — bottom-right, over the image */
+    .hero-right { top:auto; bottom:12px; right:12px; left:auto;
+                  height:auto; display:flex; align-items:flex-end; max-width:150px; }
     .countdown-right { padding:4px 8px; }
     .countdown-right .cd-num { font-size:24px; }
     .countdown-right .cd-lbl { font-size:7px; letter-spacing:1.5px; }
