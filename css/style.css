@@ -477,6 +477,7 @@ section { padding:96px 5vw; position:relative; scroll-margin-top:80px; }
 .card-val {
   font-family:'Cinzel',serif; font-size:13px; font-weight:600;
   text-align:right; line-height:1.3;
+  word-break:break-word; overflow-wrap:break-word; min-width:0;
 }
 .card-val .wm { font-size:12px; }
 .card-val .wf { font-size:12px; opacity:0.82; }
