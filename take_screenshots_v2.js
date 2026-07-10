@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer');
 const path      = require('path');
 const fs        = require('fs');
 
-const HTML_PATH = 'file://' + path.resolve(__dirname, 'rannbhoomi_website_1.html');
+const HTML_PATH = 'file://' + path.resolve(__dirname, 'index.html');
 const OUT_DIR   = path.join(__dirname, 'images', 'sections_v2');
 
 // Map each section to the CSS selector and a short filename stem.
