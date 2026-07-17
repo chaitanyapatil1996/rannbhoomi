@@ -15,7 +15,10 @@ scoring formats were finalized, and only really fit Battle 1's shape (one
 judge per station, one score per athlete per station). This spec covers what
 needs to change to support all three competitive formats on event day.
 
-Battle 3 is explicitly **out of scope** — it will be scored on paper.
+Battle 3 is scored on paper live (judges tally by hand, no live judge UI), but
+the finalized numbers are entered into the system afterward via a staff entry
+screen so totals/leaderboard/certificates stay consistent across all battles
+(see §6).
 
 ## What's staying as-is
 
@@ -43,11 +46,16 @@ and the old xlsx. Same role as Mini Hyrox's `Scoring Table` tab.
 | 1 | 5 | Sprint with Weights | Max | laps | 20 | 15kg×2 | 10kg×2 | |
 | 1 | 6 | Inch Worms | Max | reps | 10 | bodyweight | bodyweight | |
 | 1 | 7 | DB Front Squats | Max | reps | 5 | 12.5kg×2 | 5kg×2 | |
-| 2 | 1 | Rowing | 500 | metres | — (progress-based, see §3) | — | — | |
+| 2 | 1 | Rowing | 500 | metres | — (progress-based, see §4) | — | — | |
 | 2 | 2 | Devil's Press | 12 | reps | — | 10kg×2 | 5kg×2 | |
 | 2 | 3 | KB Walk | 100 | metres | — | 12kg×2 | 8kg×2 | |
 | 2 | 4 | Burpee Box Jump | 10 | reps | — | 30in | 24in | |
-| Gym | 1 | Front Squats | Max | reps | — (accumulated, see §4) | 15kg×2 | 10kg×2 | |
+| 3 | 1 | Single Arm Snatch | 40 | reps | reps × weight used (kg) | athlete-selected, logged on paper | athlete-selected, logged on paper | e.g. 30kg × 40 reps = 1200 pts |
+| 3 | 2 | Sled Push | 4 | laps | weight used (kg) × laps | athlete-selected, logged on paper | athlete-selected, logged on paper | e.g. 200kg × 4 laps = 800 pts |
+| 3 | 3 | Ski | Max (4 min cap) | metres | 1 / metre | — | — | Fixed 4-min cap; score = distance covered |
+| 3 | 4 | Box Step Up with Weights | 40 | reps | 10 (fixed) | logged for reference, not scored | logged for reference, not scored | Weight doesn't affect score; 40 × 10 = 400 pts fixed if completed |
+| 3 | 5 | Sandbag Back Throw | Max | reps | 10 | 50kg (fixed) | 30kg (fixed) | Max reps at fixed gender weight |
+| Gym | 1 | Front Squats | Max | reps | — (accumulated, see §6) | 15kg×2 | 10kg×2 | |
 | Gym | 2 | Devil's Press | Max | reps | — | 15kg×2 | 7.5kg×2 | |
 | Gym | 3 | Rower | Max | distance | — | — | — | |
 | Gym | 4 | Burpee Box Jumps | Max | reps | — | bodyweight | bodyweight | |
@@ -65,7 +73,7 @@ Replace the single shared `judge_pin` Config value with a `Judges` sheet:
 |---|---|---|---|---|
 | e.g. `X7K2M9` | `1` | `zone=A` | `s1_burpees` | "Battle 1 — Zone A — Station 1: Static Burpees" |
 | ... | `2` | `lane=M1` | (all 4, sequential) | "Battle 2 — Male Lane 1" |
-| ... | `gym` | `zone=<n>, station=<name>` | one station | "Gym Battle — Zone 2 — Devil's Press" *(see §4, still TBD)* |
+| ... | `gym` | `zone=<n>, station=<name>` | one station | "Gym Battle — Zone 2 — Devil's Press" *(see §6, still TBD)* |
 
 Every judge link becomes `judge/index.html?pin=<PIN>` — no other URL params.
 The backend looks up battle/assignment/station from the PIN server-side, so a
@@ -76,7 +84,9 @@ a URL.
 `generateKeys()`) creates and logs all PINs in one run:
 - Battle 1: 4 zones × 7 stations = **28 PINs**
 - Battle 2: 2 male lanes + 2 female lanes = **4 PINs**
-- Gym Battle: 4 judges × number of zones = **PIN count TBD** (see §4)
+- Gym Battle: 4 judges × number of zones = **PIN count TBD** (see §6)
+- Battle 3: no judge PINs — staff entry screen only (see §5), likely reuses
+  the admin PIN rather than a new judge PIN
 
 ## 3. Battle 1 — unchanged interaction, two fixes
 
@@ -128,7 +138,30 @@ a URL.
 - **Ranking / tiebreak:** most fully-completed rounds → most stations reached
   in the final (incomplete) round → highest value in the last touched station.
 
-## 5. Gym Battle — rotation tracker (judge structure changed, needs follow-up)
+## 5. Battle 3 — paper scoring, post-round staff entry
+
+- No live judge UI for Battle 3. Judges tally scores on paper during the
+  round, same as originally planned.
+- **After the round finishes**, staff key the paper results into a simple
+  entry form (one screen, one row per athlete — top 10 male + top 10 female
+  finalists), reading straight off the paper sheet:
+  - Single Arm Snatch: weight used (kg) + reps → points = reps × weight
+  - Sled Push: weight used (kg) + laps → points = weight × laps
+  - Ski: distance covered in the 4-minute cap (metres) → points = metres × 1
+  - Box Step Up with Weights: reps completed → points = reps × 10 (weight is
+    logged for reference but doesn't affect score)
+  - Sandbag Back Throw: reps completed → points = reps × 10 (fixed gender
+    weight, not entered per-athlete)
+  - Total Battle 3 score = sum of all 5 station points.
+- **Data model:** new `Round3_Scores` sheet, one row per athlete with a column
+  per station (weight-used columns only where relevant) plus a computed
+  total — same shape as the existing `Round1`/`Round2` score sheets, just
+  populated by a staff form instead of live judge submissions.
+- This is a single-entry form, not append-only like the live battles — there's
+  no risk of duplicate/concurrent submissions since one staff member enters
+  each athlete's final tally once, from paper.
+
+## 6. Gym Battle — rotation tracker (judge structure changed, needs follow-up)
 
 - Fixed station rotation order: Front Squats → Devil's Press → Rower →
   Burpee Box Jumps → KB Hold → (back to Front Squats).
@@ -153,7 +186,7 @@ a URL.
   Squats M-15kg×2/F-10kg×2, Devil's Press M-15kg×2/F-7.5kg×2, KB Hold
   M-24kg/F-16kg (Rower = max distance, Burpee Box Jumps = bodyweight).
 
-## 6. Testing / verification approach
+## 7. Testing / verification approach
 
 - No automated test suite exists for this GAS backend today (matches Mini
   Hyrox's approach — manual dry-run before race day).
@@ -169,9 +202,13 @@ a URL.
 2. Gym Battle: heat ends once all 5 rotations complete (every athlete has done
    every station once). ✅
 3. Battle 1 point multipliers (now in the Scoring Table, §1) are final. ✅
+4. Battle 3 stays pen-and-paper live, but results get entered into the system
+   post-round via a staff form (§5) rather than staying fully manual. ✅
+5. Ski's Battle 3 target is a fixed 4-minute time cap, scored by distance
+   (metres), matching the Erg Bike pattern from Battle 1. ✅
 
 ## Still open
 
-- Gym Battle judge/PIN structure and rotation-trigger ownership (§5) —
+- Gym Battle judge/PIN structure and rotation-trigger ownership (§6) —
   explicitly deferred to a follow-up discussion, not blocking the rest of
   this spec.
