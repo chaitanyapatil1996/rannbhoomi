@@ -48,7 +48,7 @@ and the old xlsx. Same role as Mini Hyrox's `Scoring Table` tab.
 | 2 | 3 | KB Walk | 100 | metres | — | 12kg×2 | 8kg×2 | |
 | 2 | 4 | Burpee Box Jump | 10 | reps | — | 30in | 24in | |
 | Gym | 1 | Front Squats | Max | reps | — (accumulated, see §4) | 15kg×2 | 10kg×2 | |
-| Gym | 2 | Devil's Press | Max | reps | — | 15kg | 7.5kg | |
+| Gym | 2 | Devil's Press | Max | reps | — | 15kg×2 | 7.5kg×2 | |
 | Gym | 3 | Rower | Max | distance | — | — | — | |
 | Gym | 4 | Burpee Box Jumps | Max | reps | — | bodyweight | bodyweight | |
 | Gym | 5 | KB Hold | Max time | seconds | not scored | 24kg | 16kg | gates rotation only |
@@ -150,7 +150,7 @@ a URL.
   - How 4 independent judges' inputs reconcile into one team score without
     double-counting or gaps during rotation.
 - Weights (context, not enforced by the app — judges self-referee): Front
-  Squats M-15kg×2/F-10kg×2, Devil's Press M-15kg/F-7.5kg, KB Hold
+  Squats M-15kg×2/F-10kg×2, Devil's Press M-15kg×2/F-7.5kg×2, KB Hold
   M-24kg/F-16kg (Rower = max distance, Burpee Box Jumps = bodyweight).
 
 ## 6. Testing / verification approach
