@@ -552,6 +552,18 @@ function _battle2FindOpenRow(sheet, athlete_id) {
   return null;
 }
 
+// Converts a Round2_Scores row into the {round, stationsFilled} shape the
+// judge UI renders from — used so every endpoint can return true server
+// state instead of the client having to assume what happened.
+function _battle2RowToState(row, headers) {
+  const stationsFilled = {};
+  BATTLE2_STATIONS.forEach(([key]) => {
+    const v = row[headers.indexOf(key)];
+    if (v !== '' && v !== undefined && v !== null) stationsFilled[key] = v;
+  });
+  return { round: Number(row[headers.indexOf('round')]) || 1, stationsFilled };
+}
+
 function battle2Start(body) {
   const { pin, athlete_id } = body;
   const judge = _lookupJudge(pin);
@@ -570,8 +582,16 @@ function battle2Start(body) {
   try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
   try {
     const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+
+    // If this athlete already has an in-progress heat — e.g. a prior START
+    // succeeded server-side but the judge's device never saw the response
+    // (dropped connection, backgrounded app) — resume showing it instead of
+    // blocking with a dead-end error.
     const existingOpen = _battle2FindOpenRow(sheet, athlete_id);
-    if (existingOpen) return jsonResponse({ error: 'This athlete already has an active heat in progress' });
+    if (existingOpen) {
+      const state = _battle2RowToState(existingOpen.row, existingOpen.headers);
+      return jsonResponse({ success: true, resumed: true, athlete_id, name, category, round: state.round, stationsFilled: state.stationsFilled });
+    }
 
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const row = new Array(headers.length).fill('');
@@ -584,7 +604,7 @@ function battle2Start(body) {
     set('heat_finished', false);
     set('updated_at', new Date().toISOString());
     sheet.appendRow(row);
-    return jsonResponse({ success: true, athlete_id, name, category });
+    return jsonResponse({ success: true, resumed: false, athlete_id, name, category, round: 1, stationsFilled: {} });
   } finally {
     lock.releaseLock();
   }
@@ -604,31 +624,48 @@ function battle2StationDone(body) {
     if (!open) return jsonResponse({ error: 'No active heat found for this athlete' });
 
     const nextStation = BATTLE2_STATIONS.find(([key]) => open.row[open.headers.indexOf(key)] === '');
-    if (!nextStation) return jsonResponse({ error: 'Round already fully logged' });
-    const [key] = nextStation;
-    const scoring = _getScoringRow('2', key);
-    const target = scoring ? Number(scoring.target) || 0 : 0;
+    let stationLogged = null, valueLogged = null;
 
-    sheet.getRange(open.rowIndex, open.headers.indexOf(key) + 1).setValue(target);
-    sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
+    if (nextStation) {
+      const [key] = nextStation;
+      const scoring = _getScoringRow('2', key);
+      const target = scoring ? Number(scoring.target) || 0 : 0;
+      sheet.getRange(open.rowIndex, open.headers.indexOf(key) + 1).setValue(target);
+      sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
+      stationLogged = key;
+      valueLogged = target;
 
-    const fresh = sheet.getRange(open.rowIndex, 1, 1, open.headers.length).getValues()[0];
-    const allFilled = BATTLE2_STATIONS.every(([k]) => fresh[open.headers.indexOf(k)] !== '');
-    if (allFilled) {
-      sheet.getRange(open.rowIndex, open.headers.indexOf('round_complete') + 1).setValue(true);
-      const newRow = new Array(open.headers.length).fill('');
-      const set = (h, v) => { const i = open.headers.indexOf(h); if (i > -1) newRow[i] = v; };
-      set('athlete_id', fresh[open.headers.indexOf('athlete_id')]);
-      set('name', fresh[open.headers.indexOf('name')]);
-      set('category', fresh[open.headers.indexOf('category')]);
-      set('round', Number(fresh[open.headers.indexOf('round')]) + 1);
-      set('round_complete', false);
-      set('heat_finished', false);
-      set('updated_at', new Date().toISOString());
-      sheet.appendRow(newRow);
+      const fresh = sheet.getRange(open.rowIndex, 1, 1, open.headers.length).getValues()[0];
+      const allFilled = BATTLE2_STATIONS.every(([k]) => fresh[open.headers.indexOf(k)] !== '');
+      if (allFilled) {
+        sheet.getRange(open.rowIndex, open.headers.indexOf('round_complete') + 1).setValue(true);
+        const newRow = new Array(open.headers.length).fill('');
+        const set = (h, v) => { const i = open.headers.indexOf(h); if (i > -1) newRow[i] = v; };
+        set('athlete_id', fresh[open.headers.indexOf('athlete_id')]);
+        set('name', fresh[open.headers.indexOf('name')]);
+        set('category', fresh[open.headers.indexOf('category')]);
+        set('round', Number(fresh[open.headers.indexOf('round')]) + 1);
+        set('round_complete', false);
+        set('heat_finished', false);
+        set('updated_at', new Date().toISOString());
+        sheet.appendRow(newRow);
+      }
     }
 
-    return jsonResponse({ success: true, station: key, value: target, round_complete: allFilled });
+    // Re-read whatever this athlete's current open row is now (same row, or
+    // the freshly auto-created next round) so the response always reflects
+    // true server state rather than an assumption about what just happened.
+    const after = _battle2FindOpenRow(sheet, athlete_id);
+    const state = after ? _battle2RowToState(after.row, after.headers) : { round: null, stationsFilled: {} };
+
+    return jsonResponse({
+      success: true,
+      station: stationLogged,
+      value: valueLogged,
+      round_complete: stationLogged !== null && Object.keys(state.stationsFilled).length === 0,
+      round: state.round,
+      stationsFilled: state.stationsFilled,
+    });
   } finally {
     lock.releaseLock();
   }

@@ -243,7 +243,11 @@ async function startHeat() {
     if (!data.success) throw new Error(data.error || 'Failed to start heat');
 
     currentAthlete = { athlete_id: athleteId, name: data.name, category: data.category };
-    heatState = { round: 1, stationsFilled: {} };
+    heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
+    if (data.resumed) {
+      msg.textContent = 'Resumed an in-progress heat for this athlete';
+      msg.className = 'msg ok';
+    }
     renderHeat();
     show('heatScreen');
   } catch (err) {
@@ -292,13 +296,13 @@ async function stationDone() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
 
-    heatState.stationsFilled[data.station] = data.value;
-    if (data.round_complete) {
-      heatState = { round: heatState.round + 1, stationsFilled: {} };
-    }
+    // Always trust the server's returned state rather than assuming what
+    // just happened — a dropped connection or slow response could otherwise
+    // leave the on-screen state stuck out of sync with the sheet.
+    heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
     renderHeat();
   } catch (err) {
-    msg.textContent = err.message;
+    msg.textContent = err.message + ' — tap STATION DONE again to retry';
     msg.className = 'msg err';
   }
   btn.disabled = false;
@@ -328,7 +332,7 @@ async function confirmWhistle() {
       <div class="result-line"><span>Value logged</span><span class="rl-val">${data.value}</span></div>`;
     show('doneScreen');
   } catch (err) {
-    msg.textContent = err.message;
+    msg.textContent = err.message + ' — tap CONFIRM & END HEAT again to retry';
     msg.className = 'msg err';
   }
 }
