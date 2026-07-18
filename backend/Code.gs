@@ -407,6 +407,7 @@ function rebuildLeaderboard() {
     const waveIdx     = headers.indexOf('wave');
     const completeIdx = headers.indexOf('complete');
     const totalIdx    = headers.indexOf('total');
+    const catIdx      = headers.indexOf('category');
 
     const validRows = data.slice(1).filter(r => {
       if (!r[0]) return false;
@@ -419,7 +420,20 @@ function rebuildLeaderboard() {
       return true;
     });
 
+    // Overall rank (all categories combined, by total score) — used by the
+    // existing combined leaderboard display.
     validRows.sort((a, b) => (Number(b[totalIdx]) || 0) - (Number(a[totalIdx]) || 0));
+
+    // Gender-scoped rank (by total score, within category only) — Battle 1's
+    // global rank interleaves male/female, which isn't what "top 30 male"
+    // means for Battle 2's roster. Computed separately so it doesn't disturb
+    // the existing global `rank` column.
+    const genderRankMap = new Map();
+    ['male', 'female'].forEach(cat => {
+      const rows = validRows.filter(r => catIdx > -1 && String(r[catIdx]).toLowerCase() === cat);
+      rows.sort((a, b) => (Number(b[totalIdx]) || 0) - (Number(a[totalIdx]) || 0));
+      rows.forEach((row, i) => genderRankMap.set(row, i + 1));
+    });
 
     const cacheName = CACHE_SHEETS[round];
     let cacheSheet  = ss.getSheetByName(cacheName);
@@ -429,8 +443,8 @@ function rebuildLeaderboard() {
       cacheSheet.clearContents();
     }
 
-    cacheSheet.appendRow(['rank', ...headers]);
-    validRows.forEach((row, i) => cacheSheet.appendRow([i + 1, ...row]));
+    cacheSheet.appendRow(['rank', 'gender_rank', ...headers]);
+    validRows.forEach((row, i) => cacheSheet.appendRow([i + 1, genderRankMap.get(row) || '', ...row]));
   });
 }
 
@@ -515,7 +529,7 @@ function battle2Roster(e) {
   const catIdx  = headers.indexOf('category');
   const idIdx   = headers.indexOf('athlete_id');
   const nameIdx = headers.indexOf('name');
-  const rankIdx = headers.indexOf('rank');
+  const rankIdx = headers.indexOf('gender_rank');
 
   const athletes = data.slice(1)
     .filter(r => r[idIdx] && (!gender || String(r[catIdx]).toLowerCase() === gender))
