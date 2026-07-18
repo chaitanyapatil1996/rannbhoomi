@@ -55,10 +55,10 @@ and the old xlsx. Same role as Mini Hyrox's `Scoring Table` tab.
 | 3 | 3 | Ski | Max (4 min cap) | metres | 1 / metre | — | — | Fixed 4-min cap; score = distance covered |
 | 3 | 4 | Box Step Up with Weights | 40 | reps | 10 (fixed) | logged for reference, not scored | logged for reference, not scored | Weight doesn't affect score; 40 × 10 = 400 pts fixed if completed |
 | 3 | 5 | Sandbag Back Throw | Max | reps | 10 | 50kg (fixed) | 30kg (fixed) | Max reps at fixed gender weight |
-| Gym | 1 | Front Squats | Max | reps | — (accumulated, see §6) | 15kg×2 | 10kg×2 | |
-| Gym | 2 | Devil's Press | Max | reps | — | 15kg×2 | 7.5kg×2 | |
-| Gym | 3 | Rower | Max | distance | — | — | — | |
-| Gym | 4 | Burpee Box Jumps | Max | reps | — | bodyweight | bodyweight | |
+| Gym | 1 | Front Squats | Max | reps | 10 (accumulated, see §6) | 15kg×2 | 10kg×2 | |
+| Gym | 2 | Devil's Press | Max | reps | 10 | 15kg×2 | 7.5kg×2 | |
+| Gym | 3 | Rower | Max | metres | 1 | — | — | |
+| Gym | 4 | Burpee Box Jumps | Max | reps | 10 | bodyweight | bodyweight | |
 | Gym | 5 | KB Hold | Max time | seconds | not scored | 24kg | 16kg | gates rotation only |
 
 Populate this via a `setupScoringTable()` function (mirrors Mini Hyrox's
@@ -73,7 +73,7 @@ Replace the single shared `judge_pin` Config value with a `Judges` sheet:
 |---|---|---|---|---|
 | e.g. `X7K2M9` | `1` | `zone=A` | `s1_burpees` | "Battle 1 — Zone A — Station 1: Static Burpees" |
 | ... | `2` | `lane=M1` | (all 4, sequential) | "Battle 2 — Male Lane 1" |
-| ... | `gym` | `zone=<n>, station=<name>` | one station | "Gym Battle — Zone 2 — Devil's Press" *(see §6, still TBD)* |
+| ... | `gym` | `zone=<n>, station=<name>` | one station | "Gym Battle — Zone 2 — Devil's Press" |
 
 Every judge link becomes `judge/index.html?pin=<PIN>` — no other URL params.
 The backend looks up battle/assignment/station from the PIN server-side, so a
@@ -84,7 +84,8 @@ a URL.
 `generateKeys()`) creates and logs all PINs in one run:
 - Battle 1: 4 zones × 7 stations = **28 PINs**
 - Battle 2: 2 male lanes + 2 female lanes = **4 PINs**
-- Gym Battle: 4 judges × number of zones = **PIN count TBD** (see §6)
+- Gym Battle: 4 zones × 4 non-KB stations = **16 PINs**, each reused across
+  all 3 waves as different teams rotate through that zone (see §6)
 - Battle 3: no judge PINs — staff entry screen only (see §5), likely reuses
   the admin PIN rather than a new judge PIN
 
@@ -161,27 +162,28 @@ a URL.
   no risk of duplicate/concurrent submissions since one staff member enters
   each athlete's final tally once, from paper.
 
-## 6. Gym Battle — rotation tracker (judge structure changed, needs follow-up)
+## 6. Gym Battle — rotation tracker
 
 - Fixed station rotation order: Front Squats → Devil's Press → Rower →
   Burpee Box Jumps → KB Hold → (back to Front Squats).
-- **Changed from the original plan:** instead of one judge per team overseeing
-  the whole rotation, there are **4 judges per zone, one per non-KB station**
-  (KB Hold has no dedicated judge). Each team still rotates through all 5
-  stations, only performing each once (per the workout rules).
-- **Scoring:** 4 running totals, one per non-KB station, accumulated across
-  the whole heat regardless of which athlete currently occupies that station.
-  KB Hold time is not scored — it only gates rotation (when dropped, everyone
-  advances one station).
-- **Open / deferred — to design in a follow-up pass:**
-  - Exact PIN/assignment scheme now that judges are per-station rather than
-    per-team (e.g., does a station judge serve one team or all teams passing
-    through that station in a zone?).
-  - Who triggers "KB dropped → rotate everyone" if no judge is stationed at
-    KB Hold — one of the 4 station judges, a zone coordinator, or the
-    athlete's own team signaling it?
-  - How 4 independent judges' inputs reconcile into one team score without
-    double-counting or gaps during rotation.
+- **Judge structure:** 4 judges per zone, one per non-KB station (KB Hold has
+  no dedicated judge). One team occupies a zone per wave (10 teams ÷ 4 zones
+  = 3 waves), so each station judge only ever tracks one team at a time.
+- **PIN scheme:** one PIN per (zone, station) pair — 4 zones × 4 stations =
+  16 PINs, matching Battle 2's lane-reuse pattern. The same PIN/link is used
+  across all 3 waves as different teams pass through that zone.
+- **Rotation trigger:** the **Front Squats judge** taps "KB dropped → rotate
+  everyone" — they're first in the rotation order and best positioned to see
+  the incoming athlete. Single clear owner, no multi-judge coordination
+  needed.
+- **Scoring:** points = reps × 10 for Front Squats, Devil's Press, and Burpee
+  Box Jumps; points = metres × 1 for Rower. Each station judge keeps one
+  running point total for their station, accumulated across whichever
+  athlete currently occupies it — since only one athlete is ever at a given
+  station at a time within a zone, there's no double-counting risk. KB Hold
+  time is not scored at all — it only gates rotation.
+- **Team final score** = sum of the 4 station totals at heat end (once all 5
+  rotations complete, i.e. every athlete has done every station once).
 - Weights (context, not enforced by the app — judges self-referee): Front
   Squats M-15kg×2/F-10kg×2, Devil's Press M-15kg×2/F-7.5kg×2, KB Hold
   M-24kg/F-16kg (Rower = max distance, Burpee Box Jumps = bodyweight).
@@ -206,9 +208,9 @@ a URL.
    post-round via a staff form (§5) rather than staying fully manual. ✅
 5. Ski's Battle 3 target is a fixed 4-minute time cap, scored by distance
    (metres), matching the Erg Bike pattern from Battle 1. ✅
+6. Gym Battle: Front Squats judge owns the rotation trigger; PIN scheme is
+   one per (zone, station) — 16 total, reused across waves. ✅
+7. Gym Battle scoring: 10 pts/rep for Front Squats, Devil's Press, and Burpee
+   Box Jumps; 1 pt/metre for Rower. KB Hold remains unscored. ✅
 
-## Still open
-
-- Gym Battle judge/PIN structure and rotation-trigger ownership (§6) —
-  explicitly deferred to a follow-up discussion, not blocking the rest of
-  this spec.
+No open items remain — spec is ready to implement.
