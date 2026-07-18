@@ -831,6 +831,110 @@ function gymScores(e) {
   return jsonResponse({ scores, last_updated: new Date().toISOString() });
 }
 
+// ─── Test data seeding (DEV/TESTING ONLY) ────────────────────────────────────
+//
+// Seeds 300 fake athletes (150 M / 150 F) into Athletes, scores them through
+// Battle 1 with random values, and releases the leaderboard so Battle 2's
+// roster (top 30 M/F) has something to test against. Every row this creates
+// has an athlete_id starting with "TEST" so clearTestData() can remove it
+// cleanly without touching real registrations or scores.
+//
+// Run seedTestData() once from the editor, test Battle 1/2/Gym Battle with
+// the generated TEST athletes, then run clearTestData() before race day.
+
+const TEST_ID_PREFIX = 'TEST';
+
+function seedTestData() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const athleteSheet = ss.getSheetByName('Athletes');
+  const scoreSheet   = ss.getSheetByName('Round1_Scores');
+  const stations     = STATION_ROUNDS['1'];
+  const count        = 300;
+
+  const athleteHeaders = athleteSheet.getRange(1, 1, 1, athleteSheet.getLastColumn()).getValues()[0];
+  const scoreHeaders   = scoreSheet.getRange(1, 1, 1, scoreSheet.getLastColumn()).getValues()[0];
+
+  const athleteRows = [];
+  const scoreRows   = [];
+
+  for (let i = 1; i <= count; i++) {
+    const category = i % 2 === 0 ? 'male' : 'female';
+    const id   = TEST_ID_PREFIX + String(i).padStart(4, '0');
+    const name = `Test Athlete ${i}`;
+    const zone = ['A', 'B', 'C', 'D'][i % 4];
+    const wave = String(1 + (i % 11));
+
+    const aRow = new Array(athleteHeaders.length).fill('');
+    const setA = (h, v) => { const idx = athleteHeaders.indexOf(h); if (idx > -1) aRow[idx] = v; };
+    setA('athlete_id', id);
+    setA('name', name);
+    setA('category', category);
+    setA('wave', wave);
+    athleteRows.push(aRow);
+
+    const sRow = new Array(scoreHeaders.length).fill('');
+    const setS = (h, v) => { const idx = scoreHeaders.indexOf(h); if (idx > -1) sRow[idx] = v; };
+    setS('athlete_id', id);
+    setS('name', name);
+    setS('category', category);
+    setS('wave', wave);
+    setS('zone', zone);
+    let total = 0;
+    stations.forEach(st => {
+      const raw = Math.floor(Math.random() * 30) + 5;
+      const scoring = _getScoringRow('1', st);
+      const pts = scoring ? Number(scoring.pointsPerUnit) || 1 : 1;
+      setS(st, raw);
+      total += raw * pts;
+    });
+    setS('complete', true);
+    setS('submitted_at', new Date().toISOString());
+    setS('total', total);
+    scoreRows.push(sRow);
+  }
+
+  athleteSheet.getRange(athleteSheet.getLastRow() + 1, 1, athleteRows.length, athleteHeaders.length).setValues(athleteRows);
+  scoreSheet.getRange(scoreSheet.getLastRow() + 1, 1, scoreRows.length, scoreHeaders.length).setValues(scoreRows);
+
+  // Force release so Leaderboard_Cache_R1 populates immediately (Battle 2 roster reads from it).
+  const configSheet = ss.getSheetByName('Config');
+  const cfgData = configSheet.getDataRange().getValues();
+  const rowIdx = cfgData.findIndex(r => r[0] === 'release_all');
+  if (rowIdx > -1) configSheet.getRange(rowIdx + 1, 2).setValue('TRUE');
+  else configSheet.appendRow(['release_all', 'TRUE']);
+
+  rebuildLeaderboard();
+  Logger.log(`seedTestData complete: ${count} test athletes seeded, scored, and leaderboard released.`);
+}
+
+// Removes every row (Athletes, Round1/2/3_Scores, Gym_Results) whose athlete_id
+// or team_name starts with TEST. Safe to run repeatedly — only touches rows
+// seedTestData() created, never real registrations or scores.
+function clearTestData() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  ['Athletes', 'Round1_Scores', 'Round2_Scores', 'Round3_Scores'].forEach(name => {
+    const sheet = ss.getSheetByName(name);
+    if (!sheet || sheet.getLastRow() <= 1) return;
+    const data = sheet.getDataRange().getValues();
+    for (let i = data.length - 1; i > 0; i--) {
+      if (String(data[i][0]).startsWith(TEST_ID_PREFIX)) sheet.deleteRow(i + 1);
+    }
+  });
+
+  const gymResults = ss.getSheetByName(GYM_RESULTS_SHEET);
+  if (gymResults && gymResults.getLastRow() > 1) {
+    const data = gymResults.getDataRange().getValues();
+    const teamIdx = data[0].indexOf('team_name');
+    for (let i = data.length - 1; i > 0; i--) {
+      if (String(data[i][teamIdx]).startsWith(TEST_ID_PREFIX)) gymResults.deleteRow(i + 1);
+    }
+  }
+
+  rebuildLeaderboard();
+  Logger.log('clearTestData complete — all TEST-prefixed rows removed.');
+}
+
 // ─── One-time setup (run from the Apps Script editor, not via HTTP) ─────────
 
 function setupScoringTable() {
