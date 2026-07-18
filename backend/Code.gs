@@ -9,6 +9,16 @@ const STATION_ROUNDS = {
 const SCORE_SHEETS  = { '1':'Round1_Scores',       '2':'Round2_Scores',       '3':'Round3_Scores'       };
 const CACHE_SHEETS  = { '1':'Leaderboard_Cache_R1', '2':'Leaderboard_Cache_R2', '3':'Leaderboard_Cache_R3' };
 
+const JUDGES_SHEET        = 'Judges';
+const SCORING_TABLE_SHEET = 'Scoring Table';
+const ROUND2_SCORES_SHEET = 'Round2_Scores';
+const BATTLE2_STATIONS    = [['rowing','Rowing'], ['devils_press',"Devil's Press"], ['kb_walk','KB Walk'], ['box_jump','Burpee Box Jump']];
+
+const GYM_LIVE_SHEET    = 'Gym_Live';
+const GYM_RESULTS_SHEET = 'Gym_Results';
+const GYM_STATIONS      = [['front_squats','Front Squats'], ['devils_press',"Devil's Press"], ['rower','Rower'], ['box_jump','Burpee Box Jump']];
+const GYM_ZONES         = ['1','2','3','4'];
+
 // ─── Routing ────────────────────────────────────────────────────────────────
 
 function doGet(e) {
@@ -17,6 +27,11 @@ function doGet(e) {
   if (action === 'validate_athlete') return validateAthlete(e);
   if (action === 'athlete')          return getAthlete(e);
   if (action === 'analytics')        return getAnalytics(e);
+  if (action === 'judge_login')      return judgeLogin(e);
+  if (action === 'battle2_roster')   return battle2Roster(e);
+  if (action === 'battle2_scores')   return battle2Scores(e);
+  if (action === 'gym_scores')       return gymScores(e);
+  if (action === 'gym_zone_status')  return gymZoneStatus(e);
   return jsonResponse({ error: 'Unknown action' });
 }
 
@@ -29,7 +44,48 @@ function doPost(e) {
   if (action === 'admin_clear')       return clearAllScores(body);
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
+  if (action === 'battle2_start')        return battle2Start(body);
+  if (action === 'battle2_station_done') return battle2StationDone(body);
+  if (action === 'battle2_partial')      return battle2Partial(body);
+  if (action === 'battle2_whistle')      return battle2Whistle(body);
+  if (action === 'gym_start_team')       return gymStartTeam(body);
+  if (action === 'gym_add_score')        return gymAddScore(body);
+  if (action === 'gym_rotate')           return gymRotate(body);
   return jsonResponse({ error: 'Unknown action' });
+}
+
+// ─── Judge PIN lookup (shared by all battles) ────────────────────────────────
+
+function _lookupJudge(pin) {
+  if (!pin) return null;
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(JUDGES_SHEET);
+  if (!sheet) return null;
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const row = data.find((r, i) => i > 0 && String(r[0]) === String(pin));
+  if (!row) return null;
+  const judge = {};
+  headers.forEach((h, i) => { judge[h] = row[i]; });
+  return judge;
+}
+
+function judgeLogin(e) {
+  const judge = _lookupJudge(e.parameter.pin);
+  if (!judge) return jsonResponse({ found: false });
+  return jsonResponse({ found: true, judge });
+}
+
+// ─── Scoring Table lookup (Battle/Station -> target, unit, points) ──────────
+
+function _getScoringRow(battle, stationKey) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(SCORING_TABLE_SHEET);
+  if (!sheet) return null;
+  const data = sheet.getDataRange().getValues();
+  const row = data.find((r, i) => i > 0 && String(r[0]) === String(battle) && String(r[1]) === String(stationKey));
+  if (!row) return null;
+  return { battle: row[0], stationKey: row[1], stationName: row[2], target: row[3], unit: row[4], pointsPerUnit: row[5], mWeight: row[6], fWeight: row[7], notes: row[8] };
 }
 
 // ─── Config helpers ──────────────────────────────────────────────────────────
@@ -64,13 +120,19 @@ function handleRegistration(body) {
 // When all station columns for the round are filled, it computes and stores the total.
 
 function handleScore(body) {
-  const { pin, round, zone, station, athlete_id, value } = body;
+  const { pin, round, station, athlete_id, value } = body;
   if (!pin || !round || !station || !athlete_id) return jsonResponse({ error: 'Missing required fields' });
+
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== String(round)) return jsonResponse({ error: 'Invalid PIN for this round' });
+  if (String(round) === '1' && String(judge.station) !== String(station)) {
+    return jsonResponse({ error: 'This PIN is not assigned to station ' + station });
+  }
+  const zone = judge.assignment || '';
 
   const ss  = SpreadsheetApp.openById(SPREADSHEET_ID);
   const cfg = getConfig(ss);
 
-  if (String(pin) !== String(cfg['judge_pin']))       return jsonResponse({ error: 'Invalid PIN' });
   if (String(round) !== String(cfg['active_round']))  return jsonResponse({ error: `Round ${round} is not active. Active: ${cfg['active_round']}` });
 
   const sheetName     = SCORE_SHEETS[String(round)];
@@ -123,7 +185,15 @@ function handleScore(body) {
       const stationIdxs = roundStations.map(s => freshH.indexOf(s)).filter(i => i > -1);
       const vals        = stationIdxs.map(i => row[i]);
       const allFilled   = vals.every(v => v !== '' && v !== null && v !== undefined);
-      const total       = vals.reduce((sum, v) => sum + (Number(v) || 0), 0);
+      // Battle 1 applies the per-station points multiplier from the Scoring Table.
+      // Other rounds keep a raw sum (their placeholder columns aren't points-weighted yet).
+      const total = String(round) === '1'
+        ? roundStations.reduce((sum, st, i) => {
+            const scoring = _getScoringRow('1', st);
+            const pts = scoring ? Number(scoring.pointsPerUnit) || 0 : 1;
+            return sum + (Number(vals[i]) || 0) * pts;
+          }, 0)
+        : vals.reduce((sum, v) => sum + (Number(v) || 0), 0);
       const setCell     = (h, v) => { const i = freshH.indexOf(h); if (i > -1) sheet.getRange(rowIdx + 1, i + 1).setValue(v); };
       setCell('complete',     allFilled);
       setCell('submitted_at', new Date().toISOString());
@@ -425,6 +495,450 @@ function adminRebuild(body) {
   if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
   rebuildLeaderboard();
   return jsonResponse({ success: true });
+}
+
+// ─── Battle 2 — round/station grid (no stopwatch) ────────────────────────────
+//
+// Round2_Scores: one row per (athlete, round). Each of the 4 station columns
+// is filled with its fixed target once the judge taps STATION DONE; the one
+// station live when the whistle blows gets a manual partial value instead.
+// heat_finished marks the athlete's final row once the whistle ends their heat.
+
+function battle2Roster(e) {
+  const gender = (e.parameter.gender || '').toLowerCase();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(CACHE_SHEETS['1']);
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ athletes: [] });
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const catIdx  = headers.indexOf('category');
+  const idIdx   = headers.indexOf('athlete_id');
+  const nameIdx = headers.indexOf('name');
+  const rankIdx = headers.indexOf('rank');
+
+  const athletes = data.slice(1)
+    .filter(r => r[idIdx] && (!gender || String(r[catIdx]).toLowerCase() === gender))
+    .sort((a, b) => Number(a[rankIdx]) - Number(b[rankIdx]))
+    .slice(0, 30)
+    .map(r => ({ athlete_id: r[idIdx], name: r[nameIdx], rank: r[rankIdx] }));
+
+  return jsonResponse({ athletes });
+}
+
+function _battle2FindOpenRow(sheet, athlete_id) {
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const finishedIdx = headers.indexOf('heat_finished');
+  for (let i = data.length - 1; i > 0; i--) {
+    if (String(data[i][0]) === String(athlete_id) && data[i][finishedIdx] !== true) {
+      return { rowIndex: i + 1, row: data[i], headers };
+    }
+  }
+  return null;
+}
+
+function battle2Start(body) {
+  const { pin, athlete_id } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '2') return jsonResponse({ error: 'Invalid PIN' });
+  if (!athlete_id) return jsonResponse({ error: 'athlete_id required' });
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const athleteSheet = ss.getSheetByName('Athletes');
+  const athleteData  = athleteSheet.getDataRange().getValues();
+  const athlete = athleteData.find((r, i) => i > 0 && String(r[0]) === String(athlete_id));
+  if (!athlete) return jsonResponse({ error: 'Athlete not found' });
+  const name = athlete[1];
+  const category = String(athlete[3] || '').toLowerCase();
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+    const existingOpen = _battle2FindOpenRow(sheet, athlete_id);
+    if (existingOpen) return jsonResponse({ error: 'This athlete already has an active heat in progress' });
+
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const row = new Array(headers.length).fill('');
+    const set = (h, v) => { const i = headers.indexOf(h); if (i > -1) row[i] = v; };
+    set('athlete_id', athlete_id);
+    set('name', name);
+    set('category', category);
+    set('round', 1);
+    set('round_complete', false);
+    set('heat_finished', false);
+    set('updated_at', new Date().toISOString());
+    sheet.appendRow(row);
+    return jsonResponse({ success: true, athlete_id, name, category });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function battle2StationDone(body) {
+  const { pin, athlete_id } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '2') return jsonResponse({ error: 'Invalid PIN' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+    const open = _battle2FindOpenRow(sheet, athlete_id);
+    if (!open) return jsonResponse({ error: 'No active heat found for this athlete' });
+
+    const nextStation = BATTLE2_STATIONS.find(([key]) => open.row[open.headers.indexOf(key)] === '');
+    if (!nextStation) return jsonResponse({ error: 'Round already fully logged' });
+    const [key] = nextStation;
+    const scoring = _getScoringRow('2', key);
+    const target = scoring ? Number(scoring.target) || 0 : 0;
+
+    sheet.getRange(open.rowIndex, open.headers.indexOf(key) + 1).setValue(target);
+    sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
+
+    const fresh = sheet.getRange(open.rowIndex, 1, 1, open.headers.length).getValues()[0];
+    const allFilled = BATTLE2_STATIONS.every(([k]) => fresh[open.headers.indexOf(k)] !== '');
+    if (allFilled) {
+      sheet.getRange(open.rowIndex, open.headers.indexOf('round_complete') + 1).setValue(true);
+      const newRow = new Array(open.headers.length).fill('');
+      const set = (h, v) => { const i = open.headers.indexOf(h); if (i > -1) newRow[i] = v; };
+      set('athlete_id', fresh[open.headers.indexOf('athlete_id')]);
+      set('name', fresh[open.headers.indexOf('name')]);
+      set('category', fresh[open.headers.indexOf('category')]);
+      set('round', Number(fresh[open.headers.indexOf('round')]) + 1);
+      set('round_complete', false);
+      set('heat_finished', false);
+      set('updated_at', new Date().toISOString());
+      sheet.appendRow(newRow);
+    }
+
+    return jsonResponse({ success: true, station: key, value: target, round_complete: allFilled });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Judge types the actual partial count/distance when the whistle catches the athlete mid-station.
+function battle2Partial(body) {
+  const { pin, athlete_id, value } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '2') return jsonResponse({ error: 'Invalid PIN' });
+  if (value === undefined || value === null || value === '') return jsonResponse({ error: 'Value required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+    const open = _battle2FindOpenRow(sheet, athlete_id);
+    if (!open) return jsonResponse({ error: 'No active heat found for this athlete' });
+
+    const nextStation = BATTLE2_STATIONS.find(([key]) => open.row[open.headers.indexOf(key)] === '');
+    if (!nextStation) return jsonResponse({ error: 'Round already fully logged — use WHISTLE instead' });
+    const [key] = nextStation;
+
+    sheet.getRange(open.rowIndex, open.headers.indexOf(key) + 1).setValue(Number(value) || 0);
+    sheet.getRange(open.rowIndex, open.headers.indexOf('heat_finished') + 1).setValue(true);
+    sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
+
+    return jsonResponse({ success: true, station: key, value: Number(value) || 0, heat_finished: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Whistle blew exactly as a station was completed — no partial value needed, just close the heat.
+function battle2Whistle(body) {
+  const { pin, athlete_id } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '2') return jsonResponse({ error: 'Invalid PIN' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+    const open = _battle2FindOpenRow(sheet, athlete_id);
+    if (!open) return jsonResponse({ error: 'No active heat found for this athlete' });
+    sheet.getRange(open.rowIndex, open.headers.indexOf('heat_finished') + 1).setValue(true);
+    sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
+    return jsonResponse({ success: true, heat_finished: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Public read: ranks by rounds completed -> stations reached in final round -> value at that station.
+function battle2Scores(e) {
+  const category = (e.parameter.category || '').toLowerCase();
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ scores: [] });
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idIdx        = headers.indexOf('athlete_id');
+  const nameIdx       = headers.indexOf('name');
+  const catIdx        = headers.indexOf('category');
+  const completeIdx   = headers.indexOf('round_complete');
+  const finishedIdx   = headers.indexOf('heat_finished');
+
+  const byAthlete = {};
+  data.slice(1).forEach(r => {
+    if (!r[idIdx]) return;
+    const id = String(r[idIdx]);
+    if (!byAthlete[id]) byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_value: 0 };
+    if (r[completeIdx] === true) byAthlete[id].rounds_completed++;
+    if (r[finishedIdx] === true && r[completeIdx] !== true) {
+      const filled = BATTLE2_STATIONS.filter(([k]) => r[headers.indexOf(k)] !== '');
+      byAthlete[id].partial_stations   = filled.length;
+      byAthlete[id].partial_last_value = filled.length ? Number(r[headers.indexOf(filled[filled.length - 1][0])]) || 0 : 0;
+    }
+  });
+
+  const scores = Object.values(byAthlete)
+    .filter(a => !category || String(a.category).toLowerCase() === category)
+    .sort((a, b) => b.rounds_completed - a.rounds_completed || b.partial_stations - a.partial_stations || b.partial_last_value - a.partial_last_value)
+    .map((a, i) => ({ ...a, rank: i + 1 }));
+
+  return jsonResponse({ scores, last_updated: new Date().toISOString() });
+}
+
+// ─── Gym Battle — rotation tracker ───────────────────────────────────────────
+//
+// Gym_Live: one row per zone, running point totals for the team currently in
+// that zone. Front Squats judge triggers rotation; on the 5th rotation the
+// heat is complete — totals archive to Gym_Results and the zone resets.
+
+function _gymFindZoneRow(sheet, zone) {
+  const data = sheet.getDataRange().getValues();
+  const idx  = data.findIndex((r, i) => i > 0 && String(r[0]) === String(zone));
+  return idx > -1 ? idx + 1 : null;
+}
+
+function gymStartTeam(body) {
+  const { pin, team_name } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== 'gym') return jsonResponse({ error: 'Invalid PIN' });
+  if (judge.station !== 'front_squats') return jsonResponse({ error: 'Only the Front Squats judge can start a new team/wave' });
+  if (!team_name) return jsonResponse({ error: 'Team name required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
+    const rowIdx = _gymFindZoneRow(sheet, judge.assignment);
+    if (!rowIdx) return jsonResponse({ error: 'Zone not found: ' + judge.assignment });
+    sheet.getRange(rowIdx, 1, 1, 8).setValues([[judge.assignment, team_name, 0, 0, 0, 0, 0, 'active']]);
+    return jsonResponse({ success: true, zone: judge.assignment, team_name });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Judge adds the reps/distance the athlete just achieved at their station (a delta, not an absolute).
+function gymAddScore(body) {
+  const { pin, delta } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== 'gym') return jsonResponse({ error: 'Invalid PIN' });
+  if (delta === undefined || delta === null || delta === '') return jsonResponse({ error: 'Value required' });
+  const station = judge.station;
+  if (!GYM_STATIONS.some(([k]) => k === station)) return jsonResponse({ error: 'This PIN is not assigned to a scored station' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
+    const rowIdx = _gymFindZoneRow(sheet, judge.assignment);
+    if (!rowIdx) return jsonResponse({ error: 'Zone not found' });
+    const headers = sheet.getRange(1, 1, 1, 8).getValues()[0];
+    const col = headers.indexOf(station) + 1;
+    const current = Number(sheet.getRange(rowIdx, col).getValue()) || 0;
+    const updated = current + (Number(delta) || 0);
+    sheet.getRange(rowIdx, col).setValue(updated);
+    return jsonResponse({ success: true, station, total: updated });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Only the Front Squats judge for a zone may trigger rotation.
+function gymRotate(body) {
+  const { pin } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== 'gym') return jsonResponse({ error: 'Invalid PIN' });
+  if (judge.station !== 'front_squats') return jsonResponse({ error: 'Only the Front Squats judge can trigger rotation' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
+    const rowIdx = _gymFindZoneRow(sheet, judge.assignment);
+    if (!rowIdx) return jsonResponse({ error: 'Zone not found' });
+    const headers = sheet.getRange(1, 1, 1, 8).getValues()[0];
+    const rotCol = headers.indexOf('rotations') + 1;
+    const rotations = (Number(sheet.getRange(rowIdx, rotCol).getValue()) || 0) + 1;
+    sheet.getRange(rowIdx, rotCol).setValue(rotations);
+
+    if (rotations >= 5) {
+      const row = sheet.getRange(rowIdx, 1, 1, 8).getValues()[0];
+      const [zone, team_name, fs, dp, rw, bj] = row;
+      const teamScore = Number(fs) + Number(dp) + Number(rw) + Number(bj);
+      const results = ss.getSheetByName(GYM_RESULTS_SHEET);
+      results.appendRow([zone, team_name, fs, dp, rw, bj, teamScore, new Date().toISOString()]);
+      sheet.getRange(rowIdx, 1, 1, 8).setValues([[zone, '', 0, 0, 0, 0, 0, 'idle']]);
+      return jsonResponse({ success: true, heat_complete: true, team_name, team_score: teamScore });
+    }
+
+    return jsonResponse({ success: true, heat_complete: false, rotations });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Lets any of the 4 station judges in a zone see current team name / totals / rotation count.
+function gymZoneStatus(e) {
+  const zone = e.parameter.zone;
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
+  if (!sheet) return jsonResponse({ error: 'Gym_Live sheet not set up yet' });
+  const rowIdx = _gymFindZoneRow(sheet, zone);
+  if (!rowIdx) return jsonResponse({ error: 'Zone not found' });
+  const headers = sheet.getRange(1, 1, 1, 8).getValues()[0];
+  const row     = sheet.getRange(rowIdx, 1, 1, 8).getValues()[0];
+  const obj = {};
+  headers.forEach((h, i) => { obj[h] = row[i]; });
+  return jsonResponse({ zone: obj });
+}
+
+function gymScores(e) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(GYM_RESULTS_SHEET);
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ scores: [] });
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const scoreIdx = headers.indexOf('team_score');
+  const rows = data.slice(1).filter(r => r[0]);
+  rows.sort((a, b) => Number(b[scoreIdx]) - Number(a[scoreIdx]));
+  const scores = rows.map((r, i) => {
+    const obj = { rank: i + 1 };
+    headers.forEach((h, j) => { obj[h] = r[j]; });
+    return obj;
+  });
+  return jsonResponse({ scores, last_updated: new Date().toISOString() });
+}
+
+// ─── One-time setup (run from the Apps Script editor, not via HTTP) ─────────
+
+function setupScoringTable() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SCORING_TABLE_SHEET);
+  if (!sheet) sheet = ss.insertSheet(SCORING_TABLE_SHEET);
+  sheet.clearContents();
+  const headers = ['Battle', 'Station Key', 'Station Name', 'Target', 'Unit', 'Points/Unit', 'M Weight', 'F Weight', 'Notes'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+
+  const rows = [
+    ['1', 's1_burpees',   'Static Burpees',           'Max', 'reps',   10, 'Bodyweight', 'Bodyweight', ''],
+    ['1', 's2_bike',      'Erg Bike',                 'Max (2 min)', 'metres', 1, '—', '—', ''],
+    ['1', 's3_lunges',    'Deadlift',                 'Max', 'reps',   10, '50kg', '30kg', ''],
+    ['1', 's4_pushups',   'Hand Release Push Ups',    'Max', 'reps',   5,  'Bodyweight', 'Bodyweight', ''],
+    ['1', 's5_sprint',    'Sprint with Weights',      'Max', 'laps',   20, '15kg x2', '10kg x2', ''],
+    ['1', 's6_inchworms', 'Inch Worms',                'Max', 'reps',   10, 'Bodyweight', 'Bodyweight', ''],
+    ['1', 's7_squats',    'DB Front Squats',          'Max', 'reps',   5,  '12.5kg x2', '5kg x2', ''],
+    ['2', 'rowing',       'Rowing',                    500,   'metres', '', '—', '—', 'Fixed target per round'],
+    ['2', 'devils_press', "Devil's Press",             12,    'reps',   '', '10kg x2', '5kg x2', ''],
+    ['2', 'kb_walk',      'KB Walk',                   100,   'metres', '', '12kg x2', '8kg x2', ''],
+    ['2', 'box_jump',     'Burpee Box Jump',           10,    'reps',   '', '30in', '24in', ''],
+    ['gym', 'front_squats', 'Front Squats',            'Max', 'reps',   10, '15kg x2', '10kg x2', 'Accumulated'],
+    ['gym', 'devils_press', "Devil's Press",           'Max', 'reps',   10, '15kg x2', '7.5kg x2', 'Accumulated'],
+    ['gym', 'rower',        'Rower',                   'Max', 'metres', 1,  '—', '—', 'Accumulated'],
+    ['gym', 'box_jump',     'Burpee Box Jump',         'Max', 'reps',   10, 'Bodyweight', 'Bodyweight', 'Accumulated'],
+    ['gym', 'kb_hold',      'KB Hold',                 'Max time', 'seconds', '', '24kg', '16kg', 'Not scored — gates rotation only'],
+  ];
+  sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
+  Logger.log('setupScoringTable complete: ' + rows.length + ' rows.');
+}
+
+function generateJudgePins() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(JUDGES_SHEET);
+  if (!sheet) sheet = ss.insertSheet(JUDGES_SHEET);
+  sheet.clearContents();
+  sheet.getRange(1, 1, 1, 5).setValues([['pin', 'battle', 'assignment', 'station', 'label']]).setFontWeight('bold');
+
+  const randPin = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+  const rows = [];
+
+  const ZONES = ['A', 'B', 'C', 'D'];
+  const B1_STATIONS = [
+    ['s1_burpees', 'Static Burpees'], ['s2_bike', 'Erg Bike'], ['s3_lunges', 'Deadlift'],
+    ['s4_pushups', 'Hand Release Push Ups'], ['s5_sprint', 'Sprint with Weights'],
+    ['s6_inchworms', 'Inch Worms'], ['s7_squats', 'DB Front Squats'],
+  ];
+  ZONES.forEach(zone => {
+    B1_STATIONS.forEach(([key, name]) => {
+      rows.push([randPin(), '1', zone, key, `Battle 1 — Zone ${zone} — ${name}`]);
+    });
+  });
+
+  ['1', '2'].forEach(n => rows.push([randPin(), '2', 'M' + n, '', `Battle 2 — Male Lane ${n}`]));
+  ['1', '2'].forEach(n => rows.push([randPin(), '2', 'F' + n, '', `Battle 2 — Female Lane ${n}`]));
+
+  GYM_ZONES.forEach(zone => {
+    GYM_STATIONS.forEach(([key, name]) => {
+      rows.push([randPin(), 'gym', zone, key, `Gym Battle — Zone ${zone} — ${name}`]);
+    });
+  });
+
+  sheet.getRange(2, 1, rows.length, 5).setValues(rows);
+  Logger.log(`generateJudgePins complete: ${rows.length} PINs created.`);
+  rows.forEach(r => Logger.log(`${r[4]}: PIN=${r[0]}`));
+}
+
+function setupBattle2Sheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+  if (!sheet) sheet = ss.insertSheet(ROUND2_SCORES_SHEET);
+  if (sheet.getLastRow() > 0) { Logger.log('Round2_Scores already has data — leaving it alone.'); return; }
+  const headers = ['athlete_id', 'name', 'category', 'round', 'rowing', 'devils_press', 'kb_walk', 'box_jump', 'round_complete', 'heat_finished', 'updated_at'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  Logger.log('setupBattle2Sheet complete.');
+}
+
+function setupGymSheets() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let live = ss.getSheetByName(GYM_LIVE_SHEET);
+  if (!live) {
+    live = ss.insertSheet(GYM_LIVE_SHEET);
+    const headers = ['zone', 'team_name', 'front_squats', 'devils_press', 'rower', 'box_jump', 'rotations', 'status'];
+    live.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+    GYM_ZONES.forEach(zone => live.appendRow([zone, '', 0, 0, 0, 0, 0, 'idle']));
+    Logger.log('Gym_Live created with 4 zone rows.');
+  } else {
+    Logger.log('Gym_Live already exists — leaving it alone.');
+  }
+  let results = ss.getSheetByName(GYM_RESULTS_SHEET);
+  if (!results) {
+    results = ss.insertSheet(GYM_RESULTS_SHEET);
+    const headers = ['zone', 'team_name', 'front_squats', 'devils_press', 'rower', 'box_jump', 'team_score', 'finished_at'];
+    results.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+    Logger.log('Gym_Results created.');
+  } else {
+    Logger.log('Gym_Results already exists — leaving it alone.');
+  }
+}
+
+// Run this once from the Apps Script editor before race day (and after any Athletes/Leaderboard_Cache_R1 reset).
+function setupJudgeScoringSystem() {
+  setupScoringTable();
+  setupBattle2Sheet();
+  setupGymSheets();
+  generateJudgePins();
+  Logger.log('setupJudgeScoringSystem complete — check the Judges sheet for all PINs.');
 }
 
 // ─── Utility ──────────────────────────────────────────────────────────────────

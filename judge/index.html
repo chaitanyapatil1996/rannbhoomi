@@ -18,11 +18,9 @@
 html, body { min-height: 100%; background: #d6b97a; font-family: 'Cinzel', serif; color: var(--crimson); }
 body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); }
 
-/* ── Layout ── */
 .screen { display: none; min-height: 100vh; flex-direction: column; align-items: center; justify-content: center; padding: 32px 20px 40px; }
 .screen.active { display: flex; }
 
-/* ── PIN screen ── */
 .pin-card { width: 100%; max-width: 400px; background: rgba(214,185,122,0.55); border: 1px solid var(--border); padding: 40px 32px; }
 .assignment-badge { font-size: 9px; letter-spacing: 4px; opacity: 0.5; text-transform: uppercase; margin-bottom: 10px; }
 .assignment-main { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 2px; color: var(--crimson); line-height: 1.1; margin-bottom: 4px; }
@@ -48,7 +46,6 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
 .msg.err { color: var(--crimson); }
 .msg.ok  { color: #1a6b00; }
 
-/* ── Queue screen ── */
 .queue-card { width: 100%; max-width: 480px; }
 .queue-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
 .queue-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--crimson); line-height: 1; }
@@ -107,23 +104,23 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
 </head>
 <body>
 
-<!-- ── PIN Screen ── -->
+<!-- ── PIN Screen (fallback when no ?pin= in the URL, or an invalid PIN) ── -->
 <div class="screen active" id="pinScreen">
   <div class="pin-card">
     <div class="assignment-badge">Judge Access — Rannbhoomi 2026</div>
-    <div class="assignment-main" id="assignmentMain">Loading...</div>
-    <div class="assignment-sub" id="assignmentSub">Enter PIN to begin</div>
+    <div class="assignment-main" id="assignmentMain">JUDGE PORTAL</div>
+    <div class="assignment-sub" id="assignmentSub">Enter your PIN to begin</div>
     <div class="rule"></div>
 
     <label class="field-label" for="pinInput">Judge PIN</label>
     <input class="field-input" type="password" id="pinInput" placeholder="••••••" maxlength="12" autocomplete="off"
-           onkeydown="if(event.key==='Enter') verifyPin()">
-    <button class="btn-primary" onclick="verifyPin()" id="pinBtn">ENTER</button>
+           onkeydown="if(event.key==='Enter') submitPin()">
+    <button class="btn-primary" onclick="submitPin()" id="pinBtn">ENTER</button>
     <div class="msg" id="pinMsg"></div>
   </div>
 </div>
 
-<!-- ── Queue Screen ── -->
+<!-- ── Queue Screen (Battle 1 only — Battle 2 / Gym Battle redirect to their own pages) ── -->
 <div class="screen" id="queueScreen">
   <div class="queue-card">
     <div class="queue-header">
@@ -131,20 +128,18 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
         <div class="queue-title" id="qStationTitle">—</div>
         <div class="queue-zone" id="qZoneLabel">—</div>
       </div>
-      <div class="wave-badge" id="qWaveBadge">BATTLE 1</div>
+      <div class="wave-badge">BATTLE 1</div>
     </div>
     <div class="q-rule"></div>
 
-    <!-- Athlete ID -->
     <div class="athlete-lookup">
-      <label class="field-label" for="athleteId">Athlete ID</label>
+      <label class="field-label" for="athleteId">Athlete ID (Web Number)</label>
       <input class="field-input" type="text" id="athleteId" placeholder="e.g. RB001234"
              autocomplete="off" autocapitalize="characters"
              oninput="onAthleteIdInput()" onpaste="setTimeout(onAthleteIdInput,0)">
       <div class="athlete-name-display" id="athleteNameDisplay">Enter athlete ID above</div>
     </div>
 
-    <!-- Score value -->
     <div class="value-input-wrap">
       <input class="big-input" type="number" id="valueInput" placeholder="0"
              min="0" step="1" inputmode="numeric"
@@ -170,59 +165,40 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
 const STATION_LABELS = {
-  s1_burpees:   { label: 'Burpees',           unit: 'reps' },
+  s1_burpees:   { label: 'Static Burpees',    unit: 'reps' },
   s2_bike:      { label: 'Erg Bike',          unit: 'metres' },
-  s3_lunges:    { label: 'Lunges',            unit: 'reps' },
-  s4_pushups:   { label: 'Push Ups',          unit: 'reps' },
-  s5_sprint:    { label: 'Sprint',            unit: '20m lengths' },
+  s3_lunges:    { label: 'Deadlift',          unit: 'reps' },
+  s4_pushups:   { label: 'Hand Release Push Ups', unit: 'reps' },
+  s5_sprint:    { label: 'Sprint with Weights', unit: 'laps' },
   s6_inchworms: { label: 'Inch Worms',        unit: 'reps' },
   s7_squats:    { label: 'DB Front Squats',   unit: 'reps' },
-  rowing:       { label: 'Rowing',            unit: 'cals' },
-  devils_press: { label: "Devil's Press",     unit: 'reps' },
-  kb_walk:      { label: 'KB Walk',           unit: '20m lengths' },
-  box_jump:     { label: 'Box Jumps',         unit: 'reps' },
-  weight_total: { label: 'Total Weight',      unit: 'kg' },
-  time_seconds: { label: 'Finish Time',       unit: 'seconds' },
 };
 
-const ROUND_NAMES = { '1': 'Battle 1', '2': 'Battle 2', '3': 'Battle 3' };
-
-// Read zone + station from URL params
-const params  = new URLSearchParams(location.search);
-const urlZone = (params.get('zone') || '').toUpperCase();
-const urlSt   = params.get('station') || '';
-const urlRound = params.get('round') || '1';
-const stInfo  = STATION_LABELS[urlSt] || null;
-
-let judgePin   = sessionStorage.getItem('judge_pin') || '';
 let scoreCount = 0;
-let lookupTimer = null;
-let currentAthleteId   = '';
+let currentAthleteId = '';
 let currentAthleteName = '';
-let athleteConfirmed   = false;
+let athleteConfirmed = false;
+let lookupTimer = null;
+let judge = null;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 
 (function init() {
-  // Show assignment on PIN screen
-  if (stInfo && urlZone) {
-    document.getElementById('assignmentMain').textContent = stInfo.label.toUpperCase();
-    document.getElementById('assignmentSub').textContent  = `Zone ${urlZone}  ·  ${ROUND_NAMES[urlRound] || 'Battle ' + urlRound}  ·  Enter PIN to begin`;
-  } else {
-    document.getElementById('assignmentMain').textContent = 'JUDGE PORTAL';
-    document.getElementById('assignmentSub').textContent  = 'Enter PIN to begin';
+  const params = new URLSearchParams(location.search);
+  const pin = params.get('pin') || sessionStorage.getItem('judge_pin') || '';
+  if (pin) {
+    document.getElementById('pinInput').value = pin;
+    verifyPin(pin);
   }
-
-  // Auto-login if PIN cached in sessionStorage
-  if (judgePin) showQueue();
 })();
 
-// ── PIN verification ──────────────────────────────────────────────────────────
-
-async function verifyPin() {
+function submitPin() {
   const entered = document.getElementById('pinInput').value.trim();
   if (!entered) return;
+  verifyPin(entered);
+}
 
+async function verifyPin(pin) {
   const btn = document.getElementById('pinBtn');
   const msg = document.getElementById('pinMsg');
   btn.disabled = true;
@@ -230,33 +206,54 @@ async function verifyPin() {
   msg.textContent = '';
   msg.className = 'msg';
 
-  // Verify PIN by submitting a dummy validate call
-  // (PIN is validated server-side on real score submission; we just cache it here)
-  // For a lightweight pre-check we attempt a validateAthlete call with a dummy ID
-  // and accept any response other than "Invalid PIN" or network error as success.
-  // True PIN validation happens at score submit time.
-  judgePin = entered;
-  sessionStorage.setItem('judge_pin', entered);
-  showQueue();
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?action=judge_login&pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
 
-  btn.disabled = false;
-  btn.textContent = 'ENTER';
+    if (!data.found) {
+      msg.textContent = 'PIN not recognized';
+      msg.className = 'msg err';
+      btn.disabled = false;
+      btn.textContent = 'ENTER';
+      return;
+    }
+
+    judge = data.judge;
+    sessionStorage.setItem('judge_pin', pin);
+
+    if (String(judge.battle) === '2') {
+      location.href = 'battle2.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
+    if (String(judge.battle) === 'gym') {
+      location.href = 'gym.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
+    if (String(judge.battle) !== '1') {
+      msg.textContent = 'Unknown assignment for this PIN';
+      msg.className = 'msg err';
+      btn.disabled = false;
+      btn.textContent = 'ENTER';
+      return;
+    }
+
+    showQueue();
+  } catch (err) {
+    msg.textContent = 'Connection failed — try again';
+    msg.className = 'msg err';
+    btn.disabled = false;
+    btn.textContent = 'ENTER';
+  }
 }
 
 function showQueue() {
   document.getElementById('pinScreen').classList.remove('active');
   document.getElementById('queueScreen').classList.add('active');
 
-  // Populate queue header
-  if (stInfo) {
-    document.getElementById('qStationTitle').textContent = stInfo.label.toUpperCase();
-    document.getElementById('unitLabel').textContent     = stInfo.unit.toUpperCase();
-  } else {
-    document.getElementById('qStationTitle').textContent = urlSt || 'STATION';
-    document.getElementById('unitLabel').textContent     = '—';
-  }
-  document.getElementById('qZoneLabel').textContent = urlZone ? `Zone ${urlZone}` : 'Zone —';
-  document.getElementById('qWaveBadge').textContent  = ROUND_NAMES[urlRound] || 'Battle ' + urlRound;
+  const stInfo = STATION_LABELS[judge.station] || null;
+  document.getElementById('qStationTitle').textContent = (stInfo ? stInfo.label : judge.station).toUpperCase();
+  document.getElementById('unitLabel').textContent     = (stInfo ? stInfo.unit : '—').toUpperCase();
+  document.getElementById('qZoneLabel').textContent    = `Zone ${judge.assignment}`;
 
   document.getElementById('athleteId').focus();
 }
@@ -292,8 +289,7 @@ async function lookupAthlete(id) {
       const a = data.athlete;
       const name     = a.name || id;
       const category = a.category ? ` · ${String(a.category).charAt(0).toUpperCase() + String(a.category).slice(1)}` : '';
-      const wave     = a.wave ? ` · Wave ${a.wave}` : '';
-      box.textContent  = `${name}${category}${wave}`;
+      box.textContent  = `${name}${category}`;
       box.className    = 'athlete-name-display found';
       currentAthleteId   = id;
       currentAthleteName = name;
@@ -334,10 +330,9 @@ async function submitScore() {
       headers: { 'Content-Type': 'text/plain' },
       body:    JSON.stringify({
         action:     'score',
-        pin:        judgePin,
-        round:      urlRound,
-        zone:       urlZone,
-        station:    urlSt,
+        pin:        judge.pin,
+        round:      '1',
+        station:    judge.station,
         athlete_id: currentAthleteId,
         value:      val,
       }),
@@ -345,15 +340,14 @@ async function submitScore() {
     const data = await res.json();
 
     if (data.success) {
-      // Show last entry
       document.getElementById('leName').textContent = currentAthleteName;
+      const stInfo = STATION_LABELS[judge.station] || null;
       document.getElementById('leVal').textContent  = `${val} ${stInfo ? stInfo.unit : ''}`;
       document.getElementById('lastEntry').style.display = 'flex';
 
       scoreCount++;
       document.getElementById('scoreCount').textContent = `Scored this session: ${scoreCount}`;
 
-      // Clear form for next athlete
       document.getElementById('athleteId').value    = '';
       document.getElementById('valueInput').value   = '';
       document.getElementById('athleteNameDisplay').textContent = 'Enter athlete ID above';
@@ -370,10 +364,9 @@ async function submitScore() {
   } catch (err) {
     msg.textContent = err.message;
     msg.className   = 'msg err';
-    // If PIN was wrong, force re-login
     if (err.message.includes('PIN')) {
       sessionStorage.removeItem('judge_pin');
-      judgePin = '';
+      judge = null;
       setTimeout(() => {
         document.getElementById('queueScreen').classList.remove('active');
         document.getElementById('pinScreen').classList.add('active');
@@ -390,10 +383,9 @@ async function submitScore() {
 
 function logout() {
   sessionStorage.removeItem('judge_pin');
-  location.reload();
+  location.href = 'index.html';
 }
 
-// Re-validate submit button on value input
 document.getElementById('valueInput').addEventListener('input', updateSubmitBtn);
 </script>
 </body>

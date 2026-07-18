@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Gym Battle Judge — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); --ok:#1a6b00; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { min-height:100%; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); }
+body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0); }
+
+.screen { display:none; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:28px 18px 40px; }
+.screen.active { display:flex; }
+.card { width:100%; max-width:460px; background:rgba(214,185,122,0.55); border:1px solid var(--border); padding:32px 26px; }
+
+.badge { font-size:9px; letter-spacing:4px; opacity:0.5; text-transform:uppercase; margin-bottom:10px; }
+.title { font-family:'Bebas Neue',sans-serif; font-size:30px; letter-spacing:2px; color:var(--crimson); line-height:1.1; margin-bottom:4px; }
+.sub { font-size:11px; letter-spacing:2px; opacity:0.6; margin-bottom:24px; }
+.rule { width:44px; height:2px; background:var(--crimson); opacity:0.3; margin-bottom:24px; }
+
+.field-label { font-size:9px; letter-spacing:3px; opacity:0.5; margin-bottom:8px; display:block; }
+.field-input {
+  width:100%; padding:14px; border:1px solid var(--border);
+  background:rgba(214,185,122,0.4); font-family:'Cinzel',serif;
+  font-size:14px; color:var(--crimson); outline:none; -webkit-appearance:none; border-radius:0;
+}
+.field-input:focus { border-color:var(--crimson); background:rgba(214,185,122,0.7); }
+.btn-primary {
+  width:100%; margin-top:16px; padding:16px;
+  background:var(--crimson); color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:4px;
+  border:none; cursor:pointer; transition:opacity .15s;
+}
+.btn-primary:hover { opacity:.85; }
+.btn-primary:disabled { opacity:.35; cursor:not-allowed; }
+.msg { margin-top:14px; font-size:11px; letter-spacing:2px; min-height:16px; text-align:center; }
+.msg.err { color:var(--crimson); }
+.msg.ok  { color:var(--ok); }
+
+.waiting-box { text-align:center; padding:24px 0; font-size:12px; letter-spacing:2px; opacity:0.55; }
+
+/* Scoring screen */
+.score-header { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px; }
+.team-name { font-family:'Bebas Neue',sans-serif; font-size:24px; letter-spacing:1px; }
+.zone-label { font-size:10px; letter-spacing:2px; opacity:0.55; margin-top:3px; }
+.rotation-badge { background:var(--crimson); color:var(--gold); font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; padding:6px 10px; white-space:nowrap; }
+
+.station-name { font-size:12px; letter-spacing:3px; opacity:0.55; margin-bottom:2px; }
+.station-total { font-family:'Bebas Neue',sans-serif; font-size:56px; color:var(--crimson); text-align:center; margin:14px 0 4px; }
+.station-total-label { text-align:center; font-size:9px; letter-spacing:3px; opacity:0.45; margin-bottom:20px; }
+
+.add-row { display:flex; gap:10px; }
+.add-input {
+  flex:1; padding:18px; text-align:center; border:2px solid var(--border);
+  background:rgba(214,185,122,0.4); font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--crimson);
+  outline:none; -webkit-appearance:none; border-radius:0;
+}
+.add-btn {
+  padding:0 26px; background:var(--crimson); color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:3px; border:none; cursor:pointer;
+}
+.add-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+.rotate-btn {
+  width:100%; margin-top:22px; padding:22px;
+  background:#7a1a00; color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:4px;
+  border:none; cursor:pointer;
+}
+.rotate-btn:hover { opacity:.88; }
+.rotate-btn:disabled { opacity:.35; cursor:not-allowed; }
+
+.btn-logout { margin-top:24px; padding:10px 18px; background:transparent; color:var(--crimson); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px; cursor:pointer; opacity:0.5; }
+.btn-logout:hover { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="loadingScreen">
+  <div class="card"><div class="title">LOADING…</div></div>
+</div>
+
+<!-- ── Front Squats judge only: start a new team/wave ── -->
+<div class="screen" id="startTeamScreen">
+  <div class="card">
+    <div class="badge" id="startBadge">Gym Battle Judge — Rannbhoomi 2026</div>
+    <div class="title" id="startTitle">—</div>
+    <div class="sub">No team active in this zone — enter the gym/team name to begin</div>
+    <div class="rule"></div>
+
+    <label class="field-label" for="teamNameInput">Gym / Team Name</label>
+    <input class="field-input" type="text" id="teamNameInput" placeholder="e.g. Prehab 121" autocomplete="off">
+    <button class="btn-primary" onclick="startTeam()" id="startTeamBtn">START WAVE</button>
+    <div class="msg" id="startMsg"></div>
+    <button class="btn-logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<!-- ── Waiting for Front Squats judge to start (non-front-squats judges) ── -->
+<div class="screen" id="waitingScreen">
+  <div class="card">
+    <div class="badge" id="waitBadge">Gym Battle Judge — Rannbhoomi 2026</div>
+    <div class="title" id="waitTitle">—</div>
+    <div class="rule"></div>
+    <div class="waiting-box">Waiting for the Front Squats judge to start the next team…</div>
+    <button class="btn-logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<!-- ── Active scoring screen ── -->
+<div class="screen" id="scoreScreen">
+  <div class="card">
+    <div class="score-header">
+      <div>
+        <div class="team-name" id="scoreTeamName">—</div>
+        <div class="zone-label" id="scoreZoneLabel">—</div>
+      </div>
+      <div class="rotation-badge" id="rotationBadge">ROTATION 0 / 5</div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="station-name" id="scoreStationName" style="text-align:center;">—</div>
+    <div class="station-total" id="scoreStationTotal">0</div>
+    <div class="station-total-label" id="scoreStationUnit">POINTS SO FAR</div>
+
+    <div class="add-row">
+      <input class="add-input" type="number" id="addValue" placeholder="0" min="0" step="1" inputmode="numeric">
+      <button class="add-btn" onclick="addScore()" id="addBtn">ADD</button>
+    </div>
+    <div class="msg" id="scoreMsg"></div>
+
+    <button class="rotate-btn" id="rotateBtn" onclick="rotate()" style="display:none;">KB DROPPED — ROTATE</button>
+
+    <button class="btn-logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
+
+const STATION_META = {
+  front_squats: { label: 'Front Squats',    unit: 'reps × 10 pts' },
+  devils_press: { label: "Devil's Press",   unit: 'reps × 10 pts' },
+  rower:        { label: 'Rower',           unit: 'metres × 1 pt' },
+  box_jump:     { label: 'Burpee Box Jump', unit: 'reps × 10 pts' },
+};
+
+let judge = null;
+let pin = null;
+let pollTimer = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+(async function init() {
+  const params = new URLSearchParams(location.search);
+  pin = params.get('pin') || sessionStorage.getItem('judge_pin') || '';
+  if (!pin) { location.href = 'index.html'; return; }
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=judge_login&pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (!data.found || String(data.judge.battle) !== 'gym') {
+      location.href = 'index.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
+    judge = data.judge;
+    sessionStorage.setItem('judge_pin', pin);
+
+    const meta = STATION_META[judge.station] || { label: judge.station, unit: '' };
+    document.getElementById('startTitle').textContent = `ZONE ${judge.assignment} — ${meta.label.toUpperCase()}`;
+    document.getElementById('waitTitle').textContent   = `ZONE ${judge.assignment} — ${meta.label.toUpperCase()}`;
+    document.getElementById('scoreZoneLabel').textContent = `Zone ${judge.assignment} — ${meta.label}`;
+    document.getElementById('scoreStationName').textContent = meta.label.toUpperCase();
+    document.getElementById('scoreStationUnit').textContent = meta.unit.toUpperCase();
+    document.getElementById('rotateBtn').style.display = judge.station === 'front_squats' ? 'block' : 'none';
+
+    await pollZone();
+    pollTimer = setInterval(pollZone, 4000);
+  } catch (err) {
+    document.getElementById('loadingScreen').querySelector('.title').textContent = 'CONNECTION FAILED';
+  }
+})();
+
+async function pollZone() {
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=gym_zone_status&zone=${encodeURIComponent(judge.assignment)}`);
+    const data = await res.json();
+    if (!data.zone) return;
+    renderZone(data.zone);
+  } catch {}
+}
+
+function renderZone(zone) {
+  const active = zone.status === 'active';
+
+  if (!active) {
+    if (judge.station === 'front_squats') {
+      show('startTeamScreen');
+    } else {
+      show('waitingScreen');
+    }
+    return;
+  }
+
+  document.getElementById('scoreTeamName').textContent = zone.team_name || '—';
+  document.getElementById('rotationBadge').textContent = `ROTATION ${zone.rotations} / 5`;
+  document.getElementById('scoreStationTotal').textContent = zone[judge.station] !== undefined ? zone[judge.station] : 0;
+  show('scoreScreen');
+}
+
+async function startTeam() {
+  const teamName = document.getElementById('teamNameInput').value.trim();
+  const btn = document.getElementById('startTeamBtn');
+  const msg = document.getElementById('startMsg');
+  if (!teamName) { msg.textContent = 'Enter a team name'; msg.className = 'msg err'; return; }
+  btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'gym_start_team', pin, team_name: teamName }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed to start');
+    document.getElementById('teamNameInput').value = '';
+    await pollZone();
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  btn.disabled = false;
+}
+
+async function addScore() {
+  const val = document.getElementById('addValue').value;
+  const btn = document.getElementById('addBtn');
+  const msg = document.getElementById('scoreMsg');
+  if (val === '' || isNaN(Number(val))) return;
+  btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'gym_add_score', pin, delta: val }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    document.getElementById('scoreStationTotal').textContent = data.total;
+    document.getElementById('addValue').value = '';
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  btn.disabled = false;
+}
+
+async function rotate() {
+  const btn = document.getElementById('rotateBtn');
+  const msg = document.getElementById('scoreMsg');
+  btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'gym_rotate', pin }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    if (data.heat_complete) {
+      msg.textContent = `Team complete — score: ${data.team_score}`;
+      msg.className = 'msg ok';
+    }
+    await pollZone();
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  btn.disabled = false;
+}
+
+function logout() {
+  sessionStorage.removeItem('judge_pin');
+  if (pollTimer) clearInterval(pollTimer);
+  location.href = 'index.html';
+}
+</script>
+</body>
+</html>
