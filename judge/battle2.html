@@ -175,7 +175,7 @@ const STATIONS = [
 let judge = null;
 let pin = null;
 let currentAthlete = null; // { athlete_id, name, category }
-let heatState = {};        // { round, stationsFilled: {key: value} }
+let heatState = {};        // { round, stationsFilled: {key: value}, cumulative: {key: totalAcrossAllRounds}, roundsCompleted }
 
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -245,7 +245,7 @@ async function startHeat() {
     if (!data.success) throw new Error(data.error || 'Failed to start heat');
 
     currentAthlete = { athlete_id: athleteId, name: data.name, category: data.category };
-    heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
+    heatState = { round: data.round, stationsFilled: data.stationsFilled || {}, cumulative: data.cumulative || {}, roundsCompleted: data.roundsCompleted || 0 };
     if (data.resumed) {
       msg.textContent = 'Resumed an in-progress heat for this athlete';
       msg.className = 'msg ok';
@@ -263,20 +263,27 @@ async function startHeat() {
 function renderHeat() {
   document.getElementById('heatAthleteName').textContent = currentAthlete.name;
   document.getElementById('heatAthleteMeta').textContent = String(currentAthlete.category || '').toUpperCase();
-  document.getElementById('roundBadge').textContent = 'ROUND ' + heatState.round;
+  document.getElementById('roundBadge').textContent = 'ROUNDS: ' + (heatState.roundsCompleted || 0);
 
+  // Station rows show the CUMULATIVE total across every round so far (keeps
+  // growing round over round, and a whistle-interrupted partial adds onto
+  // it automatically) — while "NOW"/next-station logic still comes from
+  // stationsFilled, which only tracks the current in-progress round.
   const nextStation = STATIONS.find(s => heatState.stationsFilled[s.key] === undefined);
   const list = document.getElementById('stationsList');
   list.innerHTML = STATIONS.map(s => {
-    const val = heatState.stationsFilled[s.key];
-    const isDone = val !== undefined;
-    const isActive = !isDone && nextStation && nextStation.key === s.key;
-    return `<div class="station-row ${isDone ? 'done' : ''} ${isActive ? 'active' : ''}">
+    const doneThisRound = heatState.stationsFilled[s.key] !== undefined;
+    const isActive = !doneThisRound && nextStation && nextStation.key === s.key;
+    const cumulativeVal = (heatState.cumulative && heatState.cumulative[s.key]) || 0;
+    return `<div class="station-row ${doneThisRound ? 'done' : ''} ${isActive ? 'active' : ''}">
       <div>
         <div class="st-name">${s.label}</div>
-        <div class="st-target">Target: ${s.target} ${s.unit}</div>
+        <div class="st-target">Target: ${s.target} ${s.unit} / round</div>
       </div>
-      ${isDone ? `<div class="st-val">${val}</div>` : (isActive ? '<div class="st-val" style="color:var(--crimson);opacity:.75;font-weight:700;">NOW</div>' : '')}
+      <div style="text-align:right;">
+        <div class="st-val">${cumulativeVal} ${s.unit}</div>
+        ${isActive ? '<div style="font-size:9px;letter-spacing:2px;color:var(--crimson);opacity:.75;font-weight:700;">NOW</div>' : ''}
+      </div>
     </div>`;
   }).join('');
 
@@ -301,7 +308,7 @@ async function stationDone() {
     // Always trust the server's returned state rather than assuming what
     // just happened — a dropped connection or slow response could otherwise
     // leave the on-screen state stuck out of sync with the sheet.
-    heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
+    heatState = { round: data.round, stationsFilled: data.stationsFilled || {}, cumulative: data.cumulative || {}, roundsCompleted: data.roundsCompleted || 0 };
     renderHeat();
   } catch (err) {
     // The write may well have succeeded even though this fetch failed
@@ -325,7 +332,7 @@ async function resyncHeat() {
     const res = await fetch(`${APPS_SCRIPT_URL}?action=battle2_status&athlete_id=${encodeURIComponent(currentAthlete.athlete_id)}`);
     const data = await res.json();
     if (!data.active) return false;
-    heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
+    heatState = { round: data.round, stationsFilled: data.stationsFilled || {}, cumulative: data.cumulative || {}, roundsCompleted: data.roundsCompleted || 0 };
     renderHeat();
     return true;
   } catch {
@@ -349,12 +356,12 @@ async function confirmWhistle() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
 
-    const roundsCompleted = heatState.round - 1;
+    const cumulative = data.cumulative || {};
     document.getElementById('doneAthleteName').textContent = currentAthlete.name;
     document.getElementById('doneSummary').innerHTML = `
-      <div class="result-line"><span>Rounds completed</span><span class="rl-val">${roundsCompleted}</span></div>
+      <div class="result-line"><span>Rounds completed</span><span class="rl-val">${data.roundsCompleted || 0}</span></div>
       <div class="result-line"><span>Stopped at</span><span class="rl-val">${(STATIONS.find(s=>s.key===data.station)||{}).label || data.station}</span></div>
-      <div class="result-line"><span>Value logged</span><span class="rl-val">${data.value}</span></div>`;
+      ${STATIONS.map(s => `<div class="result-line"><span>${s.label} (total)</span><span class="rl-val">${cumulative[s.key] || 0} ${s.unit}</span></div>`).join('')}`;
     show('doneScreen');
   } catch (err) {
     // Check whether the heat actually ended despite the fetch failing —

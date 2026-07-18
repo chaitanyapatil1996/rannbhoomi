@@ -532,7 +532,8 @@ function battle2Status(e) {
   const open = _battle2FindOpenRow(sheet, athlete_id);
   if (!open) return jsonResponse({ active: false });
   const state = _battle2RowToState(open.row, open.headers);
-  return jsonResponse({ active: true, round: state.round, stationsFilled: state.stationsFilled });
+  const cumulative = _battle2CumulativeTotals(sheet, athlete_id);
+  return jsonResponse({ active: true, round: state.round, stationsFilled: state.stationsFilled, cumulative: cumulative.totals, roundsCompleted: cumulative.roundsCompleted });
 }
 
 function battle2Roster(e) {
@@ -580,6 +581,30 @@ function _battle2RowToState(row, headers) {
   return { round: Number(row[headers.indexOf('round')]) || 1, stationsFilled };
 }
 
+// Sums each station's value across every row an athlete has (all rounds,
+// including a whistle-interrupted partial), plus how many rounds fully
+// completed. This is what the judge screen displays — running totals that
+// keep growing round over round, rather than resetting to blank each round.
+function _battle2CumulativeTotals(sheet, athlete_id) {
+  const data    = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const completeIdx = headers.indexOf('round_complete');
+  const totals = {};
+  BATTLE2_STATIONS.forEach(([key]) => { totals[key] = 0; });
+  let roundsCompleted = 0;
+
+  data.slice(1).forEach(r => {
+    if (String(r[0]) !== String(athlete_id)) return;
+    BATTLE2_STATIONS.forEach(([key]) => {
+      const v = r[headers.indexOf(key)];
+      if (v !== '' && v !== undefined && v !== null) totals[key] += Number(v) || 0;
+    });
+    if (r[completeIdx] === true) roundsCompleted++;
+  });
+
+  return { totals, roundsCompleted };
+}
+
 function battle2Start(body) {
   const { pin, athlete_id } = body;
   const judge = _lookupJudge(pin);
@@ -606,7 +631,8 @@ function battle2Start(body) {
     const existingOpen = _battle2FindOpenRow(sheet, athlete_id);
     if (existingOpen) {
       const state = _battle2RowToState(existingOpen.row, existingOpen.headers);
-      return jsonResponse({ success: true, resumed: true, athlete_id, name, category, round: state.round, stationsFilled: state.stationsFilled });
+      const cumulative = _battle2CumulativeTotals(sheet, athlete_id);
+      return jsonResponse({ success: true, resumed: true, athlete_id, name, category, round: state.round, stationsFilled: state.stationsFilled, cumulative: cumulative.totals, roundsCompleted: cumulative.roundsCompleted });
     }
 
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -620,7 +646,9 @@ function battle2Start(body) {
     set('heat_finished', false);
     set('updated_at', new Date().toISOString());
     sheet.appendRow(row);
-    return jsonResponse({ success: true, resumed: false, athlete_id, name, category, round: 1, stationsFilled: {} });
+    const emptyTotals = {};
+    BATTLE2_STATIONS.forEach(([key]) => { emptyTotals[key] = 0; });
+    return jsonResponse({ success: true, resumed: false, athlete_id, name, category, round: 1, stationsFilled: {}, cumulative: emptyTotals, roundsCompleted: 0 });
   } finally {
     lock.releaseLock();
   }
@@ -655,6 +683,11 @@ function battle2StationDone(body) {
       const allFilled = BATTLE2_STATIONS.every(([k]) => fresh[open.headers.indexOf(k)] !== '');
       if (allFilled) {
         sheet.getRange(open.rowIndex, open.headers.indexOf('round_complete') + 1).setValue(true);
+        // Close this row out explicitly — otherwise it and the newly
+        // appended round both have heat_finished=false, and any ambiguity
+        // in which one is "the open row" leads to the UI getting stuck
+        // showing the just-completed round instead of advancing.
+        sheet.getRange(open.rowIndex, open.headers.indexOf('heat_finished') + 1).setValue(true);
         const newRow = new Array(open.headers.length).fill('');
         const set = (h, v) => { const i = open.headers.indexOf(h); if (i > -1) newRow[i] = v; };
         set('athlete_id', fresh[open.headers.indexOf('athlete_id')]);
@@ -673,6 +706,7 @@ function battle2StationDone(body) {
     // true server state rather than an assumption about what just happened.
     const after = _battle2FindOpenRow(sheet, athlete_id);
     const state = after ? _battle2RowToState(after.row, after.headers) : { round: null, stationsFilled: {} };
+    const cumulative = _battle2CumulativeTotals(sheet, athlete_id);
 
     return jsonResponse({
       success: true,
@@ -681,6 +715,8 @@ function battle2StationDone(body) {
       round_complete: stationLogged !== null && Object.keys(state.stationsFilled).length === 0,
       round: state.round,
       stationsFilled: state.stationsFilled,
+      cumulative: cumulative.totals,
+      roundsCompleted: cumulative.roundsCompleted,
     });
   } finally {
     lock.releaseLock();
@@ -710,7 +746,8 @@ function battle2Partial(body) {
     sheet.getRange(open.rowIndex, open.headers.indexOf('heat_finished') + 1).setValue(true);
     sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
 
-    return jsonResponse({ success: true, station: key, value: Number(value) || 0, heat_finished: true });
+    const cumulative = _battle2CumulativeTotals(sheet, athlete_id);
+    return jsonResponse({ success: true, station: key, value: Number(value) || 0, heat_finished: true, cumulative: cumulative.totals, roundsCompleted: cumulative.roundsCompleted });
   } finally {
     lock.releaseLock();
   }
