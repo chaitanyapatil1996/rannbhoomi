@@ -29,6 +29,7 @@ function doGet(e) {
   if (action === 'analytics')        return getAnalytics(e);
   if (action === 'judge_login')      return judgeLogin(e);
   if (action === 'battle2_roster')   return battle2Roster(e);
+  if (action === 'battle2_status')   return battle2Status(e);
   if (action === 'battle2_scores')   return battle2Scores(e);
   if (action === 'gym_scores')       return gymScores(e);
   if (action === 'gym_zone_status')  return gymZoneStatus(e);
@@ -518,6 +519,21 @@ function adminRebuild(body) {
 // is filled with its fixed target once the judge taps STATION DONE; the one
 // station live when the whistle blows gets a manual partial value instead.
 // heat_finished marks the athlete's final row once the whistle ends their heat.
+
+// Read-only state check — no writes. Lets the judge UI resync itself after a
+// fetch failure (e.g. the write actually succeeded but the response never
+// arrived) instead of leaving stale state on screen.
+function battle2Status(e) {
+  const athlete_id = e.parameter.athlete_id;
+  if (!athlete_id) return jsonResponse({ error: 'athlete_id required' });
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+  if (!sheet) return jsonResponse({ active: false });
+  const open = _battle2FindOpenRow(sheet, athlete_id);
+  if (!open) return jsonResponse({ active: false });
+  const state = _battle2RowToState(open.row, open.headers);
+  return jsonResponse({ active: true, round: state.round, stationsFilled: state.stationsFilled });
+}
 
 function battle2Roster(e) {
   const gender = (e.parameter.gender || '').toLowerCase();

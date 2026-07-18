@@ -134,6 +134,8 @@ select.field-input, .field-input {
 
     <div class="stations" id="stationsList"></div>
 
+    <button class="whistle-toggle" onclick="resyncHeat()">REFRESH STATUS FROM SHEET</button>
+
     <button class="big-btn" id="doneBtn" onclick="stationDone()">STATION DONE</button>
 
     <button class="whistle-toggle" onclick="toggleWhistle()">WHISTLE BLEW — END HEAT</button>
@@ -302,10 +304,33 @@ async function stationDone() {
     heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
     renderHeat();
   } catch (err) {
-    msg.textContent = err.message + ' — tap STATION DONE again to retry';
-    msg.className = 'msg err';
+    // The write may well have succeeded even though this fetch failed
+    // (dropped connection, backgrounded app) — pull true state with a
+    // read-only GET before telling the judge anything is actually wrong.
+    const resynced = await resyncHeat();
+    msg.textContent = resynced
+      ? 'Connection dropped, but re-synced — station list below is correct'
+      : (err.message + ' — tap STATION DONE again to retry');
+    msg.className = resynced ? 'msg ok' : 'msg err';
   }
   btn.disabled = false;
+}
+
+// Read-only resync: pulls the athlete's true current state from the server
+// and re-renders. Returns true if a resync happened, false if there was
+// nothing to resync (network still down, or genuinely no active heat).
+async function resyncHeat() {
+  if (!currentAthlete) return false;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=battle2_status&athlete_id=${encodeURIComponent(currentAthlete.athlete_id)}`);
+    const data = await res.json();
+    if (!data.active) return false;
+    heatState = { round: data.round, stationsFilled: data.stationsFilled || {} };
+    renderHeat();
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function toggleWhistle() {
@@ -332,8 +357,24 @@ async function confirmWhistle() {
       <div class="result-line"><span>Value logged</span><span class="rl-val">${data.value}</span></div>`;
     show('doneScreen');
   } catch (err) {
-    msg.textContent = err.message + ' — tap CONFIRM & END HEAT again to retry';
-    msg.className = 'msg err';
+    // Check whether the heat actually ended despite the fetch failing —
+    // if it's no longer "active", the partial almost certainly saved.
+    let stillActive = true;
+    try {
+      const res = await fetch(`${APPS_SCRIPT_URL}?action=battle2_status&athlete_id=${encodeURIComponent(currentAthlete.athlete_id)}`);
+      const data = await res.json();
+      stillActive = !!data.active;
+    } catch {}
+
+    if (!stillActive) {
+      document.getElementById('doneAthleteName').textContent = currentAthlete.name;
+      document.getElementById('doneSummary').innerHTML = `
+        <div class="result-line" style="display:block;">Connection dropped, but this heat is no longer active — it most likely saved. Please verify in the sheet.</div>`;
+      show('doneScreen');
+    } else {
+      msg.textContent = err.message + ' — tap CONFIRM & END HEAT again to retry';
+      msg.className = 'msg err';
+    }
   }
 }
 
