@@ -28,7 +28,7 @@ screen so totals/leaderboard/certificates stay consistent across all battles
 - Public leaderboard rendering, analytics (station champions, category
   averages, combined ranking).
 - Admin panel actions (clear scores, release leaderboard, rebuild cache).
-- Battle 1's fundamental judge interaction: web number → name confirm →
+- Battle 1's fundamental judge interaction: bib number → name confirm →
   score submit.
 
 ## 1. Canonical Scoring Table (replaces `Workout Plan.xlsx` as source of truth)
@@ -91,7 +91,7 @@ a URL.
 
 ## 3. Battle 1 — unchanged interaction, two fixes
 
-- Interaction stays exactly as today: judge enters web number → athlete name
+- Interaction stays exactly as today: judge enters bib number → athlete name
   confirms → judge enters the raw value → submit.
 - **Fix (scoring bug):** apply the per-station point multiplier from the new
   `Scoring Table` sheet before summing to `total`, replacing the current

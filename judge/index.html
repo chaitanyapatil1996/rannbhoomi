@@ -27,6 +27,7 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
 .assignment-sub { font-size: 11px; letter-spacing: 3px; opacity: 0.6; margin-bottom: 32px; }
 .rule { width: 48px; height: 2px; background: var(--crimson); opacity: 0.3; margin-bottom: 32px; }
 .field-label { font-size: 9px; letter-spacing: 3px; opacity: 0.5; margin-bottom: 8px; display: block; }
+.field-label-lg { font-size: 15px; letter-spacing: 1.5px; opacity: 0.9; font-weight: 700; margin-bottom: 10px; }
 .field-input {
   width: 100%; padding: 16px; border: 1px solid var(--border);
   background: rgba(214,185,122,0.4); font-family: 'Cinzel', serif;
@@ -73,7 +74,7 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
   letter-spacing: 4px;
 }
 .big-input:focus { border-color: var(--crimson); background: rgba(214,185,122,0.65); }
-.unit-label { text-align: center; font-size: 10px; letter-spacing: 3px; opacity: 0.45; margin-top: 8px; }
+.unit-label { text-align: center; font-size: 16px; letter-spacing: 2px; opacity: 0.85; font-weight: 700; margin-top: 8px; }
 .submit-confirm {
   width: 100%; padding: 20px;
   background: var(--crimson); color: var(--gold);
@@ -133,7 +134,7 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
     <div class="q-rule"></div>
 
     <div class="athlete-lookup">
-      <label class="field-label" for="athleteId">Athlete ID (Web Number)</label>
+      <label class="field-label field-label-lg" for="athleteId">Athlete ID (Bib Number)</label>
       <input class="field-input" type="text" id="athleteId" placeholder="e.g. RB001234"
              autocomplete="off" autocapitalize="characters"
              oninput="onAthleteIdInput()" onpaste="setTimeout(onAthleteIdInput,0)">
