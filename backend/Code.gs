@@ -51,6 +51,7 @@ function doPost(e) {
   if (action === 'gym_start_team')       return gymStartTeam(body);
   if (action === 'gym_add_score')        return gymAddScore(body);
   if (action === 'gym_rotate')           return gymRotate(body);
+  if (action === 'battle3_submit')       return battle3Submit(body);
   return jsonResponse({ error: 'Unknown action' });
 }
 
@@ -704,6 +705,73 @@ function battle2Scores(e) {
   return jsonResponse({ scores, last_updated: new Date().toISOString() });
 }
 
+// ─── Battle 3 — post-round staff entry (pen-and-paper results typed in once) ─
+//
+// Not a live judge flow — staff key in the paper tally after the round, one
+// row per athlete. Re-submitting the same athlete_id overwrites their row
+// (lets staff correct a typo) rather than appending a duplicate.
+
+function battle3Submit(body) {
+  const { pin, athlete_id, snatch_weight, snatch_reps, sled_weight, sled_laps, ski_metres, box_step_reps, sandbag_reps } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '3') return jsonResponse({ error: 'Invalid PIN' });
+  if (!athlete_id) return jsonResponse({ error: 'athlete_id required' });
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const athleteSheet = ss.getSheetByName('Athletes');
+  const athleteData  = athleteSheet.getDataRange().getValues();
+  const athlete = athleteData.find((r, i) => i > 0 && String(r[0]) === String(athlete_id));
+  if (!athlete) return jsonResponse({ error: 'Athlete not found' });
+  const name = athlete[1];
+  const category = String(athlete[3] || '').toLowerCase();
+
+  const skiScoring     = _getScoringRow('3', 'ski');
+  const boxScoring     = _getScoringRow('3', 'box_step_up');
+  const sandbagScoring = _getScoringRow('3', 'sandbag_throw');
+
+  const snatchPts  = (Number(snatch_weight) || 0) * (Number(snatch_reps) || 0);
+  const sledPts    = (Number(sled_weight) || 0) * (Number(sled_laps) || 0);
+  const skiPts     = (Number(ski_metres) || 0) * (skiScoring ? Number(skiScoring.pointsPerUnit) || 1 : 1);
+  const boxPts     = (Number(box_step_reps) || 0) * (boxScoring ? Number(boxScoring.pointsPerUnit) || 10 : 10);
+  const sandbagPts = (Number(sandbag_reps) || 0) * (sandbagScoring ? Number(sandbagScoring.pointsPerUnit) || 10 : 10);
+  const total = snatchPts + sledPts + skiPts + boxPts + sandbagPts;
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const sheet   = ss.getSheetByName(SCORE_SHEETS['3']);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const data    = sheet.getDataRange().getValues();
+    const existingIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(athlete_id));
+
+    const row = new Array(headers.length).fill('');
+    const set = (h, v) => { const idx = headers.indexOf(h); if (idx > -1) row[idx] = v; };
+    set('athlete_id', athlete_id);
+    set('name', name);
+    set('category', category);
+    set('snatch_weight', Number(snatch_weight) || 0);
+    set('snatch_reps', Number(snatch_reps) || 0);
+    set('sled_weight', Number(sled_weight) || 0);
+    set('sled_laps', Number(sled_laps) || 0);
+    set('ski_metres', Number(ski_metres) || 0);
+    set('box_step_reps', Number(box_step_reps) || 0);
+    set('sandbag_reps', Number(sandbag_reps) || 0);
+    set('complete', true);
+    set('total', total);
+    set('submitted_at', new Date().toISOString());
+
+    if (existingIdx > 0) {
+      sheet.getRange(existingIdx + 1, 1, 1, headers.length).setValues([row]);
+    } else {
+      sheet.appendRow(row);
+    }
+
+    return jsonResponse({ success: true, athlete_id, name, total, breakdown: { snatchPts, sledPts, skiPts, boxPts, sandbagPts } });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 // ─── Gym Battle — rotation tracker ───────────────────────────────────────────
 //
 // Gym_Live: one row per zone, running point totals for the team currently in
@@ -907,6 +975,31 @@ function seedTestData() {
   Logger.log(`seedTestData complete: ${count} test athletes seeded, scored, and leaderboard released.`);
 }
 
+// Seeds 50 fake completed Gym Battle team results directly into Gym_Results
+// (bypassing the live rotation flow) so the Gym Battle leaderboard has
+// something to look at. Doesn't touch Gym_Live — test the live rotation UI
+// separately with a real Gym Battle PIN if you want to exercise that flow.
+function seedGymTestData() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const results = ss.getSheetByName(GYM_RESULTS_SHEET);
+  const count = 50;
+  const rows = [];
+
+  for (let i = 1; i <= count; i++) {
+    const zone = String(1 + (i % 4));
+    const teamName = `${TEST_ID_PREFIX} Gym ${i}`;
+    const fs = (Math.floor(Math.random() * 30) + 10) * 10; // reps x 10 pts
+    const dp = (Math.floor(Math.random() * 20) + 5) * 10;
+    const rw = Math.floor(Math.random() * 300) + 100;      // metres x 1 pt
+    const bj = (Math.floor(Math.random() * 25) + 5) * 10;
+    const teamScore = fs + dp + rw + bj;
+    rows.push([zone, teamName, fs, dp, rw, bj, teamScore, new Date().toISOString()]);
+  }
+
+  results.getRange(results.getLastRow() + 1, 1, rows.length, 8).setValues(rows);
+  Logger.log(`seedGymTestData complete: ${count} test gym team results seeded.`);
+}
+
 // Removes every row (Athletes, Round1/2/3_Scores, Gym_Results) whose athlete_id
 // or team_name starts with TEST. Safe to run repeatedly — only touches rows
 // seedTestData() created, never real registrations or scores.
@@ -962,6 +1055,11 @@ function setupScoringTable() {
     ['gym', 'rower',        'Rower',                   'Max', 'metres', 1,  '—', '—', 'Accumulated'],
     ['gym', 'box_jump',     'Burpee Box Jump',         'Max', 'reps',   10, 'Bodyweight', 'Bodyweight', 'Accumulated'],
     ['gym', 'kb_hold',      'KB Hold',                 'Max time', 'seconds', '', '24kg', '16kg', 'Not scored — gates rotation only'],
+    ['3', 'snatch',       'Single Arm Snatch',         40,    'reps',   '', 'athlete-selected', 'athlete-selected', 'Points = reps x weight used'],
+    ['3', 'sled_push',    'Sled Push',                 4,     'laps',   '', 'athlete-selected', 'athlete-selected', 'Points = weight used x laps'],
+    ['3', 'ski',          'Ski',                       'Max (4 min cap)', 'metres', 1, '—', '—', 'Points = metres x 1'],
+    ['3', 'box_step_up',  'Box Step Up with Weights',  40,    'reps',   10, 'ref only', 'ref only', "Weight doesn't affect score"],
+    ['3', 'sandbag_throw','Sandbag Back Throw',        'Max', 'reps',   10, '50kg (fixed)', '30kg (fixed)', 'Fixed gender weight'],
   ];
   sheet.getRange(2, 1, rows.length, headers.length).setValues(rows);
   Logger.log('setupScoringTable complete: ' + rows.length + ' rows.');
@@ -992,6 +1090,8 @@ function generateJudgePins() {
   ['1', '2'].forEach(n => rows.push([randPin(), '2', 'M' + n, '', `Battle 2 — Male Lane ${n}`]));
   ['1', '2'].forEach(n => rows.push([randPin(), '2', 'F' + n, '', `Battle 2 — Female Lane ${n}`]));
 
+  ['1', '2', '3', '4'].forEach(n => rows.push([randPin(), '3', 'staff' + n, '', `Battle 3 — Staff Entry ${n}`]));
+
   GYM_ZONES.forEach(zone => {
     GYM_STATIONS.forEach(([key, name]) => {
       rows.push([randPin(), 'gym', zone, key, `Gym Battle — Zone ${zone} — ${name}`]);
@@ -1000,6 +1100,42 @@ function generateJudgePins() {
 
   sheet.getRange(2, 1, rows.length, 5).setValues(rows);
   Logger.log(`generateJudgePins complete: ${rows.length} PINs created.`);
+  rows.forEach(r => Logger.log(`${r[4]}: PIN=${r[0]}`));
+}
+
+// Round3_Scores already exists with old placeholder headers (weight_total/time_seconds)
+// from before Battle 3's stations were finalized. Only safe to overwrite if it's
+// still just the header row — if real data has been entered, leave it alone.
+function setupBattle3Sheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SCORE_SHEETS['3']);
+  if (!sheet) sheet = ss.insertSheet(SCORE_SHEETS['3']);
+  if (sheet.getLastRow() > 1) {
+    Logger.log('Round3_Scores already has data rows — leaving it alone.');
+    return;
+  }
+  sheet.clearContents();
+  const headers = ['athlete_id', 'name', 'category', 'snatch_weight', 'snatch_reps', 'sled_weight', 'sled_laps', 'ski_metres', 'box_step_reps', 'sandbag_reps', 'complete', 'total', 'submitted_at'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  Logger.log('setupBattle3Sheet complete — Round3_Scores now uses the 5-station Battle 3 schema.');
+}
+
+// Adds Battle 3 staff-entry PINs to the EXISTING Judges sheet without
+// touching any PINs already generated — safe to run after Battle 1/2/Gym
+// PINs have already been distributed or tested (unlike generateJudgePins(),
+// which wipes and regenerates everything).
+function addBattle3Pins() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(JUDGES_SHEET);
+  if (!sheet) { Logger.log('Judges sheet not found — run generateJudgePins() first.'); return; }
+  const data = sheet.getDataRange().getValues();
+  const alreadyHas = data.some((r, i) => i > 0 && String(r[1]) === '3');
+  if (alreadyHas) { Logger.log('Battle 3 PINs already exist — not adding duplicates.'); return; }
+
+  const randPin = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+  const rows = ['1', '2', '3', '4'].map(n => [randPin(), '3', 'staff' + n, '', `Battle 3 — Staff Entry ${n}`]);
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 5).setValues(rows);
+  Logger.log(`addBattle3Pins complete: ${rows.length} PINs added.`);
   rows.forEach(r => Logger.log(`${r[4]}: PIN=${r[0]}`));
 }
 
@@ -1040,6 +1176,7 @@ function setupGymSheets() {
 function setupJudgeScoringSystem() {
   setupScoringTable();
   setupBattle2Sheet();
+  setupBattle3Sheet();
   setupGymSheets();
   generateJudgePins();
   Logger.log('setupJudgeScoringSystem complete — check the Judges sheet for all PINs.');

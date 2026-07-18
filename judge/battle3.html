@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Battle 3 Staff Entry — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); --ok:#1a6b00; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { min-height:100%; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); }
+body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0); }
+
+.screen { display:none; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:28px 18px 40px; }
+.screen.active { display:flex; }
+.card { width:100%; max-width:520px; background:rgba(214,185,122,0.55); border:1px solid var(--border); padding:32px 26px; }
+
+.badge { font-size:9px; letter-spacing:4px; opacity:0.75; text-transform:uppercase; margin-bottom:10px; }
+.title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; color:var(--crimson); line-height:1.1; margin-bottom:4px; }
+.sub { font-size:12px; letter-spacing:2px; opacity:0.85; margin-bottom:20px; }
+.rule { width:44px; height:2px; background:var(--crimson); opacity:0.3; margin-bottom:22px; }
+
+.field-label { font-size:12px; letter-spacing:2px; opacity:0.8; font-weight:700; margin-bottom:8px; display:block; margin-top:18px; }
+.field-label:first-of-type { margin-top:0; }
+.field-input {
+  width:100%; padding:14px; border:1px solid var(--border);
+  background:rgba(214,185,122,0.4); font-family:'Cinzel',serif;
+  font-size:15px; color:var(--crimson); outline:none; -webkit-appearance:none; border-radius:0;
+}
+.field-input:focus { border-color:var(--crimson); background:rgba(214,185,122,0.7); }
+.athlete-name-display {
+  margin-top:10px; padding:12px 14px;
+  background:rgba(76,0,7,0.06); border-left:3px solid var(--crimson);
+  font-size:13px; letter-spacing:1px; min-height:44px;
+}
+.athlete-name-display.found { border-color:var(--ok); }
+.athlete-name-display.not-found { border-color:var(--crimson); opacity:0.7; }
+
+.station-block { margin-top:22px; padding:16px; border:1px solid var(--border); background:rgba(214,185,122,0.3); }
+.station-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+.station-title { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; }
+.station-pts { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--ok); }
+.station-inputs { display:flex; gap:10px; }
+.station-inputs .field-input { font-size:16px; text-align:center; }
+.mini-label { font-size:9px; letter-spacing:2px; opacity:0.7; margin-bottom:6px; display:block; text-align:center; }
+
+.total-row { display:flex; justify-content:space-between; align-items:baseline; margin-top:24px; padding-top:16px; border-top:1px solid var(--border); }
+.total-label { font-size:13px; letter-spacing:3px; }
+.total-val { font-family:'Bebas Neue',sans-serif; font-size:36px; color:var(--crimson); }
+
+.btn-primary {
+  width:100%; margin-top:22px; padding:18px;
+  background:var(--crimson); color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:4px;
+  border:none; cursor:pointer; transition:opacity .15s;
+}
+.btn-primary:hover { opacity:.85; }
+.btn-primary:disabled { opacity:.35; cursor:not-allowed; }
+.msg { margin-top:16px; font-size:11px; letter-spacing:2px; min-height:16px; text-align:center; }
+.msg.err { color:var(--crimson); }
+.msg.ok  { color:var(--ok); }
+.btn-logout { margin-top:24px; padding:10px 18px; background:transparent; color:var(--crimson); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px; cursor:pointer; opacity:0.65; }
+.btn-logout:hover { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="loadingScreen">
+  <div class="card"><div class="title">LOADING…</div></div>
+</div>
+
+<div class="screen" id="entryScreen">
+  <div class="card">
+    <div class="badge" id="entryBadge">Battle 3 Staff Entry — Rannbhoomi 2026</div>
+    <div class="title">TYPE IN PAPER RESULTS</div>
+    <div class="sub">One entry per athlete — re-submitting the same bib number overwrites their row</div>
+    <div class="rule"></div>
+
+    <label class="field-label" for="athleteId">Athlete Bib Number</label>
+    <input class="field-input" type="text" id="athleteId" placeholder="e.g. RB001234"
+           autocomplete="off" autocapitalize="characters"
+           oninput="onAthleteIdInput()" onpaste="setTimeout(onAthleteIdInput,0)">
+    <div class="athlete-name-display" id="athleteNameDisplay">Enter bib number above</div>
+
+    <div class="station-block">
+      <div class="station-head"><span class="station-title">Single Arm Snatch</span><span class="station-pts" id="ptsSnatch">0 pts</span></div>
+      <div class="station-inputs">
+        <div style="flex:1;"><span class="mini-label">WEIGHT (KG)</span><input class="field-input" type="number" id="snatchWeight" min="0" oninput="recalc()"></div>
+        <div style="flex:1;"><span class="mini-label">REPS</span><input class="field-input" type="number" id="snatchReps" min="0" oninput="recalc()"></div>
+      </div>
+    </div>
+
+    <div class="station-block">
+      <div class="station-head"><span class="station-title">Sled Push</span><span class="station-pts" id="ptsSled">0 pts</span></div>
+      <div class="station-inputs">
+        <div style="flex:1;"><span class="mini-label">WEIGHT (KG)</span><input class="field-input" type="number" id="sledWeight" min="0" oninput="recalc()"></div>
+        <div style="flex:1;"><span class="mini-label">LAPS</span><input class="field-input" type="number" id="sledLaps" min="0" oninput="recalc()"></div>
+      </div>
+    </div>
+
+    <div class="station-block">
+      <div class="station-head"><span class="station-title">Ski (4 min cap)</span><span class="station-pts" id="ptsSki">0 pts</span></div>
+      <span class="mini-label">DISTANCE (METRES)</span>
+      <input class="field-input" type="number" id="skiMetres" min="0" oninput="recalc()">
+    </div>
+
+    <div class="station-block">
+      <div class="station-head"><span class="station-title">Box Step Up with Weights</span><span class="station-pts" id="ptsBox">0 pts</span></div>
+      <span class="mini-label">REPS</span>
+      <input class="field-input" type="number" id="boxReps" min="0" oninput="recalc()">
+    </div>
+
+    <div class="station-block">
+      <div class="station-head"><span class="station-title">Sandbag Back Throw</span><span class="station-pts" id="ptsSandbag">0 pts</span></div>
+      <span class="mini-label">REPS</span>
+      <input class="field-input" type="number" id="sandbagReps" min="0" oninput="recalc()">
+    </div>
+
+    <div class="total-row">
+      <span class="total-label">TOTAL</span>
+      <span class="total-val" id="totalPts">0</span>
+    </div>
+
+    <button class="btn-primary" id="submitBtn" onclick="submitEntry()" disabled>SUBMIT ENTRY</button>
+    <div class="msg" id="entryMsg"></div>
+    <button class="btn-logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
+
+let pin = null;
+let judge = null;
+let athleteConfirmed = false;
+let currentAthleteId = '';
+let currentAthleteName = '';
+let lookupTimer = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+(async function init() {
+  const params = new URLSearchParams(location.search);
+  pin = params.get('pin') || sessionStorage.getItem('judge_pin') || '';
+  if (!pin) { location.href = 'index.html'; return; }
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=judge_login&pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (!data.found || String(data.judge.battle) !== '3') {
+      location.href = 'index.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
+    judge = data.judge;
+    sessionStorage.setItem('judge_pin', pin);
+    document.getElementById('entryBadge').textContent = judge.label || 'Battle 3 Staff Entry';
+    show('entryScreen');
+  } catch (err) {
+    document.getElementById('loadingScreen').querySelector('.title').textContent = 'CONNECTION FAILED';
+  }
+})();
+
+function onAthleteIdInput() {
+  const id  = document.getElementById('athleteId').value.trim().toUpperCase();
+  const box = document.getElementById('athleteNameDisplay');
+  athleteConfirmed = false;
+  currentAthleteId = '';
+  currentAthleteName = '';
+  updateSubmitBtn();
+
+  if (!id || id.length < 4) {
+    box.textContent = 'Enter bib number above';
+    box.className   = 'athlete-name-display';
+    return;
+  }
+
+  box.textContent = 'Looking up...';
+  box.className   = 'athlete-name-display';
+  clearTimeout(lookupTimer);
+  lookupTimer = setTimeout(() => lookupAthlete(id), 500);
+}
+
+async function lookupAthlete(id) {
+  const box = document.getElementById('athleteNameDisplay');
+  try {
+    const res  = await fetch(`${APPS_SCRIPT_URL}?action=validate_athlete&athlete_id=${encodeURIComponent(id)}`);
+    const data = await res.json();
+    if (data.found && data.athlete) {
+      const a = data.athlete;
+      const name = a.name || id;
+      const category = a.category ? ` · ${String(a.category).charAt(0).toUpperCase() + String(a.category).slice(1)}` : '';
+      box.textContent = `${name}${category}`;
+      box.className   = 'athlete-name-display found';
+      currentAthleteId   = id;
+      currentAthleteName = name;
+      athleteConfirmed    = true;
+    } else {
+      box.textContent = 'Athlete not found — check ID';
+      box.className   = 'athlete-name-display not-found';
+    }
+  } catch {
+    box.textContent = 'Lookup failed — check connection';
+    box.className   = 'athlete-name-display not-found';
+  }
+  updateSubmitBtn();
+}
+
+function num(id) { return Number(document.getElementById(id).value) || 0; }
+
+function recalc() {
+  const snatchPts  = num('snatchWeight') * num('snatchReps');
+  const sledPts    = num('sledWeight') * num('sledLaps');
+  const skiPts     = num('skiMetres') * 1;
+  const boxPts     = num('boxReps') * 10;
+  const sandbagPts = num('sandbagReps') * 10;
+
+  document.getElementById('ptsSnatch').textContent  = snatchPts + ' pts';
+  document.getElementById('ptsSled').textContent    = sledPts + ' pts';
+  document.getElementById('ptsSki').textContent     = skiPts + ' pts';
+  document.getElementById('ptsBox').textContent     = boxPts + ' pts';
+  document.getElementById('ptsSandbag').textContent = sandbagPts + ' pts';
+  document.getElementById('totalPts').textContent   = snatchPts + sledPts + skiPts + boxPts + sandbagPts;
+}
+
+function updateSubmitBtn() {
+  document.getElementById('submitBtn').disabled = !athleteConfirmed;
+}
+
+async function submitEntry() {
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('entryMsg');
+  if (!athleteConfirmed) return;
+  btn.disabled = true;
+  btn.textContent = 'SUBMITTING...';
+  msg.textContent = '';
+
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'battle3_submit',
+        pin,
+        athlete_id: currentAthleteId,
+        snatch_weight: num('snatchWeight'), snatch_reps: num('snatchReps'),
+        sled_weight: num('sledWeight'), sled_laps: num('sledLaps'),
+        ski_metres: num('skiMetres'),
+        box_step_reps: num('boxReps'),
+        sandbag_reps: num('sandbagReps'),
+      }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Submission failed');
+
+    msg.textContent = `Saved — ${data.name}: ${data.total} pts total`;
+    msg.className = 'msg ok';
+
+    // Reset for next athlete
+    document.getElementById('athleteId').value = '';
+    ['snatchWeight','snatchReps','sledWeight','sledLaps','skiMetres','boxReps','sandbagReps'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('athleteNameDisplay').textContent = 'Enter bib number above';
+    document.getElementById('athleteNameDisplay').className = 'athlete-name-display';
+    athleteConfirmed = false;
+    currentAthleteId = '';
+    recalc();
+    document.getElementById('athleteId').focus();
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  btn.disabled = false;
+  btn.textContent = 'SUBMIT ENTRY';
+  updateSubmitBtn();
+}
+
+function logout() {
+  sessionStorage.removeItem('judge_pin');
+  location.href = 'index.html';
+}
+</script>
+</body>
+</html>

@@ -226,6 +226,10 @@ async function verifyPin(pin) {
       location.href = 'battle2.html?pin=' + encodeURIComponent(pin);
       return;
     }
+    if (String(judge.battle) === '3') {
+      location.href = 'battle3.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
     if (String(judge.battle) === 'gym') {
       location.href = 'gym.html?pin=' + encodeURIComponent(pin);
       return;
