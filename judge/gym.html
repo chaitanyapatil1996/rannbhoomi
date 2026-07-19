@@ -49,21 +49,16 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
 .zone-label { font-size:10px; letter-spacing:2px; opacity:0.8; margin-top:3px; }
 .rotation-badge { background:var(--crimson); color:var(--gold); font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:2px; padding:6px 10px; white-space:nowrap; }
 
-.station-name { font-size:13px; letter-spacing:3px; opacity:0.85; font-weight:700; margin-bottom:2px; }
-.station-total { font-family:'Bebas Neue',sans-serif; font-size:56px; color:var(--crimson); text-align:center; margin:14px 0 4px; }
-.station-total-label { text-align:center; font-size:9px; letter-spacing:3px; opacity:0.7; margin-bottom:20px; }
-
-.add-row { display:flex; gap:10px; }
-.add-input {
-  flex:1; padding:18px; text-align:center; border:2px solid var(--border);
-  background:rgba(214,185,122,0.4); font-family:'Bebas Neue',sans-serif; font-size:32px; color:var(--crimson);
+.stations { display:flex; flex-direction:column; gap:8px; margin:20px 0; }
+.station-row { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid var(--border); background:rgba(214,185,122,0.3); gap:10px; }
+.station-row .st-name { font-size:12px; letter-spacing:1px; flex:1; }
+.station-row .st-name .st-unit { display:block; font-size:9px; opacity:0.65; margin-top:2px; letter-spacing:0.5px; }
+.station-row .st-total { font-family:'Bebas Neue',sans-serif; font-size:20px; color:var(--crimson); min-width:56px; text-align:right; }
+.station-row .st-input {
+  width:64px; padding:10px; text-align:center; border:2px solid var(--border);
+  background:rgba(214,185,122,0.5); font-family:'Bebas Neue',sans-serif; font-size:18px; color:var(--crimson);
   outline:none; -webkit-appearance:none; border-radius:0;
 }
-.add-btn {
-  padding:0 26px; background:var(--crimson); color:var(--gold);
-  font-family:'Bebas Neue',sans-serif; font-size:16px; letter-spacing:3px; border:none; cursor:pointer;
-}
-.add-btn:disabled { opacity:.35; cursor:not-allowed; }
 
 .rotate-btn {
   width:100%; margin-top:22px; padding:22px;
@@ -123,17 +118,11 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
     </div>
     <div class="rule"></div>
 
-    <div class="station-name" id="scoreStationName" style="text-align:center;">—</div>
-    <div class="station-total" id="scoreStationTotal">0</div>
-    <div class="station-total-label" id="scoreStationUnit">POINTS SO FAR</div>
+    <div class="stations" id="stationsList"></div>
 
-    <div class="add-row">
-      <input class="add-input" type="number" id="addValue" placeholder="0" min="0" step="1" inputmode="numeric">
-      <button class="add-btn" onclick="addScore()" id="addBtn">ADD</button>
-    </div>
     <div class="msg" id="scoreMsg"></div>
 
-    <button class="rotate-btn" id="rotateBtn" onclick="rotate()" style="display:none;">KB DROPPED — ROTATE</button>
+    <button class="rotate-btn" id="submitRotationBtn" onclick="submitRotation()" style="display:none;">SUBMIT ROTATION</button>
 
     <button class="btn-logout" onclick="logout()">LOG OUT</button>
   </div>
@@ -142,6 +131,7 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
+const STATION_ORDER = ['front_squats', 'devils_press', 'rower', 'box_jump'];
 const STATION_META = {
   front_squats: { label: 'Front Squats',    unit: 'reps × 10 pts' },
   devils_press: { label: "Devil's Press",   unit: 'reps × 10 pts' },
@@ -152,6 +142,7 @@ const STATION_META = {
 let judge = null;
 let pin = null;
 let pollTimer = null;
+let lastKnownRotations = 0;
 
 function show(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -177,9 +168,7 @@ function show(id) {
     document.getElementById('startTitle').textContent = `ZONE ${judge.assignment} — ${meta.label.toUpperCase()}`;
     document.getElementById('waitTitle').textContent   = `ZONE ${judge.assignment} — ${meta.label.toUpperCase()}`;
     document.getElementById('scoreZoneLabel').textContent = `Zone ${judge.assignment} — ${meta.label}`;
-    document.getElementById('scoreStationName').textContent = meta.label.toUpperCase();
-    document.getElementById('scoreStationUnit').textContent = meta.unit.toUpperCase();
-    document.getElementById('rotateBtn').style.display = judge.station === 'front_squats' ? 'block' : 'none';
+    document.getElementById('submitRotationBtn').style.display = judge.station === 'front_squats' ? 'block' : 'none';
 
     await pollZone();
     pollTimer = setInterval(pollZone, 4000);
@@ -199,6 +188,7 @@ async function pollZone() {
 
 function renderZone(zone) {
   const active = zone.status === 'active';
+  lastKnownRotations = Number(zone.rotations) || 0;
 
   if (!active) {
     if (judge.station === 'front_squats') {
@@ -211,8 +201,75 @@ function renderZone(zone) {
 
   document.getElementById('scoreTeamName').textContent = zone.team_name || '—';
   document.getElementById('rotationBadge').textContent = `ROTATION ${zone.rotations} / 5`;
-  document.getElementById('scoreStationTotal').textContent = zone[judge.station] !== undefined ? zone[judge.station] : 0;
+
+  const isFrontSquats = judge.station === 'front_squats';
+  const list = document.getElementById('stationsList');
+  list.innerHTML = STATION_ORDER.map(key => {
+    const meta = STATION_META[key];
+    const total = zone[key] !== undefined ? zone[key] : 0;
+    return `<div class="station-row">
+      <div class="st-name">${meta.label}<span class="st-unit">${meta.unit}</span></div>
+      <div class="st-total">${total}</div>
+      ${isFrontSquats ? `<input class="st-input" type="number" id="rot_${key}" placeholder="0" min="0" step="1" inputmode="numeric">` : ''}
+    </div>`;
+  }).join('');
+
   show('scoreScreen');
+}
+
+// Front Squats judge submits all 4 stations' values for this rotation in
+// one call. gym_submit_rotation adds deltas (not idempotent), so a dropped
+// connection after a successful write must NOT be resolved by blindly
+// retrying — that would double-add scores that already saved. Instead,
+// re-check the true rotation count/status before deciding whether to show
+// an error or an "already saved" message.
+async function submitRotation() {
+  const btn = document.getElementById('submitRotationBtn');
+  const msg = document.getElementById('scoreMsg');
+  const expectedRotations = lastKnownRotations;
+
+  const deltas = {};
+  STATION_ORDER.forEach(key => {
+    const el = document.getElementById('rot_' + key);
+    deltas[key] = (el && el.value !== '') ? Number(el.value) || 0 : 0;
+  });
+
+  btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'gym_submit_rotation', pin, deltas }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+
+    if (data.heat_complete) {
+      msg.textContent = `Team complete — score: ${data.team_score}`;
+      msg.className = 'msg ok';
+    }
+    renderZone(data.zone);
+  } catch (err) {
+    let advanced = false;
+    let zoneNow = null;
+    try {
+      const statusRes = await fetch(`${APPS_SCRIPT_URL}?action=gym_zone_status&zone=${encodeURIComponent(judge.assignment)}`);
+      const statusData = await statusRes.json();
+      zoneNow = statusData.zone || null;
+      advanced = !zoneNow || zoneNow.status !== 'active' || Number(zoneNow.rotations) > expectedRotations;
+    } catch {}
+
+    if (advanced) {
+      msg.textContent = 'Connection dropped, but this rotation already saved — re-synced below.';
+      msg.className = 'msg ok';
+      if (zoneNow) renderZone(zoneNow);
+    } else {
+      msg.textContent = err.message + ' — tap SUBMIT ROTATION again to retry';
+      msg.className = 'msg err';
+    }
+  }
+  btn.disabled = false;
 }
 
 async function startTeam() {
@@ -231,55 +288,6 @@ async function startTeam() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed to start');
     document.getElementById('teamNameInput').value = '';
-    await pollZone();
-  } catch (err) {
-    msg.textContent = err.message;
-    msg.className = 'msg err';
-  }
-  btn.disabled = false;
-}
-
-async function addScore() {
-  const val = document.getElementById('addValue').value;
-  const btn = document.getElementById('addBtn');
-  const msg = document.getElementById('scoreMsg');
-  if (val === '' || isNaN(Number(val))) return;
-  btn.disabled = true;
-  msg.textContent = '';
-  try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'gym_add_score', pin, delta: val }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Failed');
-    document.getElementById('scoreStationTotal').textContent = data.total;
-    document.getElementById('addValue').value = '';
-  } catch (err) {
-    msg.textContent = err.message;
-    msg.className = 'msg err';
-  }
-  btn.disabled = false;
-}
-
-async function rotate() {
-  const btn = document.getElementById('rotateBtn');
-  const msg = document.getElementById('scoreMsg');
-  btn.disabled = true;
-  msg.textContent = '';
-  try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'gym_rotate', pin }),
-    });
-    const data = await res.json();
-    if (!data.success) throw new Error(data.error || 'Failed');
-    if (data.heat_complete) {
-      msg.textContent = `Team complete — score: ${data.team_score}`;
-      msg.className = 'msg ok';
-    }
     await pollZone();
   } catch (err) {
     msg.textContent = err.message;
