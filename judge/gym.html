@@ -186,7 +186,8 @@ async function pollZone() {
   } catch {}
 }
 
-function renderZone(zone) {
+function renderZone(zone, opts) {
+  opts = opts || {};
   const active = zone.status === 'active';
   lastKnownRotations = Number(zone.rotations) || 0;
 
@@ -204,15 +205,27 @@ function renderZone(zone) {
 
   const isFrontSquats = judge.station === 'front_squats';
   const list = document.getElementById('stationsList');
-  list.innerHTML = STATION_ORDER.map(key => {
-    const meta = STATION_META[key];
-    const total = zone[key] !== undefined ? zone[key] : 0;
-    return `<div class="station-row">
-      <div class="st-name">${meta.label}<span class="st-unit">${meta.unit}</span></div>
-      <div class="st-total">${total}</div>
-      ${isFrontSquats ? `<input class="st-input" type="number" id="rot_${key}" placeholder="0" min="0" step="1" inputmode="numeric">` : ''}
-    </div>`;
-  }).join('');
+  const needsRebuild = opts.rebuildInputs || !isFrontSquats || list.children.length === 0;
+
+  if (needsRebuild) {
+    list.innerHTML = STATION_ORDER.map(key => {
+      const meta = STATION_META[key];
+      const total = zone[key] !== undefined ? zone[key] : 0;
+      return `<div class="station-row">
+        <div class="st-name">${meta.label}<span class="st-unit">${meta.unit}</span></div>
+        <div class="st-total" id="st_total_${key}">${total}</div>
+        ${isFrontSquats ? `<input class="st-input" type="number" id="rot_${key}" placeholder="0" min="0" step="1" inputmode="numeric">` : ''}
+      </div>`;
+    }).join('');
+  } else {
+    // Routine poll while the Front Squats judge may be mid-entry — refresh
+    // the read-only totals in place without touching the input elements,
+    // so a poll never wipes values they've typed but not submitted yet.
+    STATION_ORDER.forEach(key => {
+      const totalEl = document.getElementById('st_total_' + key);
+      if (totalEl) totalEl.textContent = zone[key] !== undefined ? zone[key] : 0;
+    });
+  }
 
   show('scoreScreen');
 }
@@ -249,7 +262,7 @@ async function submitRotation() {
       msg.textContent = `Team complete — score: ${data.team_score}`;
       msg.className = 'msg ok';
     }
-    renderZone(data.zone);
+    renderZone(data.zone, { rebuildInputs: true });
   } catch (err) {
     let advanced = false;
     let zoneNow = null;
@@ -263,7 +276,7 @@ async function submitRotation() {
     if (advanced) {
       msg.textContent = 'Connection dropped, but this rotation already saved — re-synced below.';
       msg.className = 'msg ok';
-      if (zoneNow) renderZone(zoneNow);
+      if (zoneNow) renderZone(zoneNow, { rebuildInputs: true });
     } else {
       msg.textContent = err.message + ' — tap SUBMIT ROTATION again to retry';
       msg.className = 'msg err';
