@@ -192,6 +192,11 @@ function renderZone(zone, opts) {
   lastKnownRotations = Number(zone.rotations) || 0;
 
   if (!active) {
+    // Clear any stale rows/inputs from a just-finished team so the next
+    // active render (guaranteed to be a new team, since a zone only goes
+    // inactive when a heat completes) rebuilds fresh instead of leaving
+    // the previous team's last-submitted values sitting in the DOM.
+    document.getElementById('stationsList').innerHTML = '';
     if (judge.station === 'front_squats') {
       show('startTeamScreen');
     } else {
