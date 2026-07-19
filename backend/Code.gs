@@ -52,6 +52,7 @@ function doPost(e) {
   if (action === 'gym_start_team')       return gymStartTeam(body);
   if (action === 'gym_add_score')        return gymAddScore(body);
   if (action === 'gym_rotate')           return gymRotate(body);
+  if (action === 'gym_submit_rotation')  return gymSubmitRotation(body);
   if (action === 'battle3_submit')       return battle3Submit(body);
   return jsonResponse({ error: 'Unknown action' });
 }
@@ -971,6 +972,58 @@ function gymRotate(body) {
     }
 
     return jsonResponse({ success: true, heat_complete: false, rotations });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Front Squats judge submits all 4 stations' deltas for one rotation in a
+// single atomic write, then advances the rotation counter — replaces 4
+// separate gym_add_score calls + a separate gym_rotate call with one locked
+// read-modify-write, so a dropped connection can never leave some stations
+// updated and others not (same failure mode Battle 2 hit earlier today).
+function gymSubmitRotation(body) {
+  const { pin, deltas } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== 'gym') return jsonResponse({ error: 'Invalid PIN' });
+  if (judge.station !== 'front_squats') return jsonResponse({ error: 'Only the Front Squats judge can submit a rotation' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
+    const rowIdx = _gymFindZoneRow(sheet, judge.assignment);
+    if (!rowIdx) return jsonResponse({ error: 'Zone not found: ' + judge.assignment });
+
+    const headers = sheet.getRange(1, 1, 1, 8).getValues()[0];
+    const row = sheet.getRange(rowIdx, 1, 1, 8).getValues()[0];
+
+    GYM_STATIONS.forEach(([key]) => {
+      const col = headers.indexOf(key);
+      if (col === -1) return;
+      const delta = Number(deltas && deltas[key]) || 0;
+      row[col] = (Number(row[col]) || 0) + delta;
+    });
+
+    const rotCol = headers.indexOf('rotations');
+    const rotations = (Number(row[rotCol]) || 0) + 1;
+    row[rotCol] = rotations;
+
+    const toZoneState = (r) => { const z = {}; headers.forEach((h, i) => { z[h] = r[i]; }); return z; };
+
+    if (rotations >= 5) {
+      const [zoneId, team_name, fs, dp, rw, bj] = row;
+      const teamScore = Number(fs) + Number(dp) + Number(rw) + Number(bj);
+      const results = ss.getSheetByName(GYM_RESULTS_SHEET);
+      results.appendRow([zoneId, team_name, fs, dp, rw, bj, teamScore, new Date().toISOString()]);
+      const resetRow = [zoneId, '', 0, 0, 0, 0, 0, 'idle'];
+      sheet.getRange(rowIdx, 1, 1, 8).setValues([resetRow]);
+      return jsonResponse({ success: true, heat_complete: true, team_name, team_score: teamScore, zone: toZoneState(resetRow) });
+    }
+
+    sheet.getRange(rowIdx, 1, 1, 8).setValues([row]);
+    return jsonResponse({ success: true, heat_complete: false, rotations, zone: toZoneState(row) });
   } finally {
     lock.releaseLock();
   }
