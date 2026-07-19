@@ -915,66 +915,19 @@ function gymStartTeam(body) {
   }
 }
 
-// Judge adds the reps/distance the athlete just achieved at their station (a delta, not an absolute).
+// Gym Battle now uses single-entry via gym_submit_rotation (Front Squats
+// enters all 4 stations at once) — this action is neutered rather than
+// removed, so a stale device still running the old per-station gym.html
+// can't silently double-count a score alongside the new entry flow.
 function gymAddScore(body) {
-  const { pin, delta } = body;
-  const judge = _lookupJudge(pin);
-  if (!judge || String(judge.battle) !== 'gym') return jsonResponse({ error: 'Invalid PIN' });
-  if (delta === undefined || delta === null || delta === '') return jsonResponse({ error: 'Value required' });
-  const station = judge.station;
-  if (!GYM_STATIONS.some(([k]) => k === station)) return jsonResponse({ error: 'This PIN is not assigned to a scored station' });
-
-  const lock = LockService.getScriptLock();
-  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
-    const rowIdx = _gymFindZoneRow(sheet, judge.assignment);
-    if (!rowIdx) return jsonResponse({ error: 'Zone not found' });
-    const headers = sheet.getRange(1, 1, 1, 8).getValues()[0];
-    const col = headers.indexOf(station) + 1;
-    const current = Number(sheet.getRange(rowIdx, col).getValue()) || 0;
-    const updated = current + (Number(delta) || 0);
-    sheet.getRange(rowIdx, col).setValue(updated);
-    return jsonResponse({ success: true, station, total: updated });
-  } finally {
-    lock.releaseLock();
-  }
+  return jsonResponse({ error: 'Gym Battle now uses single-entry — reload your page' });
 }
 
-// Only the Front Squats judge for a zone may trigger rotation.
+// Gym Battle now uses single-entry via gym_submit_rotation, which also
+// advances the rotation counter — this action is neutered for the same
+// reason as gymAddScore above (stale-device double-write protection).
 function gymRotate(body) {
-  const { pin } = body;
-  const judge = _lookupJudge(pin);
-  if (!judge || String(judge.battle) !== 'gym') return jsonResponse({ error: 'Invalid PIN' });
-  if (judge.station !== 'front_squats') return jsonResponse({ error: 'Only the Front Squats judge can trigger rotation' });
-
-  const lock = LockService.getScriptLock();
-  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
-  try {
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(GYM_LIVE_SHEET);
-    const rowIdx = _gymFindZoneRow(sheet, judge.assignment);
-    if (!rowIdx) return jsonResponse({ error: 'Zone not found' });
-    const headers = sheet.getRange(1, 1, 1, 8).getValues()[0];
-    const rotCol = headers.indexOf('rotations') + 1;
-    const rotations = (Number(sheet.getRange(rowIdx, rotCol).getValue()) || 0) + 1;
-    sheet.getRange(rowIdx, rotCol).setValue(rotations);
-
-    if (rotations >= 5) {
-      const row = sheet.getRange(rowIdx, 1, 1, 8).getValues()[0];
-      const [zone, team_name, fs, dp, rw, bj] = row;
-      const teamScore = Number(fs) + Number(dp) + Number(rw) + Number(bj);
-      const results = ss.getSheetByName(GYM_RESULTS_SHEET);
-      results.appendRow([zone, team_name, fs, dp, rw, bj, teamScore, new Date().toISOString()]);
-      sheet.getRange(rowIdx, 1, 1, 8).setValues([[zone, '', 0, 0, 0, 0, 0, 'idle']]);
-      return jsonResponse({ success: true, heat_complete: true, team_name, team_score: teamScore });
-    }
-
-    return jsonResponse({ success: true, heat_complete: false, rotations });
-  } finally {
-    lock.releaseLock();
-  }
+  return jsonResponse({ error: 'Gym Battle now uses single-entry — reload your page' });
 }
 
 // Front Squats judge submits all 4 stations' deltas for one rotation in a

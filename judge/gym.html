@@ -243,7 +243,6 @@ function renderZone(zone, opts) {
 // an error or an "already saved" message.
 async function submitRotation() {
   const btn = document.getElementById('submitRotationBtn');
-  const msg = document.getElementById('scoreMsg');
   const expectedRotations = lastKnownRotations;
 
   const deltas = {};
@@ -253,7 +252,7 @@ async function submitRotation() {
   });
 
   btn.disabled = true;
-  msg.textContent = '';
+  document.getElementById('scoreMsg').textContent = '';
   try {
     const res = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
@@ -263,11 +262,10 @@ async function submitRotation() {
     const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Failed');
 
-    if (data.heat_complete) {
-      msg.textContent = `Team complete — score: ${data.team_score}`;
-      msg.className = 'msg ok';
-    }
     renderZone(data.zone, { rebuildInputs: true });
+    if (data.heat_complete) {
+      showMsg(`Team complete — score: ${data.team_score}`, 'ok');
+    }
   } catch (err) {
     let advanced = false;
     let zoneNow = null;
@@ -279,15 +277,27 @@ async function submitRotation() {
     } catch {}
 
     if (advanced) {
-      msg.textContent = 'Connection dropped, but this rotation already saved — re-synced below.';
-      msg.className = 'msg ok';
       if (zoneNow) renderZone(zoneNow, { rebuildInputs: true });
+      showMsg('Connection dropped, but this rotation already saved — re-synced below.', 'ok');
     } else {
-      msg.textContent = err.message + ' — tap SUBMIT ROTATION again to retry';
-      msg.className = 'msg err';
+      showMsg(err.message + ' — tap SUBMIT ROTATION again to retry', 'err');
     }
   }
   btn.disabled = false;
+}
+
+// Writes a status message to whichever screen is currently visible. A
+// heat-complete submit switches the active screen to startTeamScreen
+// before this runs (renderZone already ran above), so scoreMsg alone
+// would be hidden along with the rest of scoreScreen — this picks the
+// message element that's actually on screen right now.
+function showMsg(text, cls) {
+  const activeScreen = document.querySelector('.screen.active');
+  const target = (activeScreen && activeScreen.id === 'startTeamScreen')
+    ? document.getElementById('startMsg')
+    : document.getElementById('scoreMsg');
+  target.textContent = text;
+  target.className = 'msg ' + cls;
 }
 
 async function startTeam() {
