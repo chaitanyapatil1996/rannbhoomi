@@ -678,27 +678,32 @@ function battle2StationDone(body) {
       sheet.getRange(open.rowIndex, open.headers.indexOf('updated_at') + 1).setValue(new Date().toISOString());
       stationLogged = key;
       valueLogged = target;
+    }
 
-      const fresh = sheet.getRange(open.rowIndex, 1, 1, open.headers.length).getValues()[0];
-      const allFilled = BATTLE2_STATIONS.every(([k]) => fresh[open.headers.indexOf(k)] !== '');
-      if (allFilled) {
-        sheet.getRange(open.rowIndex, open.headers.indexOf('round_complete') + 1).setValue(true);
-        // Close this row out explicitly — otherwise it and the newly
-        // appended round both have heat_finished=false, and any ambiguity
-        // in which one is "the open row" leads to the UI getting stuck
-        // showing the just-completed round instead of advancing.
-        sheet.getRange(open.rowIndex, open.headers.indexOf('heat_finished') + 1).setValue(true);
-        const newRow = new Array(open.headers.length).fill('');
-        const set = (h, v) => { const i = open.headers.indexOf(h); if (i > -1) newRow[i] = v; };
-        set('athlete_id', fresh[open.headers.indexOf('athlete_id')]);
-        set('name', fresh[open.headers.indexOf('name')]);
-        set('category', fresh[open.headers.indexOf('category')]);
-        set('round', Number(fresh[open.headers.indexOf('round')]) + 1);
-        set('round_complete', false);
-        set('heat_finished', false);
-        set('updated_at', new Date().toISOString());
-        sheet.appendRow(newRow);
-      }
+    // Checked unconditionally (not just when this call filled a station) —
+    // if a prior close-out attempt failed partway (e.g. a schema mismatch
+    // mid-write), the row can already be fully filled with nothing logged
+    // this call. Re-checking here means retrying "ROUND COMPLETE" actually
+    // closes the round instead of silently doing nothing.
+    const fresh = sheet.getRange(open.rowIndex, 1, 1, open.headers.length).getValues()[0];
+    const allFilled = BATTLE2_STATIONS.every(([k]) => fresh[open.headers.indexOf(k)] !== '');
+    if (allFilled) {
+      sheet.getRange(open.rowIndex, open.headers.indexOf('round_complete') + 1).setValue(true);
+      // Close this row out explicitly — otherwise it and the newly
+      // appended round both have heat_finished=false, and any ambiguity
+      // in which one is "the open row" leads to the UI getting stuck
+      // showing the just-completed round instead of advancing.
+      sheet.getRange(open.rowIndex, open.headers.indexOf('heat_finished') + 1).setValue(true);
+      const newRow = new Array(open.headers.length).fill('');
+      const set = (h, v) => { const i = open.headers.indexOf(h); if (i > -1) newRow[i] = v; };
+      set('athlete_id', fresh[open.headers.indexOf('athlete_id')]);
+      set('name', fresh[open.headers.indexOf('name')]);
+      set('category', fresh[open.headers.indexOf('category')]);
+      set('round', Number(fresh[open.headers.indexOf('round')]) + 1);
+      set('round_complete', false);
+      set('heat_finished', false);
+      set('updated_at', new Date().toISOString());
+      sheet.appendRow(newRow);
     }
 
     // Re-read whatever this athlete's current open row is now (same row, or
@@ -1251,6 +1256,27 @@ function setupBattle2Sheet() {
   const headers = ['athlete_id', 'name', 'category', 'round', 'rowing', 'devils_press', 'kb_walk', 'box_jump', 'round_complete', 'heat_finished', 'updated_at'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
   Logger.log('setupBattle2Sheet complete.');
+}
+
+// One-off migration: adds round_complete/heat_finished to a Round2_Scores
+// sheet that was created before those columns existed in the schema.
+// setupBattle2Sheet() only writes headers on a brand-new sheet, so a sheet
+// that already had data from before this schema change never got them —
+// appends only, never touches existing rows/columns, safe to re-run.
+function migrateBattle2Schema() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  ['round_complete', 'heat_finished'].forEach(name => {
+    if (headers.indexOf(name) === -1) {
+      const col = sheet.getLastColumn() + 1;
+      sheet.getRange(1, col).setValue(name).setFontWeight('bold');
+      headers.push(name);
+      Logger.log(`Added missing column "${name}" at column ${col}.`);
+    } else {
+      Logger.log(`Column "${name}" already present — skipped.`);
+    }
+  });
 }
 
 function setupGymSheets() {
