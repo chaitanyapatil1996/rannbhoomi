@@ -49,7 +49,7 @@ and the old xlsx. Same role as Mini Hyrox's `Scoring Table` tab.
 | 2 | 1 | Rowing | 500 | metres | — (progress-based, see §4) | — | — | |
 | 2 | 2 | Devil's Press | 12 | reps | — | 10kg×2 | 5kg×2 | |
 | 2 | 3 | KB Walk | 100 | metres | — | 12kg×2 | 8kg×2 | |
-| 2 | 4 | Burpee Box Jump | 10 | reps | — | 30in | 24in | |
+| 2 | 4 | Burpee Box Jump | 10 | reps | — | 24in | 20in | |
 | 3 | 1 | Single Arm Snatch | 40 | reps | reps × weight used (kg) | athlete-selected, logged on paper | athlete-selected, logged on paper | e.g. 30kg × 40 reps = 1200 pts |
 | 3 | 2 | Sled Push | 4 | laps | weight used (kg) × laps | athlete-selected, logged on paper | athlete-selected, logged on paper | e.g. 200kg × 4 laps = 800 pts |
 | 3 | 3 | Ski | Max (4 min cap) | metres | 1 / metre | — | — | Fixed 4-min cap; score = distance covered |
@@ -58,7 +58,7 @@ and the old xlsx. Same role as Mini Hyrox's `Scoring Table` tab.
 | Gym | 1 | Front Squats | Max | reps | 10 (accumulated, see §6) | 15kg×2 | 10kg×2 | |
 | Gym | 2 | Devil's Press | Max | reps | 10 | 15kg×2 | 7.5kg×2 | |
 | Gym | 3 | Rower | Max | metres | 1 | — | — | |
-| Gym | 4 | Burpee Box Jumps | Max | reps | 10 | bodyweight | bodyweight | |
+| Gym | 4 | Burpee Box Jumps | Max | reps | 10 | 24in | 20in | |
 | Gym | 5 | KB Hold | Max time | seconds | not scored | 24kg | 16kg | gates rotation only |
 
 Populate this via a `setupScoringTable()` function (mirrors Mini Hyrox's
@@ -186,7 +186,8 @@ a URL.
   rotations complete, i.e. every athlete has done every station once).
 - Weights (context, not enforced by the app — judges self-referee): Front
   Squats M-15kg×2/F-10kg×2, Devil's Press M-15kg×2/F-7.5kg×2, KB Hold
-  M-24kg/F-16kg (Rower = max distance, Burpee Box Jumps = bodyweight).
+  M-24kg/F-16kg (Rower = max distance, Burpee Box Jumps = box height
+  M-24in/F-20in, bodyweight reps).
 
 ## 7. Testing / verification approach
 
