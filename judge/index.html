@@ -234,6 +234,10 @@ async function verifyPin(pin) {
       location.href = 'gym.html?pin=' + encodeURIComponent(pin);
       return;
     }
+    if (String(judge.battle) === '1' && judge.station === 'checkin') {
+      location.href = 'checkin.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
     if (String(judge.battle) !== '1') {
       msg.textContent = 'Unknown assignment for this PIN';
       msg.className = 'msg err';

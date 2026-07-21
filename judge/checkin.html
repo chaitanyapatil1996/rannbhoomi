@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Check-In — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); --ok:#1a6b00; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { min-height:100%; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); }
+body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0); }
+
+.screen { display:none; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:28px 18px 40px; }
+.screen.active { display:flex; }
+.card { width:100%; max-width:460px; background:rgba(214,185,122,0.55); border:1px solid var(--border); padding:32px 26px; }
+
+.badge { font-size:9px; letter-spacing:4px; opacity:0.75; text-transform:uppercase; margin-bottom:10px; }
+.title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; color:var(--crimson); line-height:1.1; margin-bottom:4px; }
+.rule { width:44px; height:2px; background:var(--crimson); opacity:0.3; margin-bottom:20px; }
+
+.field-label { font-size:9px; letter-spacing:3px; opacity:0.75; margin-bottom:8px; display:block; }
+select.field-input, .field-input {
+  width:100%; padding:14px; border:1px solid var(--border);
+  background:rgba(214,185,122,0.4); font-family:'Cinzel',serif;
+  font-size:14px; color:var(--crimson); outline:none; -webkit-appearance:none; border-radius:0;
+}
+.field-input:focus { border-color:var(--crimson); background:rgba(214,185,122,0.7); }
+
+.search-results { margin-top:8px; max-height:200px; overflow-y:auto; border:1px solid var(--border); display:none; }
+.search-results.open { display:block; }
+.search-row { padding:10px 12px; font-size:12px; letter-spacing:0.5px; cursor:pointer; border-bottom:1px solid rgba(76,0,7,0.08); }
+.search-row:hover { background:rgba(76,0,7,0.06); }
+
+.selected-box { margin-top:14px; padding:14px; border:2px solid var(--crimson); background:rgba(214,185,122,0.4); display:none; }
+.selected-box.open { display:block; }
+.selected-box .sb-name { font-family:'Bebas Neue',sans-serif; font-size:20px; }
+.selected-box .sb-id { font-size:11px; opacity:0.7; margin-top:2px; }
+
+.btn-primary {
+  width:100%; margin-top:14px; padding:16px;
+  background:var(--crimson); color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:4px;
+  border:none; cursor:pointer; transition:opacity .15s;
+}
+.btn-primary:hover { opacity:.85; }
+.btn-primary:disabled { opacity:.35; cursor:not-allowed; }
+.msg { margin-top:14px; font-size:11px; letter-spacing:2px; min-height:16px; text-align:center; }
+.msg.err { color:var(--crimson); }
+.msg.ok  { color:var(--ok); }
+
+.checked-list { margin-top:24px; }
+.checked-list h3 { font-size:10px; letter-spacing:3px; opacity:0.7; margin-bottom:10px; }
+.checked-row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(76,0,7,0.08); font-size:12px; }
+
+.confirm-overlay { display:none; position:fixed; inset:0; background:rgba(76,0,7,0.5); z-index:50; align-items:center; justify-content:center; padding:20px; }
+.confirm-overlay.open { display:flex; }
+.confirm-box { background:#d6b97a; border:1px solid var(--border); padding:28px 24px; max-width:340px; width:100%; }
+.confirm-box p { font-size:12px; line-height:1.6; margin-bottom:20px; }
+.confirm-btns { display:flex; gap:10px; }
+.confirm-btns button { flex:1; padding:12px; font-family:'Cinzel',serif; font-size:11px; letter-spacing:2px; cursor:pointer; border:1px solid var(--border); }
+.confirm-btns .btn-yes { background:var(--crimson); color:var(--gold); border:none; }
+.confirm-btns .btn-no  { background:transparent; color:var(--crimson); }
+
+.btn-logout { margin-top:24px; padding:10px 18px; background:transparent; color:var(--crimson); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px; cursor:pointer; opacity:0.65; }
+.btn-logout:hover { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="loadingScreen">
+  <div class="card"><div class="title">LOADING…</div></div>
+</div>
+
+<div class="screen" id="checkinScreen">
+  <div class="card">
+    <div class="badge" id="zoneBadge">Check-In — Rannbhoomi 2026</div>
+    <div class="title">CHECK-IN</div>
+    <div class="rule"></div>
+
+    <label class="field-label" for="waveSelect">Wave</label>
+    <select class="field-input" id="waveSelect" onchange="onWaveChange()">
+      <option value="">Loading waves…</option>
+    </select>
+
+    <label class="field-label" for="athleteSearch" style="margin-top:18px;">Search athlete (name or bib)</label>
+    <input class="field-input" type="text" id="athleteSearch" placeholder="Type to search…" autocomplete="off" oninput="onSearchInput()">
+    <div class="search-results" id="searchResults"></div>
+
+    <div class="selected-box" id="selectedBox">
+      <div class="sb-name" id="selectedName">—</div>
+      <div class="sb-id" id="selectedId">—</div>
+    </div>
+
+    <button class="btn-primary" id="checkinBtn" onclick="doCheckin(false)" disabled>CHECK IN</button>
+    <div class="msg" id="checkinMsg"></div>
+
+    <div class="checked-list">
+      <h3 id="checkedListLabel">CHECKED IN — WAVE — / ZONE —</h3>
+      <div id="checkedRows"></div>
+    </div>
+
+    <button class="btn-logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<div class="confirm-overlay" id="dupOverlay">
+  <div class="confirm-box">
+    <p id="dupMsg">Already checked in.</p>
+    <div class="confirm-btns">
+      <button class="btn-no" onclick="closeDupOverlay()">CANCEL</button>
+      <button class="btn-yes" onclick="doCheckin(true)">CHECK IN ANYWAY</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
+
+let judge = null;
+let pin = null;
+let allAthletes = [];
+let selectedAthlete = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+(async function init() {
+  const params = new URLSearchParams(location.search);
+  pin = params.get('pin') || sessionStorage.getItem('judge_pin') || '';
+  if (!pin) { location.href = 'index.html'; return; }
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=judge_login&pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (!data.found || String(data.judge.battle) !== '1' || data.judge.station !== 'checkin') {
+      location.href = 'index.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
+    judge = data.judge;
+    sessionStorage.setItem('judge_pin', pin);
+    document.getElementById('zoneBadge').textContent = judge.label || ('Check-In — Zone ' + judge.assignment);
+
+    const athletesRes = await fetch(`${APPS_SCRIPT_URL}?action=athletes_all`);
+    const athletesData = await athletesRes.json();
+    allAthletes = athletesData.athletes || [];
+
+    await loadWaves();
+    show('checkinScreen');
+  } catch (err) {
+    document.getElementById('loadingScreen').querySelector('.title').textContent = 'CONNECTION FAILED';
+  }
+})();
+
+async function loadWaves() {
+  const sel = document.getElementById('waveSelect');
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=waves_open`);
+    const data = await res.json();
+    const waves = data.waves || [];
+    if (!waves.length) {
+      sel.innerHTML = '<option value="">No open waves — check Waves sheet</option>';
+      return;
+    }
+    sel.innerHTML = waves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
+    await loadCheckedInList();
+  } catch {
+    sel.innerHTML = '<option value="">Failed to load waves</option>';
+  }
+}
+
+function onWaveChange() {
+  loadCheckedInList();
+}
+
+async function loadCheckedInList() {
+  const wave = document.getElementById('waveSelect').value;
+  const label = document.getElementById('checkedListLabel');
+  const rows = document.getElementById('checkedRows');
+  if (!wave) { label.textContent = 'CHECKED IN — SELECT A WAVE'; rows.innerHTML = ''; return; }
+  label.textContent = `CHECKED IN — WAVE ${wave} / ZONE ${judge.assignment}`;
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=checkin_roster&wave=${encodeURIComponent(wave)}&zone=${encodeURIComponent(judge.assignment)}`);
+    const data = await res.json();
+    const roster = data.roster || [];
+    rows.innerHTML = roster.length
+      ? roster.map(a => `<div class="checked-row"><span>${escHtml(a.name)}</span><span>${a.athlete_id}</span></div>`).join('')
+      : '<div class="checked-row" style="opacity:0.6;">Nobody checked in yet</div>';
+  } catch {
+    rows.innerHTML = '<div class="checked-row">Failed to load</div>';
+  }
+}
+
+function onSearchInput() {
+  const q = document.getElementById('athleteSearch').value.trim().toLowerCase();
+  const box = document.getElementById('searchResults');
+  selectedAthlete = null;
+  document.getElementById('selectedBox').classList.remove('open');
+  updateCheckinBtn();
+
+  if (q.length < 2) { box.classList.remove('open'); box.innerHTML = ''; return; }
+  const matches = allAthletes
+    .filter(a => a.name.toLowerCase().includes(q) || String(a.athlete_id).toLowerCase().includes(q))
+    .slice(0, 20);
+  box.innerHTML = matches.map(a =>
+    `<div class="search-row" onclick='pickAthlete(${JSON.stringify(a).replace(/'/g, "&#39;")})'>${escHtml(a.name)} — ${a.athlete_id}${a.category ? ' · ' + escHtml(a.category) : ''}</div>`
+  ).join('');
+  box.classList.toggle('open', matches.length > 0);
+}
+
+function pickAthlete(athlete) {
+  selectedAthlete = athlete;
+  document.getElementById('selectedName').textContent = athlete.name;
+  document.getElementById('selectedId').textContent = athlete.athlete_id;
+  document.getElementById('selectedBox').classList.add('open');
+  document.getElementById('searchResults').classList.remove('open');
+  document.getElementById('athleteSearch').value = athlete.name;
+  updateCheckinBtn();
+}
+
+function updateCheckinBtn() {
+  const wave = document.getElementById('waveSelect').value;
+  document.getElementById('checkinBtn').disabled = !(selectedAthlete && wave);
+}
+
+async function doCheckin(force) {
+  const wave = document.getElementById('waveSelect').value;
+  const msg = document.getElementById('checkinMsg');
+  if (!selectedAthlete || !wave) return;
+
+  document.getElementById('checkinBtn').disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'checkin_submit', pin, wave, athlete_id: selectedAthlete.athlete_id, force }),
+    });
+    const data = await res.json();
+
+    if (data.error === 'already_checked_in') {
+      document.getElementById('dupMsg').textContent =
+        `${selectedAthlete.name} is already checked into Wave ${data.existing_wave}, Zone ${data.existing_zone}. Check in here too?`;
+      document.getElementById('dupOverlay').classList.add('open');
+      document.getElementById('checkinBtn').disabled = false;
+      return;
+    }
+    if (!data.success) throw new Error(data.error || 'Failed');
+
+    closeDupOverlay();
+    msg.textContent = `${selectedAthlete.name} checked in.`;
+    msg.className = 'msg ok';
+    document.getElementById('athleteSearch').value = '';
+    document.getElementById('selectedBox').classList.remove('open');
+    selectedAthlete = null;
+    updateCheckinBtn();
+    await loadCheckedInList();
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  document.getElementById('checkinBtn').disabled = false;
+}
+
+function closeDupOverlay() {
+  document.getElementById('dupOverlay').classList.remove('open');
+}
+
+function logout() {
+  sessionStorage.removeItem('judge_pin');
+  location.href = 'index.html';
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+updateCheckinBtn();
+</script>
+</body>
+</html>
