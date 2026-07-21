@@ -826,9 +826,9 @@ function battle1SubmitWave(body) {
   }
 }
 
-// Flips Waves.status to Complete once every checked-in athlete for a wave
-// (across all 4 zones, not just this judge's own) has a complete
-// Round1_Scores row — no manual "mark complete" action needed.
+// Flips Waves.status to Complete for one zone once every athlete checked
+// into THAT zone for this wave has a complete Round1_Scores row — fully
+// independent of the other 3 zones' progress on the same wave number.
 function _maybeCompleteWave(wave, zone) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const checkedIn = _checkinsForWave(wave).filter(c => String(c.zone) === String(zone));
