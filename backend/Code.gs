@@ -691,6 +691,15 @@ function checkinSubmit(body) {
     if (existing && !force) {
       return jsonResponse({ error: 'already_checked_in', existing_wave: existing[0], existing_zone: existing[1] });
     }
+
+    // Hard cap at one athlete per station — a zone only ever runs as many
+    // athletes through a wave at once as it has stations.
+    const capacity = STATION_ROUNDS['1'].length;
+    const zoneCount = data.filter((r, i) => i > 0 && String(r[0]) === String(wave) && String(r[1]) === String(judge.assignment)).length;
+    if (zoneCount >= capacity) {
+      return jsonResponse({ error: `Zone ${judge.assignment} is full for Wave ${wave} (${capacity}/${capacity} checked in).` });
+    }
+
     sheet.appendRow([Number(wave), judge.assignment, athlete_id, new Date().toISOString()]);
     return jsonResponse({ success: true });
   } finally {
