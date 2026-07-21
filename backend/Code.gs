@@ -35,7 +35,6 @@ function doGet(e) {
   if (action === 'checkin_roster')   return checkinRoster(e);
   if (action === 'battle1_roster')       return battle1Roster(e);
   if (action === 'waves_for_late_entry') return wavesForLateEntry(e);
-  if (action === 'admin_waves_overview') return adminWavesOverview(e);
   if (action === 'battle2_roster')   return battle2Roster(e);
   if (action === 'battle2_status')   return battle2Status(e);
   if (action === 'battle2_scores')   return battle2Scores(e);
@@ -53,9 +52,9 @@ function doPost(e) {
   if (action === 'admin_clear')       return clearAllScores(body);
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
-  if (action === 'admin_activate_wave') return adminActivateWave(body);
-  if (action === 'admin_complete_wave') return adminCompleteWave(body);
   if (action === 'checkin_submit')       return checkinSubmit(body);
+  if (action === 'checkin_activate_wave') return checkinActivateWave(body);
+  if (action === 'checkin_complete_wave') return checkinCompleteWave(body);
   if (action === 'battle1_submit_wave')  return battle1SubmitWave(body);
   if (action === 'battle2_start')        return battle2Start(body);
   if (action === 'battle2_station_done') return battle2StationDone(body);
@@ -526,76 +525,6 @@ function adminRebuild(body) {
   return jsonResponse({ success: true });
 }
 
-// ─── Admin: Battle 1 wave management ─────────────────────────────────────
-
-// GET: all waves + status + per-zone checked-in counts, for the admin
-// panel's Waves section. No PIN required — read-only status info, same
-// convention as this file's other GET reads.
-function adminWavesOverview(e) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const wavesSheet = ss.getSheetByName(WAVES_SHEET);
-  if (!wavesSheet || wavesSheet.getLastRow() <= 1) return jsonResponse({ waves: [] });
-  const wavesData = wavesSheet.getDataRange().getValues();
-
-  const checkinsSheet = ss.getSheetByName(CHECKINS_SHEET);
-  const checkins = (checkinsSheet && checkinsSheet.getLastRow() > 1)
-    ? checkinsSheet.getDataRange().getValues().slice(1)
-    : [];
-
-  const waves = wavesData.slice(1).filter(r => r[0]).map(r => {
-    const waveNum = r[0];
-    const zoneCounts = { A: 0, B: 0, C: 0, D: 0 };
-    checkins.forEach(c => {
-      if (String(c[0]) === String(waveNum) && zoneCounts[c[1]] !== undefined) zoneCounts[c[1]]++;
-    });
-    return { wave_num: waveNum, status: r[1], zone_counts: zoneCounts };
-  }).sort((a, b) => Number(a.wave_num) - Number(b.wave_num));
-
-  return jsonResponse({ waves });
-}
-
-// POST: activates a Draft wave. Blocks activating a second wave while one
-// is already Active — same "one Active wave at a time" rule as
-// Prehab121's fdActivateWave.
-function adminActivateWave(body) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const cfg = getConfig(ss);
-  if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
-  const { wave } = body;
-  if (!wave) return jsonResponse({ error: 'wave required' });
-
-  const sheet = ss.getSheetByName(WAVES_SHEET);
-  const data = sheet.getDataRange().getValues();
-  const activeRow = data.findIndex((r, i) => i > 0 && r[1] === 'Active');
-  if (activeRow > -1 && String(data[activeRow][0]) !== String(wave)) {
-    return jsonResponse({ error: `Wave ${data[activeRow][0]} is already Active — complete or force-complete it first.` });
-  }
-  const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(wave));
-  if (rowIdx === -1) return jsonResponse({ error: 'Wave not found' });
-  sheet.getRange(rowIdx + 1, 2).setValue('Active');
-  return jsonResponse({ success: true });
-}
-
-// POST: manual override to mark a wave Complete even if not every
-// checked-in athlete has a full score yet. Wave completion is normally
-// automatic (see _maybeCompleteWave in the Battle 1 scoring section), but
-// a withdrawn/injured athlete would otherwise block that wave from ever
-// auto-completing — which would in turn block activating the next wave.
-// This is the escape hatch for that.
-function adminCompleteWave(body) {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const cfg = getConfig(ss);
-  if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
-  const { wave } = body;
-  if (!wave) return jsonResponse({ error: 'wave required' });
-  const sheet = ss.getSheetByName(WAVES_SHEET);
-  const data = sheet.getDataRange().getValues();
-  const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(wave));
-  if (rowIdx === -1) return jsonResponse({ error: 'Wave not found' });
-  sheet.getRange(rowIdx + 1, 2).setValue('Complete');
-  return jsonResponse({ success: true });
-}
-
 // ─── Battle 1 — Check-In ──────────────────────────────────────────────────
 //
 // Checkins is append-only: one row per (wave, zone, athlete_id). It is the
@@ -638,13 +567,14 @@ function athletesAll(e) {
 // screen's wave selector — lets check-in for the next wave start while the
 // current wave is still being scored.
 function wavesOpenForCheckin(e) {
+  const zone = e.parameter.zone;
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(WAVES_SHEET);
   if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ waves: [] });
   const data = sheet.getDataRange().getValues();
   const waves = data.slice(1)
-    .filter(r => r[0] && (r[1] === 'Draft' || r[1] === 'Active'))
-    .map(r => ({ wave_num: r[0], status: r[1] }))
+    .filter(r => r[0] && (!zone || String(r[1]) === String(zone)) && (r[2] === 'Draft' || r[2] === 'Active'))
+    .map(r => ({ wave_num: r[0], zone: r[1], status: r[2] }))
     .sort((a, b) => Number(a.wave_num) - Number(b.wave_num));
   return jsonResponse({ waves });
 }
@@ -707,13 +637,65 @@ function checkinSubmit(body) {
   }
 }
 
-function _activeWave() {
+// POST: activates a wave for the check-in judge's own zone only. Blocks
+// only if a DIFFERENT wave is already Active for this SAME zone — other
+// zones are completely unaffected, since wave lifecycle is per-zone.
+function checkinActivateWave(body) {
+  const { pin, wave } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '1' || judge.station !== 'checkin') return jsonResponse({ error: 'Invalid PIN' });
+  if (!wave) return jsonResponse({ error: 'wave required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(WAVES_SHEET);
+    const data = sheet.getDataRange().getValues();
+    const activeRow = data.findIndex((r, i) => i > 0 && String(r[1]) === String(judge.assignment) && r[2] === 'Active');
+    if (activeRow > -1 && String(data[activeRow][0]) !== String(wave)) {
+      return jsonResponse({ error: `Wave ${data[activeRow][0]} is already Active for Zone ${judge.assignment} — complete or force-complete it first.` });
+    }
+    const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(wave) && String(r[1]) === String(judge.assignment));
+    if (rowIdx === -1) return jsonResponse({ error: 'Wave not found for this zone' });
+    sheet.getRange(rowIdx + 1, 3).setValue('Active');
+    return jsonResponse({ success: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// POST: force-completes a wave for the check-in judge's own zone — escape
+// hatch for a wave that can never naturally auto-complete (e.g. a
+// withdrawn athlete).
+function checkinCompleteWave(body) {
+  const { pin, wave } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '1' || judge.station !== 'checkin') return jsonResponse({ error: 'Invalid PIN' });
+  if (!wave) return jsonResponse({ error: 'wave required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(WAVES_SHEET);
+    const data = sheet.getDataRange().getValues();
+    const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(wave) && String(r[1]) === String(judge.assignment));
+    if (rowIdx === -1) return jsonResponse({ error: 'Wave not found for this zone' });
+    sheet.getRange(rowIdx + 1, 3).setValue('Complete');
+    return jsonResponse({ success: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function _activeWaveForZone(zone) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(WAVES_SHEET);
   if (!sheet || sheet.getLastRow() <= 1) return null;
   const data = sheet.getDataRange().getValues();
-  const row = data.find((r, i) => i > 0 && r[1] === 'Active');
-  return row ? { wave_num: row[0], status: row[1] } : null;
+  const row = data.find((r, i) => i > 0 && String(r[1]) === String(zone) && r[2] === 'Active');
+  return row ? { wave_num: row[0], zone: row[1], status: row[2] } : null;
 }
 
 // GET: this judge's zone's checked-in roster for a wave (defaults to the
@@ -728,7 +710,7 @@ function battle1Roster(e) {
 
   let wave = e.parameter.wave;
   if (!wave) {
-    const active = _activeWave();
+    const active = _activeWaveForZone(judge.assignment);
     if (!active) return jsonResponse({ wave: null, roster: [] });
     wave = active.wave_num;
   }
@@ -836,7 +818,7 @@ function battle1SubmitWave(body) {
       if (allFilled) setCell('total', total);
     });
 
-    _maybeCompleteWave(wave);
+    _maybeCompleteWave(wave, judge.assignment);
 
     return jsonResponse({ success: true, submitted, skipped });
   } finally {
@@ -847,9 +829,9 @@ function battle1SubmitWave(body) {
 // Flips Waves.status to Complete once every checked-in athlete for a wave
 // (across all 4 zones, not just this judge's own) has a complete
 // Round1_Scores row — no manual "mark complete" action needed.
-function _maybeCompleteWave(wave) {
+function _maybeCompleteWave(wave, zone) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const checkedIn = _checkinsForWave(wave);
+  const checkedIn = _checkinsForWave(wave).filter(c => String(c.zone) === String(zone));
   if (checkedIn.length === 0) return;
 
   const scoreSheet = ss.getSheetByName(SCORE_SHEETS['1']);
@@ -866,20 +848,21 @@ function _maybeCompleteWave(wave) {
 
   const wavesSheet = ss.getSheetByName(WAVES_SHEET);
   const wavesData = wavesSheet.getDataRange().getValues();
-  const rowIdx = wavesData.findIndex((r, i) => i > 0 && String(r[0]) === String(wave));
-  if (rowIdx > -1) wavesSheet.getRange(rowIdx + 1, 2).setValue('Complete');
+  const rowIdx = wavesData.findIndex((r, i) => i > 0 && String(r[0]) === String(wave) && String(r[1]) === String(zone));
+  if (rowIdx > -1) wavesSheet.getRange(rowIdx + 1, 3).setValue('Complete');
 }
 
 // GET: waves eligible for Late Entry (Active or Complete — not Draft,
 // since a Draft wave has no meaningful roster/scores yet).
 function wavesForLateEntry(e) {
+  const zone = e.parameter.zone;
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(WAVES_SHEET);
   if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ waves: [] });
   const data = sheet.getDataRange().getValues();
   const waves = data.slice(1)
-    .filter(r => r[0] && (r[1] === 'Active' || r[1] === 'Complete'))
-    .map(r => ({ wave_num: r[0], status: r[1] }))
+    .filter(r => r[0] && (!zone || String(r[1]) === String(zone)) && (r[2] === 'Active' || r[2] === 'Complete'))
+    .map(r => ({ wave_num: r[0], zone: r[1], status: r[2] }))
     .sort((a, b) => Number(a.wave_num) - Number(b.wave_num));
   return jsonResponse({ waves });
 }
@@ -1684,15 +1667,14 @@ function setupCheckinsSheet() {
   Logger.log('setupCheckinsSheet complete.');
 }
 
-// Populates one Draft row per distinct wave number already present in the
-// Athletes sheet's `wave` column, so the organizer doesn't have to type
-// wave numbers in by hand — only run against a brand-new, empty sheet.
+// Populates one Draft row per (distinct wave number in Athletes.wave) x
+// (each of the 4 zones) — only run against a brand-new, empty sheet.
 function setupWavesSheet() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(WAVES_SHEET);
   if (!sheet) sheet = ss.insertSheet(WAVES_SHEET);
   if (sheet.getLastRow() > 0) { Logger.log('Waves already has data — leaving it alone.'); return; }
-  const headers = ['wave_num', 'status'];
+  const headers = ['wave_num', 'zone', 'status'];
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
 
   const athleteSheet = ss.getSheetByName('Athletes');
@@ -1702,11 +1684,43 @@ function setupWavesSheet() {
     if (waveIdx > -1) {
       const waveNums = [...new Set(data.slice(1).map(r => String(r[waveIdx]).trim()).filter(Boolean))]
         .map(Number).sort((a, b) => a - b);
-      const rows = waveNums.map(n => [n, 'Draft']);
-      if (rows.length) sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+      const ZONES = ['A', 'B', 'C', 'D'];
+      const rows = [];
+      waveNums.forEach(n => ZONES.forEach(z => rows.push([n, z, 'Draft'])));
+      if (rows.length) sheet.getRange(2, 1, rows.length, 3).setValues(rows);
     }
   }
   Logger.log('setupWavesSheet complete.');
+}
+
+// One-off migration: the live Waves sheet was created with the OLD
+// (wave_num, status) schema — one shared status across all 4 zones. This
+// clears and rebuilds it as (wave_num, zone, status), one row per (wave,
+// zone) pair. DESTRUCTIVE — only run this once. Safe because Waves only
+// tracks status, not who's checked in (that's the separate Checkins
+// sheet, untouched here) — resets every zone back to Draft.
+function migrateWavesToPerZone() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(WAVES_SHEET);
+  if (!sheet) { Logger.log('Waves sheet not found — nothing to migrate, run setupWavesSheet() instead.'); return; }
+  sheet.clear();
+  const headers = ['wave_num', 'zone', 'status'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+
+  const athleteSheet = ss.getSheetByName('Athletes');
+  if (athleteSheet && athleteSheet.getLastRow() > 1) {
+    const data = athleteSheet.getDataRange().getValues();
+    const waveIdx = data[0].indexOf('wave');
+    if (waveIdx > -1) {
+      const waveNums = [...new Set(data.slice(1).map(r => String(r[waveIdx]).trim()).filter(Boolean))]
+        .map(Number).sort((a, b) => a - b);
+      const ZONES = ['A', 'B', 'C', 'D'];
+      const rows = [];
+      waveNums.forEach(n => ZONES.forEach(z => rows.push([n, z, 'Draft'])));
+      if (rows.length) sheet.getRange(2, 1, rows.length, 3).setValues(rows);
+    }
+  }
+  Logger.log('migrateWavesToPerZone complete — Waves sheet rebuilt with per-zone rows, all Draft.');
 }
 
 function setupGymSheets() {
