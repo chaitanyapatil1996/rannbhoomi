@@ -206,7 +206,7 @@ function renderZone(zone, opts) {
   }
 
   document.getElementById('scoreTeamName').textContent = zone.team_name || '—';
-  document.getElementById('rotationBadge').textContent = `ROTATION ${zone.rotations} / 5`;
+  document.getElementById('rotationBadge').textContent = `ROTATION ${Number(zone.rotations) + 1} / 5`;
 
   const isFrontSquats = judge.station === 'front_squats';
   const list = document.getElementById('stationsList');
