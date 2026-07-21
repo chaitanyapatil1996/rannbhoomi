@@ -30,6 +30,9 @@ function doGet(e) {
   if (action === 'athlete')          return getAthlete(e);
   if (action === 'analytics')        return getAnalytics(e);
   if (action === 'judge_login')      return judgeLogin(e);
+  if (action === 'athletes_all')     return athletesAll(e);
+  if (action === 'waves_open')       return wavesOpenForCheckin(e);
+  if (action === 'checkin_roster')   return checkinRoster(e);
   if (action === 'battle2_roster')   return battle2Roster(e);
   if (action === 'battle2_status')   return battle2Status(e);
   if (action === 'battle2_scores')   return battle2Scores(e);
@@ -47,6 +50,7 @@ function doPost(e) {
   if (action === 'admin_clear')       return clearAllScores(body);
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
+  if (action === 'checkin_submit')       return checkinSubmit(body);
   if (action === 'battle2_start')        return battle2Start(body);
   if (action === 'battle2_station_done') return battle2StationDone(body);
   if (action === 'battle2_partial')      return battle2Partial(body);
@@ -514,6 +518,108 @@ function adminRebuild(body) {
   if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
   rebuildLeaderboard();
   return jsonResponse({ success: true });
+}
+
+// ─── Battle 1 — Check-In ──────────────────────────────────────────────────
+//
+// Checkins is append-only: one row per (wave, zone, athlete_id). It is the
+// real source of truth for "who's actually part of wave N, zone Z" — the
+// Athletes sheet's `wave` column is just a pre-planned default, not
+// binding. A no-show simply never gets a row here. A late arrival gets
+// checked into whichever wave is currently open when they show up — this
+// check-in action is the entire late-accommodation mechanism.
+
+function _checkinsForWave(waveNum) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(CHECKINS_SHEET);
+  if (!sheet || sheet.getLastRow() <= 1) return [];
+  const data = sheet.getDataRange().getValues();
+  return data.slice(1)
+    .filter(r => r[0] && String(r[0]) === String(waveNum))
+    .map(r => ({ wave: r[0], zone: r[1], athlete_id: r[2], checked_in_at: r[3] }));
+}
+
+// GET: full athlete list for the check-in screen's bib search. This is the
+// only place a full-roster search is needed — check-in is a one-time
+// action per arriving athlete, done by 4 staff, not repeated by the 28
+// station judges.
+function athletesAll(e) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName('Athletes');
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ athletes: [] });
+  const data = sheet.getDataRange().getValues();
+  const headers = data[0];
+  const idIdx   = headers.indexOf('athlete_id');
+  const nameIdx = headers.indexOf('name');
+  const catIdx  = headers.indexOf('category');
+  const athletes = data.slice(1)
+    .filter(r => r[idIdx])
+    .map(r => ({ athlete_id: r[idIdx], name: r[nameIdx], category: r[catIdx] }));
+  return jsonResponse({ athletes });
+}
+
+// GET: waves still accepting check-ins (Draft or Active), for the check-in
+// screen's wave selector — lets check-in for the next wave start while the
+// current wave is still being scored.
+function wavesOpenForCheckin(e) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(WAVES_SHEET);
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ waves: [] });
+  const data = sheet.getDataRange().getValues();
+  const waves = data.slice(1)
+    .filter(r => r[0] && (r[1] === 'Draft' || r[1] === 'Active'))
+    .map(r => ({ wave_num: r[0], status: r[1] }))
+    .sort((a, b) => Number(a.wave_num) - Number(b.wave_num));
+  return jsonResponse({ waves });
+}
+
+// GET: read-only — who's already checked into (wave, zone). Lets the
+// check-in screen resync after a reload instead of losing state (same
+// server-truth principle as battle2_status / gym_zone_status).
+function checkinRoster(e) {
+  const wave = e.parameter.wave;
+  const zone = e.parameter.zone;
+  if (!wave || !zone) return jsonResponse({ error: 'wave and zone required' });
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const athleteSheet = ss.getSheetByName('Athletes');
+  const athleteData  = athleteSheet.getDataRange().getValues();
+  const athleteH     = athleteData[0];
+  const idIdx        = athleteH.indexOf('athlete_id');
+  const nameIdx      = athleteH.indexOf('name');
+
+  const checkedIn = _checkinsForWave(wave).filter(c => String(c.zone) === String(zone));
+  const roster = checkedIn.map(c => {
+    const athlete = athleteData.find((r, i) => i > 0 && String(r[idIdx]) === String(c.athlete_id));
+    return { athlete_id: c.athlete_id, name: athlete ? athlete[nameIdx] : c.athlete_id };
+  });
+  return jsonResponse({ roster });
+}
+
+// POST: checks one athlete into (wave, zone). Guards against a duplicate
+// check-in elsewhere (any wave/zone) unless the caller explicitly confirms
+// with force:true — covers a genuine correction (moved zones) without
+// silently double-checking someone in by accident.
+function checkinSubmit(body) {
+  const { pin, wave, athlete_id, force } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '1' || judge.station !== 'checkin') return jsonResponse({ error: 'Invalid PIN' });
+  if (!wave || !athlete_id) return jsonResponse({ error: 'wave and athlete_id required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CHECKINS_SHEET);
+    const data = sheet.getDataRange().getValues();
+    const existing = data.find((r, i) => i > 0 && String(r[2]) === String(athlete_id));
+    if (existing && !force) {
+      return jsonResponse({ error: 'already_checked_in', existing_wave: existing[0], existing_zone: existing[1] });
+    }
+    sheet.appendRow([Number(wave), judge.assignment, athlete_id, new Date().toISOString()]);
+    return jsonResponse({ success: true });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 // ─── Battle 2 — round/station grid (no stopwatch) ────────────────────────────
