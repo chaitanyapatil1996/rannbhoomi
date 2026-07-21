@@ -46,61 +46,6 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
 .msg { margin-top: 16px; font-size: 11px; letter-spacing: 2px; min-height: 18px; text-align: center; }
 .msg.err { color: var(--crimson); }
 .msg.ok  { color: #1a6b00; }
-
-.queue-card { width: 100%; max-width: 480px; }
-.queue-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
-.queue-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 2px; color: var(--crimson); line-height: 1; }
-.queue-zone { font-size: 9px; letter-spacing: 3px; opacity: 0.8; margin-top: 4px; }
-.wave-badge {
-  background: var(--crimson); color: var(--gold);
-  font-family: 'Bebas Neue', sans-serif; font-size: 14px; letter-spacing: 2px;
-  padding: 6px 12px; white-space: nowrap;
-}
-.q-rule { width: 100%; height: 1px; background: var(--crimson); opacity: 0.15; margin-bottom: 28px; }
-.athlete-lookup { margin-bottom: 24px; position: relative; }
-.athlete-name-display {
-  margin-top: 10px; padding: 12px 14px;
-  background: rgba(76,0,7,0.06); border-left: 3px solid var(--crimson);
-  font-size: 13px; letter-spacing: 1px; min-height: 44px;
-}
-.athlete-name-display.found { border-color: #1a6b00; }
-.athlete-name-display.not-found { border-color: var(--crimson); opacity: 0.6; }
-.value-input-wrap { margin-bottom: 28px; }
-.big-input {
-  width: 100%; padding: 22px 16px; text-align: center;
-  border: 2px solid var(--border); background: rgba(214,185,122,0.4);
-  font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: var(--crimson);
-  outline: none; -webkit-appearance: none; border-radius: 0;
-  letter-spacing: 4px;
-}
-.big-input:focus { border-color: var(--crimson); background: rgba(214,185,122,0.65); }
-.unit-label { text-align: center; font-size: 16px; letter-spacing: 2px; opacity: 0.85; font-weight: 700; margin-top: 8px; }
-.submit-confirm {
-  width: 100%; padding: 20px;
-  background: var(--crimson); color: var(--gold);
-  font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 5px;
-  border: none; cursor: pointer; transition: opacity .15s;
-}
-.submit-confirm:hover { opacity: .85; }
-.submit-confirm:disabled { opacity: .35; cursor: not-allowed; }
-.last-entry {
-  margin-top: 20px; padding: 14px 16px;
-  background: rgba(76,0,7,0.05); border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
-  font-size: 11px; letter-spacing: 1px;
-}
-.last-entry .le-name { opacity: 0.7; flex: 1; }
-.last-entry .le-val  { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--crimson); margin-left: 12px; }
-.last-entry .le-check { color: #1a6b00; margin-left: 10px; font-size: 16px; }
-.score-count { margin-top: 12px; font-size: 9px; letter-spacing: 3px; opacity: 0.7; text-align: center; }
-.btn-logout {
-  margin-top: 28px; padding: 10px 20px;
-  background: transparent; color: var(--crimson);
-  border: 1px solid var(--border); font-family: 'Cinzel', serif;
-  font-size: 9px; letter-spacing: 3px; cursor: pointer; opacity: 0.65;
-  transition: opacity .15s;
-}
-.btn-logout:hover { opacity: 1; }
 </style>
 </head>
 <body>
@@ -121,65 +66,9 @@ body { padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(sa
   </div>
 </div>
 
-<!-- ── Queue Screen (Battle 1 only — Battle 2 / Gym Battle redirect to their own pages) ── -->
-<div class="screen" id="queueScreen">
-  <div class="queue-card">
-    <div class="queue-header">
-      <div>
-        <div class="queue-title" id="qStationTitle">—</div>
-        <div class="queue-zone" id="qZoneLabel">—</div>
-      </div>
-      <div class="wave-badge">BATTLE 1</div>
-    </div>
-    <div class="q-rule"></div>
-
-    <div class="athlete-lookup">
-      <label class="field-label field-label-lg" for="athleteId">Athlete ID (Bib Number)</label>
-      <input class="field-input" type="text" id="athleteId" placeholder="e.g. RB001234"
-             autocomplete="off" autocapitalize="characters"
-             oninput="onAthleteIdInput()" onpaste="setTimeout(onAthleteIdInput,0)">
-      <div class="athlete-name-display" id="athleteNameDisplay">Enter athlete ID above</div>
-    </div>
-
-    <div class="value-input-wrap">
-      <input class="big-input" type="number" id="valueInput" placeholder="0"
-             min="0" step="1" inputmode="numeric"
-             onkeydown="if(event.key==='Enter') submitScore()">
-      <div class="unit-label" id="unitLabel">—</div>
-    </div>
-
-    <button class="submit-confirm" id="submitBtn" onclick="submitScore()" disabled>SUBMIT SCORE</button>
-    <div class="msg" id="submitMsg"></div>
-
-    <div class="last-entry" id="lastEntry" style="display:none;">
-      <span class="le-name" id="leName">—</span>
-      <span class="le-val"  id="leVal">—</span>
-      <span class="le-check">✓</span>
-    </div>
-
-    <div class="score-count" id="scoreCount">Scored this session: 0</div>
-    <button class="btn-logout" onclick="logout()">LOG OUT</button>
-  </div>
-</div>
-
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
-const STATION_LABELS = {
-  s1_burpees:   { label: 'Static Burpees',    unit: 'reps' },
-  s2_bike:      { label: 'Erg Bike',          unit: 'metres' },
-  s3_lunges:    { label: 'Deadlift',          unit: 'reps' },
-  s4_pushups:   { label: 'Hand Release Push Ups', unit: 'reps' },
-  s5_sprint:    { label: 'Sprint with Weights', unit: 'laps' },
-  s6_inchworms: { label: 'Inch Worms',        unit: 'reps' },
-  s7_squats:    { label: 'DB Front Squats',   unit: 'reps' },
-};
-
-let scoreCount = 0;
-let currentAthleteId = '';
-let currentAthleteName = '';
-let athleteConfirmed = false;
-let lookupTimer = null;
 let judge = null;
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -234,19 +123,14 @@ async function verifyPin(pin) {
       location.href = 'gym.html?pin=' + encodeURIComponent(pin);
       return;
     }
-    if (String(judge.battle) === '1' && judge.station === 'checkin') {
-      location.href = 'checkin.html?pin=' + encodeURIComponent(pin);
+    if (String(judge.battle) === '1') {
+      location.href = (judge.station === 'checkin' ? 'checkin.html' : 'battle1.html') + '?pin=' + encodeURIComponent(pin);
       return;
     }
-    if (String(judge.battle) !== '1') {
-      msg.textContent = 'Unknown assignment for this PIN';
-      msg.className = 'msg err';
-      btn.disabled = false;
-      btn.textContent = 'ENTER';
-      return;
-    }
-
-    showQueue();
+    msg.textContent = 'Unknown assignment for this PIN';
+    msg.className = 'msg err';
+    btn.disabled = false;
+    btn.textContent = 'ENTER';
   } catch (err) {
     msg.textContent = 'Connection failed — try again';
     msg.className = 'msg err';
@@ -255,147 +139,10 @@ async function verifyPin(pin) {
   }
 }
 
-function showQueue() {
-  document.getElementById('pinScreen').classList.remove('active');
-  document.getElementById('queueScreen').classList.add('active');
-
-  const stInfo = STATION_LABELS[judge.station] || null;
-  document.getElementById('qStationTitle').textContent = (stInfo ? stInfo.label : judge.station).toUpperCase();
-  document.getElementById('unitLabel').textContent     = (stInfo ? stInfo.unit : '—').toUpperCase();
-  document.getElementById('qZoneLabel').textContent    = `Zone ${judge.assignment}`;
-
-  document.getElementById('athleteId').focus();
-}
-
-// ── Athlete ID lookup (debounced) ─────────────────────────────────────────────
-
-function onAthleteIdInput() {
-  const id  = document.getElementById('athleteId').value.trim().toUpperCase();
-  const box = document.getElementById('athleteNameDisplay');
-  athleteConfirmed   = false;
-  currentAthleteId   = '';
-  currentAthleteName = '';
-  updateSubmitBtn();
-
-  if (!id || id.length < 4) {
-    box.textContent  = 'Enter athlete ID above';
-    box.className    = 'athlete-name-display';
-    return;
-  }
-
-  box.textContent = 'Looking up...';
-  box.className   = 'athlete-name-display';
-  clearTimeout(lookupTimer);
-  lookupTimer = setTimeout(() => lookupAthlete(id), 500);
-}
-
-async function lookupAthlete(id) {
-  const box = document.getElementById('athleteNameDisplay');
-  try {
-    const res  = await fetch(`${APPS_SCRIPT_URL}?action=validate_athlete&athlete_id=${encodeURIComponent(id)}`);
-    const data = await res.json();
-    if (data.found && data.athlete) {
-      const a = data.athlete;
-      const name     = a.name || id;
-      const category = a.category ? ` · ${String(a.category).charAt(0).toUpperCase() + String(a.category).slice(1)}` : '';
-      box.textContent  = `${name}${category}`;
-      box.className    = 'athlete-name-display found';
-      currentAthleteId   = id;
-      currentAthleteName = name;
-      athleteConfirmed   = true;
-    } else {
-      box.textContent = 'Athlete not found — check ID';
-      box.className   = 'athlete-name-display not-found';
-    }
-  } catch {
-    box.textContent = 'Lookup failed — check connection';
-    box.className   = 'athlete-name-display not-found';
-  }
-  updateSubmitBtn();
-}
-
-function updateSubmitBtn() {
-  const val = parseFloat(document.getElementById('valueInput').value);
-  document.getElementById('submitBtn').disabled = !(athleteConfirmed && !isNaN(val) && val >= 0);
-}
-
-// ── Score submission ──────────────────────────────────────────────────────────
-
-async function submitScore() {
-  const btn = document.getElementById('submitBtn');
-  const msg = document.getElementById('submitMsg');
-  const val = parseFloat(document.getElementById('valueInput').value);
-
-  if (!athleteConfirmed || isNaN(val)) return;
-
-  btn.disabled   = true;
-  btn.textContent = 'SUBMITTING...';
-  msg.textContent = '';
-  msg.className  = 'msg';
-
-  try {
-    const res  = await fetch(APPS_SCRIPT_URL, {
-      method:  'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body:    JSON.stringify({
-        action:     'score',
-        pin:        judge.pin,
-        round:      '1',
-        station:    judge.station,
-        athlete_id: currentAthleteId,
-        value:      val,
-      }),
-    });
-    const data = await res.json();
-
-    if (data.success) {
-      document.getElementById('leName').textContent = currentAthleteName;
-      const stInfo = STATION_LABELS[judge.station] || null;
-      document.getElementById('leVal').textContent  = `${val} ${stInfo ? stInfo.unit : ''}`;
-      document.getElementById('lastEntry').style.display = 'flex';
-
-      scoreCount++;
-      document.getElementById('scoreCount').textContent = `Scored this session: ${scoreCount}`;
-
-      document.getElementById('athleteId').value    = '';
-      document.getElementById('valueInput').value   = '';
-      document.getElementById('athleteNameDisplay').textContent = 'Enter athlete ID above';
-      document.getElementById('athleteNameDisplay').className   = 'athlete-name-display';
-      athleteConfirmed   = false;
-      currentAthleteId   = '';
-      currentAthleteName = '';
-
-      msg.textContent = '';
-      document.getElementById('athleteId').focus();
-    } else {
-      throw new Error(data.error || 'Submission failed');
-    }
-  } catch (err) {
-    msg.textContent = err.message;
-    msg.className   = 'msg err';
-    if (err.message.includes('PIN')) {
-      sessionStorage.removeItem('judge_pin');
-      judge = null;
-      setTimeout(() => {
-        document.getElementById('queueScreen').classList.remove('active');
-        document.getElementById('pinScreen').classList.add('active');
-        document.getElementById('pinMsg').textContent = 'PIN rejected — re-enter';
-        document.getElementById('pinMsg').className   = 'msg err';
-      }, 1200);
-    }
-  }
-
-  btn.disabled    = false;
-  btn.textContent = 'SUBMIT SCORE';
-  updateSubmitBtn();
-}
-
 function logout() {
   sessionStorage.removeItem('judge_pin');
   location.href = 'index.html';
 }
-
-document.getElementById('valueInput').addEventListener('input', updateSubmitBtn);
 </script>
 </body>
 </html>

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Battle 1 Judge — RANNBHOOMI 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="../images/logo-crimson.png">
+<style>
+:root { --crimson:#4c0007; --gold:#dec189; --parchment:#d6b97a; --border:rgba(76,0,7,0.22); --ok:#1a6b00; }
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html, body { min-height:100%; background:#d6b97a; font-family:'Cinzel',serif; color:var(--crimson); }
+body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0); }
+
+.screen { display:none; min-height:100vh; flex-direction:column; align-items:center; justify-content:center; padding:28px 18px 40px; }
+.screen.active { display:flex; }
+.card { width:100%; max-width:480px; background:rgba(214,185,122,0.55); border:1px solid var(--border); padding:32px 26px; }
+
+.badge { font-size:9px; letter-spacing:4px; opacity:0.75; text-transform:uppercase; margin-bottom:10px; }
+.title { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; color:var(--crimson); line-height:1.1; margin-bottom:4px; }
+.sub { font-size:11px; letter-spacing:1px; opacity:0.7; margin-bottom:16px; }
+.rule { width:44px; height:2px; background:var(--crimson); opacity:0.3; margin-bottom:20px; }
+
+.roster-table { width:100%; border-collapse:collapse; margin-bottom:18px; }
+.roster-table th { font-size:9px; letter-spacing:2px; text-align:left; padding:8px 6px; opacity:0.65; border-bottom:1px solid var(--border); }
+.roster-table td { padding:8px 6px; border-bottom:1px solid rgba(76,0,7,0.08); font-size:12px; vertical-align:middle; }
+.roster-table .rt-name { }
+.roster-table .rt-id { opacity:0.6; font-size:10px; }
+.rt-input {
+  width:70px; padding:8px; text-align:center; border:2px solid var(--border);
+  background:rgba(214,185,122,0.5); font-family:'Bebas Neue',sans-serif; font-size:16px; color:var(--crimson);
+  outline:none; -webkit-appearance:none; border-radius:0;
+}
+
+.empty-roster { padding:20px 0; text-align:center; font-size:12px; opacity:0.7; letter-spacing:1px; }
+
+.btn-primary {
+  width:100%; margin-top:6px; padding:16px;
+  background:var(--crimson); color:var(--gold);
+  font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:4px;
+  border:none; cursor:pointer; transition:opacity .15s;
+}
+.btn-primary:hover { opacity:.85; }
+.btn-primary:disabled { opacity:.35; cursor:not-allowed; }
+.btn-secondary {
+  width:100%; margin-top:12px; padding:12px;
+  background:transparent; color:var(--crimson); border:1px solid var(--border);
+  font-family:'Cinzel',serif; font-size:11px; letter-spacing:2px; cursor:pointer;
+}
+.msg { margin-top:14px; font-size:11px; letter-spacing:2px; min-height:16px; text-align:center; }
+.msg.err { color:var(--crimson); }
+.msg.ok  { color:var(--ok); }
+
+.late-panel { display:none; margin-top:14px; padding:16px; border:1px dashed var(--border); background:rgba(76,0,7,0.04); }
+.late-panel.open { display:block; }
+
+.btn-logout { margin-top:24px; padding:10px 18px; background:transparent; color:var(--crimson); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px; cursor:pointer; opacity:0.65; }
+.btn-logout:hover { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="screen active" id="loadingScreen">
+  <div class="card"><div class="title">LOADING…</div></div>
+</div>
+
+<div class="screen" id="rosterScreen">
+  <div class="card">
+    <div class="badge" id="stationBadge">Battle 1 Judge — Rannbhoomi 2026</div>
+    <div class="title" id="waveTitle">—</div>
+    <div class="sub" id="waveSub">—</div>
+    <div class="rule"></div>
+
+    <table class="roster-table" id="rosterTable" style="display:none;">
+      <thead><tr><th>Athlete</th><th style="text-align:right;">Score</th></tr></thead>
+      <tbody id="rosterBody"></tbody>
+    </table>
+    <div class="empty-roster" id="emptyRoster" style="display:none;">No one checked in yet for this wave/zone.</div>
+
+    <button class="btn-primary" id="submitBtn" onclick="submitAll()" style="display:none;">SUBMIT ALL</button>
+    <div class="msg" id="rosterMsg"></div>
+
+    <button class="btn-secondary" onclick="toggleLateEntry()">LATE ENTRY — SCORE A DIFFERENT WAVE</button>
+    <div class="late-panel" id="latePanel">
+      <label style="font-size:9px; letter-spacing:3px; opacity:0.75; display:block; margin-bottom:8px;">Select wave</label>
+      <select id="lateWaveSelect" onchange="onLateWaveChange()" style="width:100%; padding:12px; border:1px solid var(--border); background:rgba(214,185,122,0.4); font-family:'Cinzel',serif; font-size:13px; color:var(--crimson);">
+        <option value="">-- select --</option>
+      </select>
+    </div>
+
+    <button class="btn-logout" onclick="logout()">LOG OUT</button>
+  </div>
+</div>
+
+<script>
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
+
+const STATION_LABELS = {
+  s1_burpees:   { label: 'Static Burpees',    unit: 'reps' },
+  s2_bike:      { label: 'Erg Bike',          unit: 'metres' },
+  s3_lunges:    { label: 'Deadlift',          unit: 'reps' },
+  s4_pushups:   { label: 'Hand Release Push Ups', unit: 'reps' },
+  s5_sprint:    { label: 'Sprint with Weights', unit: 'laps' },
+  s6_inchworms: { label: 'Inch Worms',        unit: 'reps' },
+  s7_squats:    { label: 'DB Front Squats',   unit: 'reps' },
+};
+
+let judge = null;
+let pin = null;
+let currentWave = null;
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+(async function init() {
+  const params = new URLSearchParams(location.search);
+  pin = params.get('pin') || sessionStorage.getItem('judge_pin') || '';
+  if (!pin) { location.href = 'index.html'; return; }
+
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=judge_login&pin=${encodeURIComponent(pin)}`);
+    const data = await res.json();
+    if (!data.found || String(data.judge.battle) !== '1' || data.judge.station === 'checkin') {
+      location.href = 'index.html?pin=' + encodeURIComponent(pin);
+      return;
+    }
+    judge = data.judge;
+    sessionStorage.setItem('judge_pin', pin);
+
+    const stInfo = STATION_LABELS[judge.station] || { label: judge.station, unit: '' };
+    document.getElementById('stationBadge').textContent = `Zone ${judge.assignment} — ${stInfo.label}`;
+
+    await loadRoster();
+    show('rosterScreen');
+  } catch (err) {
+    document.getElementById('loadingScreen').querySelector('.title').textContent = 'CONNECTION FAILED';
+  }
+})();
+
+async function loadRoster(waveOverride) {
+  const url = waveOverride
+    ? `${APPS_SCRIPT_URL}?action=battle1_roster&pin=${encodeURIComponent(pin)}&wave=${encodeURIComponent(waveOverride)}`
+    : `${APPS_SCRIPT_URL}?action=battle1_roster&pin=${encodeURIComponent(pin)}`;
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    currentWave = data.wave;
+    renderRoster(data.wave, data.roster || []);
+  } catch {
+    document.getElementById('rosterMsg').textContent = 'Failed to load roster';
+    document.getElementById('rosterMsg').className = 'msg err';
+  }
+}
+
+function renderRoster(wave, roster) {
+  const stInfo = STATION_LABELS[judge.station] || { label: judge.station, unit: '' };
+  document.getElementById('waveTitle').textContent = wave ? `WAVE ${wave}` : 'NO ACTIVE WAVE';
+  document.getElementById('waveSub').textContent = wave
+    ? `${roster.length} checked in — enter ${stInfo.label} (${stInfo.unit})`
+    : 'Use Late Entry below to score a specific wave, or wait for Front Desk to activate one.';
+
+  const table = document.getElementById('rosterTable');
+  const empty = document.getElementById('emptyRoster');
+  const submitBtn = document.getElementById('submitBtn');
+
+  if (!roster.length) {
+    table.style.display = 'none';
+    empty.style.display = 'block';
+    submitBtn.style.display = 'none';
+    return;
+  }
+
+  table.style.display = 'table';
+  empty.style.display = 'none';
+  submitBtn.style.display = 'block';
+
+  const tbody = document.getElementById('rosterBody');
+  tbody.innerHTML = roster.map(a => `
+    <tr>
+      <td>
+        <div class="rt-name">${escHtml(a.name)}</div>
+        <div class="rt-id">${a.athlete_id}</div>
+      </td>
+      <td style="text-align:right;">
+        <input class="rt-input" type="number" min="0" step="1" inputmode="numeric"
+               id="score_${a.athlete_id}" value="${a.existingValue !== null ? a.existingValue : ''}">
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function submitAll() {
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('rosterMsg');
+  if (!currentWave) return;
+
+  const inputs = document.querySelectorAll('#rosterBody input');
+  const scores = Array.from(inputs)
+    .map(inp => ({ athlete_id: inp.id.replace('score_', ''), value: inp.value }))
+    .filter(s => s.value !== '');
+
+  if (!scores.length) { msg.textContent = 'Enter at least one score.'; msg.className = 'msg err'; return; }
+
+  btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'battle1_submit_wave', pin, wave: currentWave, scores }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+
+    msg.textContent = `Submitted ${data.submitted} score${data.submitted === 1 ? '' : 's'}.` +
+      (data.skipped && data.skipped.length ? ` (${data.skipped.length} skipped — not checked in.)` : '');
+    msg.className = 'msg ok';
+    await loadRoster(currentWave);
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  btn.disabled = false;
+}
+
+function toggleLateEntry() {
+  const panel = document.getElementById('latePanel');
+  panel.classList.toggle('open');
+  if (panel.classList.contains('open')) loadLateWaves();
+}
+
+async function loadLateWaves() {
+  const sel = document.getElementById('lateWaveSelect');
+  try {
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=waves_for_late_entry`);
+    const data = await res.json();
+    const waves = data.waves || [];
+    sel.innerHTML = '<option value="">-- select --</option>' +
+      waves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
+  } catch {
+    sel.innerHTML = '<option value="">Failed to load</option>';
+  }
+}
+
+function onLateWaveChange() {
+  const wave = document.getElementById('lateWaveSelect').value;
+  if (!wave) return;
+  loadRoster(wave);
+  document.getElementById('latePanel').classList.remove('open');
+}
+
+function logout() {
+  sessionStorage.removeItem('judge_pin');
+  location.href = 'index.html';
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>
