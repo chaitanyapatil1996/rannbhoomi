@@ -33,6 +33,8 @@ function doGet(e) {
   if (action === 'athletes_all')     return athletesAll(e);
   if (action === 'waves_open')       return wavesOpenForCheckin(e);
   if (action === 'checkin_roster')   return checkinRoster(e);
+  if (action === 'battle1_roster')       return battle1Roster(e);
+  if (action === 'waves_for_late_entry') return wavesForLateEntry(e);
   if (action === 'battle2_roster')   return battle2Roster(e);
   if (action === 'battle2_status')   return battle2Status(e);
   if (action === 'battle2_scores')   return battle2Scores(e);
@@ -51,6 +53,7 @@ function doPost(e) {
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
   if (action === 'checkin_submit')       return checkinSubmit(body);
+  if (action === 'battle1_submit_wave')  return battle1SubmitWave(body);
   if (action === 'battle2_start')        return battle2Start(body);
   if (action === 'battle2_station_done') return battle2StationDone(body);
   if (action === 'battle2_partial')      return battle2Partial(body);
@@ -620,6 +623,183 @@ function checkinSubmit(body) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function _activeWave() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(WAVES_SHEET);
+  if (!sheet || sheet.getLastRow() <= 1) return null;
+  const data = sheet.getDataRange().getValues();
+  const row = data.find((r, i) => i > 0 && r[1] === 'Active');
+  return row ? { wave_num: row[0], status: row[1] } : null;
+}
+
+// GET: this judge's zone's checked-in roster for a wave (defaults to the
+// current Active wave if none given — Late Entry passes an explicit
+// wave), plus each athlete's existing value for THIS station if already
+// scored, so a page reload pre-fills rather than risking a duplicate
+// entry (server-truth resync, same principle as Battle 2/Gym Battle).
+function battle1Roster(e) {
+  const pin = e.parameter.pin;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '1' || judge.station === 'checkin') return jsonResponse({ error: 'Invalid PIN' });
+
+  let wave = e.parameter.wave;
+  if (!wave) {
+    const active = _activeWave();
+    if (!active) return jsonResponse({ wave: null, roster: [] });
+    wave = active.wave_num;
+  }
+
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const athleteSheet = ss.getSheetByName('Athletes');
+  const athleteData  = athleteSheet.getDataRange().getValues();
+  const athleteH     = athleteData[0];
+  const idIdx        = athleteH.indexOf('athlete_id');
+  const nameIdx      = athleteH.indexOf('name');
+
+  const scoreSheet   = ss.getSheetByName(SCORE_SHEETS['1']);
+  const scoreData    = scoreSheet.getDataRange().getValues();
+  const scoreH       = scoreData[0];
+  const scoreIdIdx   = scoreH.indexOf('athlete_id');
+  const stationCol   = scoreH.indexOf(judge.station);
+
+  const checkedIn = _checkinsForWave(wave).filter(c => String(c.zone) === String(judge.assignment));
+  const roster = checkedIn.map(c => {
+    const athlete  = athleteData.find((r, i) => i > 0 && String(r[idIdx]) === String(c.athlete_id));
+    const scoreRow = scoreData.find((r, i) => i > 0 && String(r[scoreIdIdx]) === String(c.athlete_id));
+    const existingValue = (scoreRow && stationCol > -1 && scoreRow[stationCol] !== '') ? scoreRow[stationCol] : null;
+    return { athlete_id: c.athlete_id, name: athlete ? athlete[nameIdx] : c.athlete_id, existingValue };
+  });
+
+  return jsonResponse({ wave: Number(wave), roster });
+}
+
+// Batch-submits one station's values for every athlete in a wave/zone
+// roster in a single locked read-modify-write — same one-call-per-batch
+// principle as gym_submit_rotation, so a dropped connection can't leave
+// some athletes scored and others not.
+function battle1SubmitWave(body) {
+  const { pin, wave, scores } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '1' || judge.station === 'checkin') return jsonResponse({ error: 'Invalid PIN' });
+  if (!wave || !Array.isArray(scores)) return jsonResponse({ error: 'wave and scores required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const checkedInIds = new Set(
+      _checkinsForWave(wave).filter(c => String(c.zone) === String(judge.assignment)).map(c => String(c.athlete_id))
+    );
+
+    const sheet = ss.getSheetByName(SCORE_SHEETS['1']);
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const stationCol = headers.indexOf(judge.station);
+    if (stationCol === -1) return jsonResponse({ error: 'Station column not found: ' + judge.station });
+
+    const roundStations = STATION_ROUNDS['1'];
+    let submitted = 0;
+    const skipped = [];
+    let data = sheet.getDataRange().getValues();
+
+    scores.forEach(({ athlete_id, value }) => {
+      if (!athlete_id || value === '' || value === null || value === undefined) return;
+      if (!checkedInIds.has(String(athlete_id))) { skipped.push(athlete_id); return; }
+
+      const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(athlete_id));
+
+      if (rowIdx > 0) {
+        sheet.getRange(rowIdx + 1, stationCol + 1).setValue(Number(value) || 0);
+        data[rowIdx][stationCol] = Number(value) || 0;
+      } else {
+        const athleteSheet = ss.getSheetByName('Athletes');
+        const athleteData  = athleteSheet.getDataRange().getValues();
+        const athlete      = athleteData.find((r, i) => i > 0 && String(r[0]) === String(athlete_id));
+        const name         = athlete ? athlete[1] : 'Unknown';
+        const category     = athlete ? String(athlete[3]).toLowerCase() : '';
+        const newRow = new Array(headers.length).fill('');
+        const set = (h, v) => { const i = headers.indexOf(h); if (i > -1) newRow[i] = v; };
+        set('athlete_id', athlete_id);
+        set('name', name);
+        set('category', category);
+        set('wave', wave);
+        set('zone', judge.assignment);
+        set('complete', false);
+        newRow[stationCol] = Number(value) || 0;
+        sheet.appendRow(newRow);
+        data.push(newRow);
+      }
+      submitted++;
+    });
+
+    // Recompute complete/total for every athlete just touched — same
+    // per-athlete logic as the single-score handleScore() path.
+    scores.forEach(({ athlete_id }) => {
+      if (!athlete_id) return;
+      const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(athlete_id));
+      if (rowIdx <= 0) return;
+      const row = data[rowIdx];
+      const stationIdxs = roundStations.map(s => headers.indexOf(s)).filter(i => i > -1);
+      const vals = stationIdxs.map(i => row[i]);
+      const allFilled = vals.every(v => v !== '' && v !== null && v !== undefined);
+      const total = roundStations.reduce((sum, st, i) => {
+        const scoring = _getScoringRow('1', st);
+        const pts = scoring ? Number(scoring.pointsPerUnit) || 0 : 1;
+        return sum + (Number(vals[i]) || 0) * pts;
+      }, 0);
+      const setCell = (h, v) => { const i = headers.indexOf(h); if (i > -1) sheet.getRange(rowIdx + 1, i + 1).setValue(v); };
+      setCell('complete', allFilled);
+      setCell('submitted_at', new Date().toISOString());
+      if (allFilled) setCell('total', total);
+    });
+
+    _maybeCompleteWave(wave);
+
+    return jsonResponse({ success: true, submitted, skipped });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// Flips Waves.status to Complete once every checked-in athlete for a wave
+// (across all 4 zones, not just this judge's own) has a complete
+// Round1_Scores row — no manual "mark complete" action needed.
+function _maybeCompleteWave(wave) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const checkedIn = _checkinsForWave(wave);
+  if (checkedIn.length === 0) return;
+
+  const scoreSheet = ss.getSheetByName(SCORE_SHEETS['1']);
+  const data = scoreSheet.getDataRange().getValues();
+  const headers = data[0];
+  const idIdx = headers.indexOf('athlete_id');
+  const completeIdx = headers.indexOf('complete');
+
+  const allComplete = checkedIn.every(c => {
+    const row = data.find((r, i) => i > 0 && String(r[idIdx]) === String(c.athlete_id));
+    return row && row[completeIdx] === true;
+  });
+  if (!allComplete) return;
+
+  const wavesSheet = ss.getSheetByName(WAVES_SHEET);
+  const wavesData = wavesSheet.getDataRange().getValues();
+  const rowIdx = wavesData.findIndex((r, i) => i > 0 && String(r[0]) === String(wave));
+  if (rowIdx > -1) wavesSheet.getRange(rowIdx + 1, 2).setValue('Complete');
+}
+
+// GET: waves eligible for Late Entry (Active or Complete — not Draft,
+// since a Draft wave has no meaningful roster/scores yet).
+function wavesForLateEntry(e) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(WAVES_SHEET);
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ waves: [] });
+  const data = sheet.getDataRange().getValues();
+  const waves = data.slice(1)
+    .filter(r => r[0] && (r[1] === 'Active' || r[1] === 'Complete'))
+    .map(r => ({ wave_num: r[0], status: r[1] }))
+    .sort((a, b) => Number(a.wave_num) - Number(b.wave_num));
+  return jsonResponse({ waves });
 }
 
 // ─── Battle 2 — round/station grid (no stopwatch) ────────────────────────────
