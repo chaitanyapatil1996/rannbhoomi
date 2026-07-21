@@ -35,6 +35,7 @@ function doGet(e) {
   if (action === 'checkin_roster')   return checkinRoster(e);
   if (action === 'battle1_roster')       return battle1Roster(e);
   if (action === 'waves_for_late_entry') return wavesForLateEntry(e);
+  if (action === 'admin_waves_overview') return adminWavesOverview(e);
   if (action === 'battle2_roster')   return battle2Roster(e);
   if (action === 'battle2_status')   return battle2Status(e);
   if (action === 'battle2_scores')   return battle2Scores(e);
@@ -52,6 +53,8 @@ function doPost(e) {
   if (action === 'admin_clear')       return clearAllScores(body);
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
+  if (action === 'admin_activate_wave') return adminActivateWave(body);
+  if (action === 'admin_complete_wave') return adminCompleteWave(body);
   if (action === 'checkin_submit')       return checkinSubmit(body);
   if (action === 'battle1_submit_wave')  return battle1SubmitWave(body);
   if (action === 'battle2_start')        return battle2Start(body);
@@ -520,6 +523,76 @@ function adminRebuild(body) {
   const cfg = getConfig(ss);
   if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
   rebuildLeaderboard();
+  return jsonResponse({ success: true });
+}
+
+// ─── Admin: Battle 1 wave management ─────────────────────────────────────
+
+// GET: all waves + status + per-zone checked-in counts, for the admin
+// panel's Waves section. No PIN required — read-only status info, same
+// convention as this file's other GET reads.
+function adminWavesOverview(e) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const wavesSheet = ss.getSheetByName(WAVES_SHEET);
+  if (!wavesSheet || wavesSheet.getLastRow() <= 1) return jsonResponse({ waves: [] });
+  const wavesData = wavesSheet.getDataRange().getValues();
+
+  const checkinsSheet = ss.getSheetByName(CHECKINS_SHEET);
+  const checkins = (checkinsSheet && checkinsSheet.getLastRow() > 1)
+    ? checkinsSheet.getDataRange().getValues().slice(1)
+    : [];
+
+  const waves = wavesData.slice(1).filter(r => r[0]).map(r => {
+    const waveNum = r[0];
+    const zoneCounts = { A: 0, B: 0, C: 0, D: 0 };
+    checkins.forEach(c => {
+      if (String(c[0]) === String(waveNum) && zoneCounts[c[1]] !== undefined) zoneCounts[c[1]]++;
+    });
+    return { wave_num: waveNum, status: r[1], zone_counts: zoneCounts };
+  }).sort((a, b) => Number(a.wave_num) - Number(b.wave_num));
+
+  return jsonResponse({ waves });
+}
+
+// POST: activates a Draft wave. Blocks activating a second wave while one
+// is already Active — same "one Active wave at a time" rule as
+// Prehab121's fdActivateWave.
+function adminActivateWave(body) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const cfg = getConfig(ss);
+  if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
+  const { wave } = body;
+  if (!wave) return jsonResponse({ error: 'wave required' });
+
+  const sheet = ss.getSheetByName(WAVES_SHEET);
+  const data = sheet.getDataRange().getValues();
+  const activeRow = data.findIndex((r, i) => i > 0 && r[1] === 'Active');
+  if (activeRow > -1 && String(data[activeRow][0]) !== String(wave)) {
+    return jsonResponse({ error: `Wave ${data[activeRow][0]} is already Active — complete or force-complete it first.` });
+  }
+  const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(wave));
+  if (rowIdx === -1) return jsonResponse({ error: 'Wave not found' });
+  sheet.getRange(rowIdx + 1, 2).setValue('Active');
+  return jsonResponse({ success: true });
+}
+
+// POST: manual override to mark a wave Complete even if not every
+// checked-in athlete has a full score yet. Wave completion is normally
+// automatic (see _maybeCompleteWave in the Battle 1 scoring section), but
+// a withdrawn/injured athlete would otherwise block that wave from ever
+// auto-completing — which would in turn block activating the next wave.
+// This is the escape hatch for that.
+function adminCompleteWave(body) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const cfg = getConfig(ss);
+  if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
+  const { wave } = body;
+  if (!wave) return jsonResponse({ error: 'wave required' });
+  const sheet = ss.getSheetByName(WAVES_SHEET);
+  const data = sheet.getDataRange().getValues();
+  const rowIdx = data.findIndex((r, i) => i > 0 && String(r[0]) === String(wave));
+  if (rowIdx === -1) return jsonResponse({ error: 'Wave not found' });
+  sheet.getRange(rowIdx + 1, 2).setValue('Complete');
   return jsonResponse({ success: true });
 }
 
