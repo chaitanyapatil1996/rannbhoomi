@@ -94,12 +94,6 @@ label   { display:block; font-size:9px; letter-spacing:3px; opacity:.5; margin-b
 
   </div>
   <div class="msg" id="globalMsg"></div>
-
-  <div style="margin-top:32px;">
-    <h3 style="font-size:12px; letter-spacing:2px; margin-bottom:10px;">BATTLE 1 — WAVES</h3>
-    <button class="btn-secondary" onclick="loadWavesOverview()" style="margin-bottom:12px;">REFRESH WAVES</button>
-    <div id="wavesOverview"></div>
-  </div>
 </div>
 
 <!-- Confirm overlay -->
@@ -207,54 +201,6 @@ async function post(body) {
   return res.json();
 }
 
-async function loadWavesOverview() {
-  const el = document.getElementById('wavesOverview');
-  el.textContent = 'Loading...';
-  try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=admin_waves_overview`);
-    const data = await res.json();
-    const waves = data.waves || [];
-    if (!waves.length) { el.textContent = 'No waves found — run setupWavesSheet() from the Apps Script editor.'; return; }
-    el.innerHTML = waves.map(w => `
-      <div class="action-card" style="margin-bottom:10px;">
-        <h3>WAVE ${w.wave_num} — ${w.status.toUpperCase()}</h3>
-        <p>Checked in — A: ${w.zone_counts.A}, B: ${w.zone_counts.B}, C: ${w.zone_counts.C}, D: ${w.zone_counts.D}</p>
-        ${w.status === 'Draft' ? `<button class="btn-danger" onclick="activateWave(${w.wave_num})">ACTIVATE</button>` : ''}
-        ${w.status === 'Active' ? `<button class="btn-secondary" onclick="completeWave(${w.wave_num})">FORCE COMPLETE</button>` : ''}
-      </div>
-    `).join('');
-  } catch (err) {
-    el.textContent = 'Error loading waves: ' + err.message;
-  }
-}
-
-async function activateWave(wave) {
-  if (!getPin()) { showMsg('globalMsg', 'Enter PIN first', 'err'); return; }
-  if (!confirm(`Activate Wave ${wave}? Athletes should be checked in already.`)) return;
-  try {
-    const res = await post({ action: 'admin_activate_wave', pin: getPin(), wave });
-    if (!res.success) throw new Error(res.error || 'Failed');
-    showMsg('globalMsg', `Wave ${wave} is now Active.`, 'ok');
-    loadWavesOverview();
-  } catch (err) {
-    showMsg('globalMsg', err.message, 'err');
-  }
-}
-
-async function completeWave(wave) {
-  if (!getPin()) { showMsg('globalMsg', 'Enter PIN first', 'err'); return; }
-  if (!confirm(`Force Wave ${wave} to Complete even if not everyone's scored?`)) return;
-  try {
-    const res = await post({ action: 'admin_complete_wave', pin: getPin(), wave });
-    if (!res.success) throw new Error(res.error || 'Failed');
-    showMsg('globalMsg', `Wave ${wave} marked Complete.`, 'ok');
-    loadWavesOverview();
-  } catch (err) {
-    showMsg('globalMsg', err.message, 'err');
-  }
-}
-
-loadWavesOverview();
 </script>
 </body>
 </html>

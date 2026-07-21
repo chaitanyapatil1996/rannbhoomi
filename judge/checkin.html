@@ -84,6 +84,13 @@ select.field-input, .field-input {
     <select class="field-input" id="waveSelect" onchange="onWaveChange()">
       <option value="">Loading waves…</option>
     </select>
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-top:10px;">
+      <span class="field-label" id="waveStatusLabel" style="margin:0;">—</span>
+      <div>
+        <button class="btn-primary" id="activateBtn" onclick="activateWave()" style="display:none; width:auto; margin:0; padding:10px 16px; font-size:12px;">ACTIVATE</button>
+        <button class="btn-primary" id="forceCompleteBtn" onclick="forceCompleteWave()" style="display:none; width:auto; margin:0; padding:10px 16px; font-size:12px; background:#7a1a00;">FORCE COMPLETE</button>
+      </div>
+    </div>
 
     <label class="field-label" for="athleteSearch" style="margin-top:18px;">Search athlete (name or bib)</label>
     <input class="field-input" type="text" id="athleteSearch" placeholder="Type to search…" autocomplete="off" oninput="onSearchInput()">
@@ -156,25 +163,95 @@ function show(id) {
   }
 })();
 
+let openWaves = [];
+
 async function loadWaves() {
   const sel = document.getElementById('waveSelect');
   try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=waves_open`);
+    const res = await fetch(`${APPS_SCRIPT_URL}?action=waves_open&zone=${encodeURIComponent(judge.assignment)}`);
     const data = await res.json();
-    const waves = data.waves || [];
-    if (!waves.length) {
-      sel.innerHTML = '<option value="">No open waves — check Waves sheet</option>';
+    openWaves = data.waves || [];
+    if (!openWaves.length) {
+      sel.innerHTML = '<option value="">No open waves for this zone — check Waves sheet</option>';
+      updateWaveStatusUI();
       return;
     }
-    sel.innerHTML = waves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
+    sel.innerHTML = openWaves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
+    updateWaveStatusUI();
     await loadCheckedInList();
   } catch {
     sel.innerHTML = '<option value="">Failed to load waves</option>';
   }
 }
 
+function updateWaveStatusUI() {
+  const wave = document.getElementById('waveSelect').value;
+  const label = document.getElementById('waveStatusLabel');
+  const activateBtn = document.getElementById('activateBtn');
+  const forceBtn = document.getElementById('forceCompleteBtn');
+  const w = openWaves.find(x => String(x.wave_num) === String(wave));
+
+  if (!w) {
+    label.textContent = '—';
+    activateBtn.style.display = 'none';
+    forceBtn.style.display = 'none';
+    return;
+  }
+  label.textContent = `STATUS: ${w.status.toUpperCase()}`;
+  activateBtn.style.display = w.status === 'Draft' ? 'inline-block' : 'none';
+  forceBtn.style.display = w.status === 'Active' ? 'inline-block' : 'none';
+}
+
 function onWaveChange() {
+  updateWaveStatusUI();
   loadCheckedInList();
+}
+
+async function activateWave() {
+  const wave = document.getElementById('waveSelect').value;
+  const msg = document.getElementById('checkinMsg');
+  if (!wave) return;
+  document.getElementById('activateBtn').disabled = true;
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'checkin_activate_wave', pin, wave }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    msg.textContent = `Wave ${wave} is now Active for Zone ${judge.assignment}.`;
+    msg.className = 'msg ok';
+    await loadWaves();
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  document.getElementById('activateBtn').disabled = false;
+}
+
+async function forceCompleteWave() {
+  const wave = document.getElementById('waveSelect').value;
+  const msg = document.getElementById('checkinMsg');
+  if (!wave) return;
+  if (!confirm(`Force Wave ${wave} to Complete for Zone ${judge.assignment}, even if not everyone's scored?`)) return;
+  document.getElementById('forceCompleteBtn').disabled = true;
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'checkin_complete_wave', pin, wave }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+    msg.textContent = `Wave ${wave} marked Complete for Zone ${judge.assignment}.`;
+    msg.className = 'msg ok';
+    await loadWaves();
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  document.getElementById('forceCompleteBtn').disabled = false;
 }
 
 async function loadCheckedInList() {
