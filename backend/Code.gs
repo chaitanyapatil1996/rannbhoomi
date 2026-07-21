@@ -12,6 +12,8 @@ const CACHE_SHEETS  = { '1':'Leaderboard_Cache_R1', '2':'Leaderboard_Cache_R2', 
 const JUDGES_SHEET        = 'Judges';
 const SCORING_TABLE_SHEET = 'Scoring Table';
 const ROUND2_SCORES_SHEET = 'Round2_Scores';
+const CHECKINS_SHEET = 'Checkins';
+const WAVES_SHEET    = 'Waves';
 const BATTLE2_STATIONS    = [['rowing','Rowing'], ['devils_press',"Devil's Press"], ['kb_walk','KB Walk'], ['box_jump','Burpee Box Jump']];
 
 const GYM_LIVE_SHEET    = 'Gym_Live';
@@ -1254,6 +1256,25 @@ function addBattle3Pins() {
   rows.forEach(r => Logger.log(`${r[4]}: PIN=${r[0]}`));
 }
 
+// Adds one check-in PIN per zone to the EXISTING Judges sheet without
+// touching any PINs already generated — safe to run after other PINs have
+// already been distributed or tested (same pattern as addBattle3Pins()).
+function addCheckinPins() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const sheet = ss.getSheetByName(JUDGES_SHEET);
+  if (!sheet) { Logger.log('Judges sheet not found — run generateJudgePins() first.'); return; }
+  const data = sheet.getDataRange().getValues();
+  const alreadyHas = data.some((r, i) => i > 0 && String(r[1]) === '1' && String(r[3]) === 'checkin');
+  if (alreadyHas) { Logger.log('Check-in PINs already exist — not adding duplicates.'); return; }
+
+  const randPin = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+  const ZONES = ['A', 'B', 'C', 'D'];
+  const rows = ZONES.map(zone => [randPin(), '1', zone, 'checkin', `Battle 1 — Zone ${zone} — Check-In`]);
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 5).setValues(rows);
+  Logger.log(`addCheckinPins complete: ${rows.length} PINs added.`);
+  rows.forEach(r => Logger.log(`${r[4]}: PIN=${r[0]}`));
+}
+
 function setupBattle2Sheet() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
@@ -1285,6 +1306,41 @@ function migrateBattle2Schema() {
   });
 }
 
+function setupCheckinsSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(CHECKINS_SHEET);
+  if (!sheet) sheet = ss.insertSheet(CHECKINS_SHEET);
+  if (sheet.getLastRow() > 0) { Logger.log('Checkins already has data — leaving it alone.'); return; }
+  const headers = ['wave', 'zone', 'athlete_id', 'checked_in_at'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+  Logger.log('setupCheckinsSheet complete.');
+}
+
+// Populates one Draft row per distinct wave number already present in the
+// Athletes sheet's `wave` column, so the organizer doesn't have to type
+// wave numbers in by hand — only run against a brand-new, empty sheet.
+function setupWavesSheet() {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(WAVES_SHEET);
+  if (!sheet) sheet = ss.insertSheet(WAVES_SHEET);
+  if (sheet.getLastRow() > 0) { Logger.log('Waves already has data — leaving it alone.'); return; }
+  const headers = ['wave_num', 'status'];
+  sheet.getRange(1, 1, 1, headers.length).setValues([headers]).setFontWeight('bold');
+
+  const athleteSheet = ss.getSheetByName('Athletes');
+  if (athleteSheet && athleteSheet.getLastRow() > 1) {
+    const data = athleteSheet.getDataRange().getValues();
+    const waveIdx = data[0].indexOf('wave');
+    if (waveIdx > -1) {
+      const waveNums = [...new Set(data.slice(1).map(r => String(r[waveIdx]).trim()).filter(Boolean))]
+        .map(Number).sort((a, b) => a - b);
+      const rows = waveNums.map(n => [n, 'Draft']);
+      if (rows.length) sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+    }
+  }
+  Logger.log('setupWavesSheet complete.');
+}
+
 function setupGymSheets() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   let live = ss.getSheetByName(GYM_LIVE_SHEET);
@@ -1314,6 +1370,8 @@ function setupJudgeScoringSystem() {
   setupBattle2Sheet();
   setupBattle3Sheet();
   setupGymSheets();
+  setupCheckinsSheet();
+  setupWavesSheet();
   generateJudgePins();
   Logger.log('setupJudgeScoringSystem complete — check the Judges sheet for all PINs.');
 }
