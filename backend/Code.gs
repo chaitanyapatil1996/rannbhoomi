@@ -1165,7 +1165,7 @@ function battle2Scores(e) {
     if (!r[idIdx]) return;
     const id = String(r[idIdx]);
     if (!byAthlete[id]) {
-      byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_value: 0, complete: true };
+      byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_station: null, partial_last_value: 0, complete: true };
       BATTLE2_STATIONS.forEach(([k]) => { byAthlete[id][k] = 0; });
     }
     BATTLE2_STATIONS.forEach(([k]) => {
@@ -1175,8 +1175,9 @@ function battle2Scores(e) {
     if (r[completeIdx] === true) byAthlete[id].rounds_completed++;
     if (r[finishedIdx] === true && r[completeIdx] !== true) {
       const filled = BATTLE2_STATIONS.filter(([k]) => r[headers.indexOf(k)] !== '');
-      byAthlete[id].partial_stations   = filled.length;
-      byAthlete[id].partial_last_value = filled.length ? Number(r[headers.indexOf(filled[filled.length - 1][0])]) || 0 : 0;
+      byAthlete[id].partial_stations     = filled.length;
+      byAthlete[id].partial_last_station = filled.length ? filled[filled.length - 1][0] : null;
+      byAthlete[id].partial_last_value   = filled.length ? Number(r[headers.indexOf(filled[filled.length - 1][0])]) || 0 : 0;
     }
   });
 

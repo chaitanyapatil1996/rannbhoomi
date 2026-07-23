@@ -377,6 +377,18 @@ const BATTLE_STATIONS = {
 
 const SKIP_COLS = new Set(['rank','athlete_id','name','category','wave','zone','complete','submitted_at','total']);
 
+const BATTLE2_UNITS = { rowing: 'm', devils_press: 'reps', kb_walk: 'm', box_jump: 'reps' };
+
+// Battle 2 ranks by rounds completed -> station reached -> value there, not
+// a point total — this builds the readable tiebreak detail (e.g. "KB Walk:
+// 45m") so two athletes tied on rounds don't look identical in the display.
+function battle2Detail(row) {
+  if (!row.partial_stations) return '';
+  const label = STATION_LABELS[row.partial_last_station] || row.partial_last_station;
+  const unit  = BATTLE2_UNITS[row.partial_last_station] || '';
+  return `${label}: ${row.partial_last_value ?? 0}${unit}`;
+}
+
 let allScores     = [];
 let lastUpdated   = null;
 let currentBattle = 1;
@@ -439,6 +451,7 @@ function renderPodium() {
       <div class="podium-cat">${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))} · Wave ${esc(r.wave??'—')}</div>
       <div class="podium-total">${esc(isB2 ? (r.rounds_completed??'—') : (r.total??'—'))}</div>
       <div class="podium-total-label">${isB2 ? 'ROUNDS COMPLETED' : 'TOTAL POINTS'}</div>
+      ${isB2 && battle2Detail(r) ? `<div class="podium-total-label" style="margin-top:2px;">${esc(battle2Detail(r))}</div>` : ''}
     </div>`).join('');
 
   document.getElementById('podium').innerHTML = html;
@@ -468,7 +481,9 @@ function renderTable() {
       <td>${esc(row.name)}</td>
       <td>${esc(row.wave??'—')}</td>
       ${stations.map(s => `<td>${row[s]!==''&&row[s]!==undefined ? esc(row[s]) : '—'}</td>`).join('')}
-      <td>${isB2 ? `<strong>${esc(row.rounds_completed??0)}</strong>` : (isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>')}</td>
+      <td>${isB2
+        ? `<strong>${esc(row.rounds_completed??0)}</strong>${battle2Detail(row) ? `<div style="font-size:9px;opacity:.6;">${esc(battle2Detail(row))}</div>` : ''}`
+        : (isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>')}</td>
     </tr>`;
   });
 
