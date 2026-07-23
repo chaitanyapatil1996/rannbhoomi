@@ -59,6 +59,13 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 
 /* ── Table ── */
 .table-wrap { overflow-x:auto; max-width:1000px; }
+@media (min-width:900px) {
+  /* Desktop windows have more room than the 1000px cap assumes — let the
+     table use it so 11 columns (Battle 1) don't need horizontal scroll.
+     Mobile is untouched: viewports below 900px were already narrower than
+     the cap, so this never applied to them anyway. */
+  .table-wrap { max-width:none; }
+}
 .scores-table { width:100%; border-collapse:collapse; }
 .scores-table th {
   font-size:12px; letter-spacing:3px; opacity:.6; text-align:left;
@@ -451,7 +458,7 @@ function renderPodium() {
       <div class="podium-cat">${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))} · Wave ${esc(r.wave??'—')}</div>
       <div class="podium-total">${esc(isB2 ? (r.rounds_completed??'—') : (r.total??'—'))}</div>
       <div class="podium-total-label">${isB2 ? 'ROUNDS COMPLETED' : 'TOTAL POINTS'}</div>
-      ${isB2 && battle2Detail(r) ? `<div class="podium-total-label" style="margin-top:2px;">${esc(battle2Detail(r))}</div>` : ''}
+      ${isB2 && battle2Detail(r) ? `<div class="podium-total-label" style="margin-top:2px; font-weight:700; opacity:.85;">${esc(battle2Detail(r))}</div>` : ''}
     </div>`).join('');
 
   document.getElementById('podium').innerHTML = html;
@@ -482,7 +489,7 @@ function renderTable() {
       <td>${esc(row.wave??'—')}</td>
       ${stations.map(s => `<td>${row[s]!==''&&row[s]!==undefined ? esc(row[s]) : '—'}</td>`).join('')}
       <td>${isB2
-        ? `<strong>${esc(row.rounds_completed??0)}</strong>${battle2Detail(row) ? `<div style="font-size:9px;opacity:.6;">${esc(battle2Detail(row))}</div>` : ''}`
+        ? `<strong>${esc(row.rounds_completed??0)}</strong>${battle2Detail(row) ? `<div style="font-size:11px; font-weight:700; opacity:.85;">${esc(battle2Detail(row))}</div>` : ''}`
         : (isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>')}</td>
     </tr>`;
   });
