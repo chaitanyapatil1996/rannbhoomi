@@ -694,7 +694,7 @@ section { padding:96px 5vw; position:relative; scroll-margin-top:80px; }
 /* ══ FOOTER ══ */
 footer {
   background:transparent;
-  padding:24px 5vw 10px; text-align:center;
+  padding:0 5vw 10px; text-align:center;
   position:relative; overflow:hidden;
 }
 footer::before {
