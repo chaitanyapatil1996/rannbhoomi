@@ -1151,7 +1151,14 @@ function battle2Scores(e) {
   data.slice(1).forEach(r => {
     if (!r[idIdx]) return;
     const id = String(r[idIdx]);
-    if (!byAthlete[id]) byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_value: 0 };
+    if (!byAthlete[id]) {
+      byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_value: 0, complete: true };
+      BATTLE2_STATIONS.forEach(([k]) => { byAthlete[id][k] = 0; });
+    }
+    BATTLE2_STATIONS.forEach(([k]) => {
+      const v = r[headers.indexOf(k)];
+      if (v !== '' && v !== undefined && v !== null) byAthlete[id][k] += Number(v) || 0;
+    });
     if (r[completeIdx] === true) byAthlete[id].rounds_completed++;
     if (r[finishedIdx] === true && r[completeIdx] !== true) {
       const filled = BATTLE2_STATIONS.filter(([k]) => r[headers.indexOf(k)] !== '');

@@ -391,7 +391,9 @@ async function loadScores() {
   try {
     const url  = currentDivision === 'gym'
       ? `${APPS_SCRIPT_URL}?action=scores&division=gym`
-      : `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&division=solo`;
+      : String(currentBattle) === '2'
+        ? `${APPS_SCRIPT_URL}?action=battle2_scores`
+        : `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&division=solo`;
     const res  = await fetch(url);
     const data = await res.json();
     allScores   = data.scores || [];
@@ -428,14 +430,15 @@ function renderPodium() {
   const top3   = allScores.slice(0, 3);
   if (!top3.length) { document.getElementById('podium').innerHTML = ''; return; }
 
+  const isB2 = String(currentBattle) === '2';
   const html = top3.map((r, i) => `
     <div class="podium-card ${i===0?'p1':''}">
       <div class="podium-medal">${medals[i]}</div>
       <div class="podium-rank">#${esc(r.rank ?? i+1)}</div>
       <div class="podium-name">${esc(r.name)}</div>
       <div class="podium-cat">${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))} · Wave ${esc(r.wave??'—')}</div>
-      <div class="podium-total">${esc(r.total??'—')}</div>
-      <div class="podium-total-label">TOTAL POINTS</div>
+      <div class="podium-total">${esc(isB2 ? (r.rounds_completed??'—') : (r.total??'—'))}</div>
+      <div class="podium-total-label">${isB2 ? 'ROUNDS COMPLETED' : 'TOTAL POINTS'}</div>
     </div>`).join('');
 
   document.getElementById('podium').innerHTML = html;
@@ -450,11 +453,12 @@ function renderTable() {
   }
 
   const stations = BATTLE_STATIONS[String(currentBattle)] || [];
+  const isB2 = String(currentBattle) === '2';
 
   let html = `<table class="scores-table"><thead><tr>
     <th>RANK</th><th>ATHLETE</th><th>WAVE</th>
     ${stations.map(s => `<th>${(STATION_LABELS[s]||s).toUpperCase()}</th>`).join('')}
-    <th>TOTAL</th>
+    <th>${isB2 ? 'ROUNDS' : 'TOTAL'}</th>
   </tr></thead><tbody>`;
 
   filtered.forEach(row => {
@@ -464,7 +468,7 @@ function renderTable() {
       <td>${esc(row.name)}</td>
       <td>${esc(row.wave??'—')}</td>
       ${stations.map(s => `<td>${row[s]!==''&&row[s]!==undefined ? esc(row[s]) : '—'}</td>`).join('')}
-      <td>${isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>'}</td>
+      <td>${isB2 ? `<strong>${esc(row.rounds_completed??0)}</strong>` : (isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>')}</td>
     </tr>`;
   });
 
