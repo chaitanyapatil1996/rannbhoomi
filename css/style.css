@@ -820,6 +820,9 @@ footer::before {
   .prize-gender-col { padding:0 10px; }
   .prize-gender-col:first-child { padding-left:0; }
   .prize-gender-col:last-child { padding-right:0; }
+
+  /* Footer logo — fixed height:128px (~416px wide at 3.25:1 aspect) overflows narrow viewports */
+  .ft-brand img { height:auto; max-width:70vw; }
 }
 
 @media(max-width:540px) {
