@@ -263,7 +263,7 @@ async function startHeat() {
 function renderHeat() {
   document.getElementById('heatAthleteName').textContent = currentAthlete.name;
   document.getElementById('heatAthleteMeta').textContent = String(currentAthlete.category || '').toUpperCase();
-  document.getElementById('roundBadge').textContent = 'ROUNDS: ' + (heatState.roundsCompleted || 0);
+  document.getElementById('roundBadge').textContent = 'ROUND ' + (heatState.round || 1);
 
   // Station rows show the CUMULATIVE total across every round so far (keeps
   // growing round over round, and a whistle-interrupted partial adds onto
