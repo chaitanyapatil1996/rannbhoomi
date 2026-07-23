@@ -571,6 +571,7 @@ async function openModal(athleteId) {
       const scores = (data.rounds || {})[round];
       if (!scores) return;
       const stations = BATTLE_STATIONS[round] || [];
+      const isB2 = round === '2';
       bodyHtml += `<div class="modal-battle">
         <div class="modal-battle-title">${title}</div>
         ${stations.map(st => `
@@ -579,8 +580,8 @@ async function openModal(athleteId) {
             <span class="modal-station-val">${scores[st]!==undefined&&scores[st]!=='' ? esc(scores[st]) : '—'}</span>
           </div>`).join('')}
         <div class="modal-total-row">
-          <span class="modal-total-label">TOTAL</span>
-          <span class="modal-total-val">${scores.complete===true||scores.complete==='TRUE' ? esc(scores.total) : 'In Progress'}</span>
+          <span class="modal-total-label">${isB2 ? 'ROUNDS' : 'TOTAL'}</span>
+          <span class="modal-total-val">${isB2 ? esc(scores.rounds_completed??0) : (scores.complete===true||scores.complete==='TRUE' ? esc(scores.total) : 'In Progress')}</span>
         </div>
       </div>`;
     });
@@ -720,6 +721,7 @@ function renderCertificate(data) {
   BATTLES.forEach(b => {
     const scores = (data.rounds || {})[b.round];
     if (!scores) return;
+    const isB2 = b.round === '2';
     const isComplete = scores.complete === true || scores.complete === 'TRUE';
     const stationsHtml = b.stations.map(st => `
       <div class="cert-station">
@@ -732,8 +734,8 @@ function renderCertificate(data) {
         <div class="cert-battle-hdr">
           <span class="cert-battle-name">${b.title}</span>
           <div class="cert-battle-total-wrap">
-            <span class="cert-battle-total-label">TOTAL</span>
-            <span class="cert-battle-total-val">${isComplete ? esc(scores.total) : 'IN PROGRESS'}</span>
+            <span class="cert-battle-total-label">${isB2 ? 'ROUNDS' : 'TOTAL'}</span>
+            <span class="cert-battle-total-val">${isB2 ? esc(scores.rounds_completed??0) : (isComplete ? esc(scores.total) : 'IN PROGRESS')}</span>
           </div>
         </div>
         <div class="cert-stations">${stationsHtml}</div>

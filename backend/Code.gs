@@ -291,7 +291,20 @@ function getAthlete(e) {
     if (!sheet) return;
     const data    = sheet.getDataRange().getValues();
     const headers = data[0];
-    const row     = data.find((r, i) => i > 0 && String(r[0]) === String(id));
+
+    // Battle 2 stores one row per (athlete, round) — a plain single-row
+    // find() would only surface whichever round happened to come first,
+    // not the athlete's cumulative totals across every round they've run.
+    if (round === '2') {
+      const hasRows = data.some((r, i) => i > 0 && String(r[0]) === String(id));
+      if (hasRows) {
+        const cumulative = _battle2CumulativeTotals(sheet, id);
+        rounds[round] = { ...cumulative.totals, rounds_completed: cumulative.roundsCompleted, complete: true };
+      }
+      return;
+    }
+
+    const row = data.find((r, i) => i > 0 && String(r[0]) === String(id));
     if (row) {
       const scores = {};
       headers.forEach((h, i) => { if (h) scores[h] = row[i]; });
