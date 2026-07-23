@@ -721,7 +721,7 @@ footer::before {
   color:var(--gold); opacity:0.78; margin-bottom:32px; display:block; position:relative;
 }
 .ft-brand { display:flex; justify-content:center; margin-bottom:8px; position:relative; }
-.ft-brand img { height:96px; object-fit:contain; opacity:0.9; }
+.ft-brand img { height:192px; object-fit:contain; opacity:0.9; }
 .ft-links {
   display:flex; justify-content:center; gap:28px; flex-wrap:wrap; margin-bottom:28px;
   position:relative;
