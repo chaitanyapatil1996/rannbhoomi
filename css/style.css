@@ -702,7 +702,7 @@ footer::before {
   background-image:url('../images/parchment.png'); background-size:cover; opacity:0.07;
 }
 .ft-chalk {
-  height:16px; width:100vw; margin-bottom:8px; position:relative;
+  height:16px; width:100vw; margin-bottom:20px; position:relative;
   left:50%; margin-left:-50vw;
   background:var(--crimson); opacity:0.92;
   clip-path: polygon(
@@ -720,8 +720,8 @@ footer::before {
   font-family:'Cinzel',serif; font-size:14px; font-weight:600; letter-spacing:5px;
   color:var(--gold); opacity:0.78; margin-bottom:32px; display:block; position:relative;
 }
-.ft-brand { display:flex; justify-content:center; margin-bottom:0; position:relative; }
-.ft-brand img { height:384px; object-fit:contain; opacity:0.9; }
+.ft-brand { display:flex; justify-content:center; margin-bottom:12px; position:relative; }
+.ft-brand img { height:128px; object-fit:contain; opacity:0.9; }
 .ft-links {
   display:flex; justify-content:center; gap:28px; flex-wrap:wrap; margin-bottom:28px;
   position:relative;
