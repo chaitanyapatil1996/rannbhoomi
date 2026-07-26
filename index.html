@@ -62,8 +62,8 @@
   }
   .prize-total-label {
     font-family: 'Cinzel', serif;
-    font-size: 13px; font-weight: 600; letter-spacing: 5px;
-    color: var(--text); opacity: 0.65; text-transform: uppercase;
+    font-size: 26px; font-weight: 700; letter-spacing: 5px;
+    color: var(--crimson); opacity: 1; text-transform: uppercase;
     display: block; margin-bottom: 10px;
   }
   .prize-total-amt {
@@ -71,11 +71,30 @@
     font-size: 80px; color: var(--crimson);
     letter-spacing: 4px; line-height: 1;
   }
-  .prize-voucher-note {
-    font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
-    letter-spacing: 4px; color: var(--crimson);
-    text-transform: uppercase; text-align: center; line-height: 1.7;
-    max-width: 760px; margin: 0 auto 32px;
+  .prize-detail-heading {
+    font-family: 'Cinzel', serif;
+    font-size: 26px; font-weight: 700; letter-spacing: 5px;
+    color: var(--crimson); text-transform: uppercase;
+    text-align: center; margin: 56px 0 20px;
+  }
+  .prize-detail-grid {
+    max-width: 1100px; margin: 0 auto;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 3px;
+  }
+  @media(max-width: 860px) {
+    .prize-detail-grid { grid-template-columns: 1fr; }
+  }
+  .prize-detail-card {
+    border: 1px solid var(--crimson-border); padding: 32px 24px;
+    background: rgba(214,185,122,0.3);
+  }
+  .prize-detail-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px;
+    letter-spacing: 3px; color: var(--crimson); margin-bottom: 14px;
+  }
+  .prize-detail-body {
+    font-family: Georgia, 'Times New Roman', serif; font-size: 16.5px;
+    color: var(--text); opacity: 0.90; line-height: 1.85;
   }
   .prize-grid {
     max-width: 1100px; margin: 0 auto;
@@ -766,8 +785,6 @@
     <div class="prize-total-amt">₹2,00,000</div>
   </div>
 
-  <p class="prize-voucher-note reveal">1st position for Solo categories (Male and Female) get a 3N/4D Goa holiday gift voucher</p>
-
   <div class="prize-grid reveal">
 
     <!-- Solo -->
@@ -799,6 +816,27 @@
       </div>
     </div>
 
+  </div>
+
+  <div class="prize-detail-heading reveal">Rewards and Takeaways</div>
+
+  <div class="prize-detail-grid reveal">
+    <div class="prize-detail-card">
+      <div class="prize-detail-title">1st Place (Male &amp; Female)</div>
+      <p class="prize-detail-body">The champions will take home a cash prize, a 3N/4D Goa Holiday Voucher, exciting gift hampers from partner brands, and earn the prestigious title of "Fittest in Pune".</p>
+    </div>
+    <div class="prize-detail-card">
+      <div class="prize-detail-title">2nd &amp; 3rd Place (Male &amp; Female)</div>
+      <p class="prize-detail-body">The runners-up will be awarded cash prizes along with exciting gift hampers from our partner brands.</p>
+    </div>
+    <div class="prize-detail-card">
+      <div class="prize-detail-title">Battle of Gyms</div>
+      <p class="prize-detail-body">The winning gym team will be crowned the "Fittest Gym in Pune" and will receive a cash prize along with exclusive gift hampers.</p>
+    </div>
+    <div class="prize-detail-card">
+      <div class="prize-detail-title">All Participants</div>
+      <p class="prize-detail-body">Every participating athlete will receive an exclusive finisher medal along with exciting giveaways from our partner brands.</p>
+    </div>
   </div>
 </section>
 
@@ -941,12 +979,15 @@
     <div class="ft-marquee-track">
       <img src="images/partners/2XU.png" alt="2XU">
       <img src="images/partners/Cafe Arabia.png" alt="Cafe Arabia">
+      <img src="images/partners/Colour Core Tattoos.png" alt="Colour Core Tattoos">
+      <img src="images/partners/Deli.png" alt="Deli">
       <img src="images/partners/Enrich.png" alt="Enrich">
       <img src="images/partners/Fitistan.png" alt="Fitistan">
       <img src="images/partners/Hyperice.png" alt="Hyperice">
       <img src="images/partners/JNB.png" alt="JNB">
       <img src="images/partners/Manant physio.png" alt="Manant Physio">
       <img src="images/partners/Next tourism.png" alt="Next Tourism">
+      <img src="images/partners/Nucleus Nutrition.png" alt="Nucleus Nutrition">
       <img src="images/partners/Peakst8.png" alt="Peakst8">
       <img src="images/partners/Pocari Sweat.png" alt="Pocari Sweat">
       <img src="images/partners/Robust Regime.png" alt="Robust Regime">
@@ -959,12 +1000,15 @@
       <img src="images/partners/zoomin.png" alt="Zoomin">
       <img src="images/partners/2XU.png" alt="" aria-hidden="true">
       <img src="images/partners/Cafe Arabia.png" alt="" aria-hidden="true">
+      <img src="images/partners/Colour Core Tattoos.png" alt="" aria-hidden="true">
+      <img src="images/partners/Deli.png" alt="" aria-hidden="true">
       <img src="images/partners/Enrich.png" alt="" aria-hidden="true">
       <img src="images/partners/Fitistan.png" alt="" aria-hidden="true">
       <img src="images/partners/Hyperice.png" alt="" aria-hidden="true">
       <img src="images/partners/JNB.png" alt="" aria-hidden="true">
       <img src="images/partners/Manant physio.png" alt="" aria-hidden="true">
       <img src="images/partners/Next tourism.png" alt="" aria-hidden="true">
+      <img src="images/partners/Nucleus Nutrition.png" alt="" aria-hidden="true">
       <img src="images/partners/Peakst8.png" alt="" aria-hidden="true">
       <img src="images/partners/Pocari Sweat.png" alt="" aria-hidden="true">
       <img src="images/partners/Robust Regime.png" alt="" aria-hidden="true">
