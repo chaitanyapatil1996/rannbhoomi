@@ -88,6 +88,26 @@ Full history: `2026-07-20-battle1-checkin-wave-scoring-design.md` (initial
 redesign) → `2026-07-21-battle1-per-zone-waves-design.md` (per-zone
 revision, supersedes the wave-lifecycle parts of the first).
 
+**Walk-in / spot registration (added 2026-07-27):** the check-in screen
+only ever supported athletes already present in the `Athletes` sheet — no
+path existed for a race-day walk-in. `judge/checkin.html` now has a
+collapsible "+ ADD WALK-IN ATHLETE" form (bib, name, category, wave); the
+new `checkin_add_walkin` backend action creates the `Athletes` row and the
+`Checkins` row in the same locked write. Design decisions, all made by the
+organizer directly rather than defaulted:
+- **Bib number is typed by check-in staff**, not auto-generated — walk-ins
+  are handed a physical bib from a reserved spare batch, so the digital
+  record has to match what's pinned to their shirt.
+- **Wave is a free choice** among that zone's currently-open waves (its own
+  selector, independent of whatever wave the check-in screen happens to
+  have selected for browsing/searching) — a walk-in doesn't have to land in
+  whatever wave staff was last looking at.
+- **Duplicate bibs are hard-blocked**, not just warned — reuses the same
+  "look up by `athlete_id`" check the rest of the system relies on, so a
+  collision would otherwise silently merge two people's scores.
+- Reuses the same 7-per-zone-per-wave capacity cap as a normal check-in
+  (`STATION_ROUNDS['1'].length`) — a walk-in still needs a free station.
+
 ## Battle 2 — round/station grid, no stopwatch
 
 Judge taps through 4 fixed-target stations per round (Rowing 500m, Devil's
