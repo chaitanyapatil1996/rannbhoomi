@@ -104,6 +104,30 @@ select.field-input, .field-input {
     <button class="btn-primary" id="checkinBtn" onclick="doCheckin(false)" disabled>CHECK IN</button>
     <div class="msg" id="checkinMsg"></div>
 
+    <button class="btn-logout" id="walkinToggle" onclick="toggleWalkinForm()" style="margin-top:18px;">+ ADD WALK-IN ATHLETE</button>
+
+    <div id="walkinForm" style="display:none; margin-top:14px; padding-top:14px; border-top:1px solid var(--border);">
+      <label class="field-label" for="walkinBib">Bib Number</label>
+      <input class="field-input" type="text" id="walkinBib" placeholder="e.g. 215" autocomplete="off">
+
+      <label class="field-label" for="walkinName" style="margin-top:12px;">Name</label>
+      <input class="field-input" type="text" id="walkinName" placeholder="Athlete name" autocomplete="off">
+
+      <label class="field-label" for="walkinCategory" style="margin-top:12px;">Category</label>
+      <select class="field-input" id="walkinCategory">
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+
+      <label class="field-label" for="walkinWave" style="margin-top:12px;">Wave</label>
+      <select class="field-input" id="walkinWave">
+        <option value="">Select wave…</option>
+      </select>
+
+      <button class="btn-primary" id="walkinSubmitBtn" onclick="submitWalkin()" style="margin-top:14px;">ADD &amp; CHECK IN</button>
+      <div class="msg" id="walkinMsg"></div>
+    </div>
+
     <div class="checked-list">
       <h3 id="checkedListLabel">CHECKED IN — WAVE — / ZONE —</h3>
       <div id="checkedRows"></div>
@@ -177,6 +201,9 @@ async function loadWaves() {
       return;
     }
     sel.innerHTML = openWaves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
+    const walkinSel = document.getElementById('walkinWave');
+    walkinSel.innerHTML = '<option value="">Select wave…</option>' +
+      openWaves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
     updateWaveStatusUI();
     await loadCheckedInList();
   } catch {
@@ -345,6 +372,55 @@ async function doCheckin(force) {
 
 function closeDupOverlay() {
   document.getElementById('dupOverlay').classList.remove('open');
+}
+
+function toggleWalkinForm() {
+  const form = document.getElementById('walkinForm');
+  const open = form.style.display !== 'none';
+  form.style.display = open ? 'none' : 'block';
+  document.getElementById('walkinToggle').textContent = open ? '+ ADD WALK-IN ATHLETE' : '− CANCEL WALK-IN';
+}
+
+async function submitWalkin() {
+  const bib = document.getElementById('walkinBib').value.trim();
+  const name = document.getElementById('walkinName').value.trim();
+  const category = document.getElementById('walkinCategory').value;
+  const wave = document.getElementById('walkinWave').value;
+  const msg = document.getElementById('walkinMsg');
+
+  if (!bib || !name || !wave) {
+    msg.textContent = 'Bib, name and wave are all required.';
+    msg.className = 'msg err';
+    return;
+  }
+
+  document.getElementById('walkinSubmitBtn').disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'checkin_add_walkin', pin, wave, athlete_id: bib, name, category }),
+    });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.error || 'Failed');
+
+    msg.textContent = `${name} added and checked into Wave ${wave}.`;
+    msg.className = 'msg ok';
+    document.getElementById('walkinBib').value = '';
+    document.getElementById('walkinName').value = '';
+
+    // New athlete should be findable in search from now on.
+    allAthletes.push({ athlete_id: bib, name, category });
+
+    if (document.getElementById('waveSelect').value === wave) {
+      await loadCheckedInList();
+    }
+  } catch (err) {
+    msg.textContent = err.message;
+    msg.className = 'msg err';
+  }
+  document.getElementById('walkinSubmitBtn').disabled = false;
 }
 
 function logout() {

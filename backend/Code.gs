@@ -53,6 +53,7 @@ function doPost(e) {
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
   if (action === 'checkin_submit')       return checkinSubmit(body);
+  if (action === 'checkin_add_walkin')   return checkinAddWalkin(body);
   if (action === 'checkin_activate_wave') return checkinActivateWave(body);
   if (action === 'checkin_complete_wave') return checkinCompleteWave(body);
   if (action === 'battle1_submit_wave')  return battle1SubmitWave(body);
@@ -644,6 +645,57 @@ function checkinSubmit(body) {
     }
 
     sheet.appendRow([Number(wave), judge.assignment, athlete_id, new Date().toISOString()]);
+    return jsonResponse({ success: true });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+// POST: race-day spot registration. Adds a brand-new row to Athletes (the
+// bib number is typed by check-in staff, not auto-generated — walk-ins get
+// handed a bib from a reserved spare batch) and immediately checks that
+// athlete into (wave, zone) in the same locked pass. Blocks on a bib that
+// already exists rather than silently overwriting/merging with a real
+// registrant's row.
+function checkinAddWalkin(body) {
+  const { pin, wave, athlete_id, name, category } = body;
+  const judge = _lookupJudge(pin);
+  if (!judge || String(judge.battle) !== '1' || judge.station !== 'checkin') return jsonResponse({ error: 'Invalid PIN' });
+  if (!wave || !athlete_id || !name || !category) return jsonResponse({ error: 'wave, athlete_id, name and category required' });
+
+  const lock = LockService.getScriptLock();
+  try { lock.waitLock(15000); } catch (e) { return jsonResponse({ error: 'Server busy — please retry' }); }
+  try {
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    const athleteSheet = ss.getSheetByName('Athletes');
+    const athleteData  = athleteSheet.getDataRange().getValues();
+    const athleteH     = athleteData[0];
+    const idIdx        = athleteH.indexOf('athlete_id');
+    const existingAthlete = athleteData.find((r, i) => i > 0 && String(r[idIdx]).trim() === String(athlete_id).trim());
+    if (existingAthlete) {
+      return jsonResponse({ error: `Bib ${athlete_id} is already in use by ${existingAthlete[athleteH.indexOf('name')]}. Use a different bib.` });
+    }
+
+    const checkinSheet = ss.getSheetByName(CHECKINS_SHEET);
+    const checkinData  = checkinSheet.getDataRange().getValues();
+
+    // Same hard cap as a normal check-in — a walk-in still needs a free station.
+    const capacity = STATION_ROUNDS['1'].length;
+    const zoneCount = checkinData.filter((r, i) => i > 0 && String(r[0]) === String(wave) && String(r[1]) === String(judge.assignment)).length;
+    if (zoneCount >= capacity) {
+      return jsonResponse({ error: `Zone ${judge.assignment} is full for Wave ${wave} (${capacity}/${capacity} checked in).` });
+    }
+
+    const newRow = new Array(athleteH.length).fill('');
+    const setA = (h, v) => { const idx = athleteH.indexOf(h); if (idx > -1) newRow[idx] = v; };
+    setA('athlete_id', athlete_id);
+    setA('name', name);
+    setA('category', category);
+    setA('wave', wave);
+    athleteSheet.appendRow(newRow);
+
+    checkinSheet.appendRow([Number(wave), judge.assignment, athlete_id, new Date().toISOString()]);
     return jsonResponse({ success: true });
   } finally {
     lock.releaseLock();
