@@ -1718,7 +1718,7 @@ function migrateBattle2Schema() {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(ROUND2_SCORES_SHEET);
   const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  ['round_complete', 'heat_finished'].forEach(name => {
+  ['round', 'round_complete', 'heat_finished'].forEach(name => {
     if (headers.indexOf(name) === -1) {
       const col = sheet.getLastColumn() + 1;
       sheet.getRange(1, col).setValue(name).setFontWeight('bold');
