@@ -336,6 +336,27 @@ function getAnalytics(e) {
   const round    = e.parameter.round || '1';
   const category = (e.parameter.category || '').toLowerCase();
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+  if (round === 'gym') {
+    const gymSheet = ss.getSheetByName(GYM_RESULTS_SHEET);
+    if (!gymSheet || gymSheet.getLastRow() <= 1) return jsonResponse({ round, station_champions: {} });
+    const gymData    = gymSheet.getDataRange().getValues();
+    const gymHeaders = gymData[0];
+    const teamNameIdx = gymHeaders.indexOf('team_name');
+    const teamRows   = gymData.slice(1).filter(r => r[0]);
+
+    const gymChampions = {};
+    GYM_STATIONS.forEach(([key]) => {
+      const col = gymHeaders.indexOf(key);
+      if (col === -1) return;
+      gymChampions[key] = teamRows
+        .map(r => ({ name: r[teamNameIdx], value: Number(r[col]) || 0 }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 3);
+    });
+    return jsonResponse({ round, station_champions: gymChampions });
+  }
+
   const sheet = ss.getSheetByName(SCORE_SHEETS[round]);
   if (!sheet) return jsonResponse({ error: 'Invalid round' });
 

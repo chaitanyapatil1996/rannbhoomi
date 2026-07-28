@@ -437,7 +437,9 @@ async function loadScores() {
 
 async function loadAnalytics() {
   try {
-    const url  = `${APPS_SCRIPT_URL}?action=analytics&round=${currentBattle}&category=${currentGender}`;
+    const url  = currentDivision === 'gym'
+      ? `${APPS_SCRIPT_URL}?action=analytics&round=gym`
+      : `${APPS_SCRIPT_URL}?action=analytics&round=${currentBattle}&category=${currentGender}`;
     const res  = await fetch(url);
     const data = await res.json();
     renderStationChamps(data.station_champions || {});
@@ -512,7 +514,7 @@ function renderTable() {
 // ── Analytics rendering ───────────────────────────────────────────────────────
 
 function renderStationChamps(champs) {
-  const stations = BATTLE_STATIONS[String(currentBattle)] || [];
+  const stations = currentDivision === 'gym' ? GYM_STATIONS : (BATTLE_STATIONS[String(currentBattle)] || []);
   if (!stations.length) { document.getElementById('champGrid').innerHTML = ''; return; }
 
   const medals = ['1ST','2ND','3RD'];
