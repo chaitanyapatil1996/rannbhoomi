@@ -41,6 +41,16 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .ctrl-btn.active { background:var(--crimson); color:var(--gold); border-color:var(--crimson); }
 .ctrl-btn:hover:not(.active) { background:rgba(76,0,7,0.07); }
 
+/* Separate class from .ctrl-btn on purpose — setBattle()/setGym() reset
+   .ctrl-btn active state on every click, which would wipe this toggle too. */
+.gender-btn {
+  padding:10px 22px; border:1px solid var(--border);
+  background:transparent; font-family:'Cinzel',serif; font-size:14px;
+  letter-spacing:3px; color:var(--crimson); cursor:pointer; transition:.18s;
+}
+.gender-btn.active { background:var(--crimson); color:var(--gold); border-color:var(--crimson); }
+.gender-btn:hover:not(.active) { background:rgba(76,0,7,0.07); }
+
 /* Separate class from .ctrl-btn on purpose — the leaderboard's battle/gym
    filter tabs do document.querySelectorAll('.ctrl-btn') to reset active
    state, which would wipe this toggle's state too if it shared the class. */
@@ -60,10 +70,8 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   position:relative; overflow:hidden;
 }
 .podium-card.p1 { background:rgba(222,193,137,0.55); border-color:rgba(76,0,7,0.35); }
-.podium-medal { font-family:'Bebas Neue',sans-serif; font-size:28px; opacity:.35; position:absolute; top:10px; right:14px; }
-.p1 .podium-medal { opacity:.6; }
-.podium-rank { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; opacity:.6; margin-bottom:4px; }
-.podium-name { font-size:15px; letter-spacing:1px; margin-bottom:2px; line-height:1.2; }
+.podium-rank { font-family:'Bebas Neue',sans-serif; font-size:14px; letter-spacing:2px; color:var(--crimson); font-weight:700; margin-bottom:4px; }
+.podium-name { font-size:15px; letter-spacing:1px; margin-bottom:2px; line-height:1.2; color:var(--crimson); font-weight:700; }
 .podium-cat  { font-size:12px; letter-spacing:2px; opacity:.6; margin-bottom:8px; }
 .podium-total { font-family:'Bebas Neue',sans-serif; font-size:30px; color:var(--crimson); }
 .podium-total-label { font-size:11px; letter-spacing:2px; opacity:.55; }
@@ -79,7 +87,7 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 }
 .scores-table { width:100%; border-collapse:collapse; }
 .scores-table th {
-  font-size:12px; letter-spacing:3px; opacity:.6; text-align:left;
+  font-size:12px; letter-spacing:3px; color:var(--crimson); font-weight:700; text-align:left;
   padding:10px 14px; border-bottom:1px solid var(--border); white-space:nowrap;
 }
 .scores-table td { padding:13px 14px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:14px; cursor:pointer; }
@@ -107,16 +115,6 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .champ-pos { font-family:'Bebas Neue',sans-serif; font-size:13px; opacity:.5; margin-right:8px; min-width:20px; }
 .champ-name { font-size:13px; letter-spacing:.5px; flex:1; }
 .champ-val  { font-family:'Bebas Neue',sans-serif; font-size:18px; }
-
-.avg-table { border-collapse:collapse; width:100%; max-width:700px; }
-.avg-table th { font-size:12px; letter-spacing:3px; opacity:.6; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
-.avg-table td { padding:10px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:14px; }
-.avg-m { color:var(--crimson); }
-.avg-f { opacity:.75; }
-
-.combined-table { border-collapse:collapse; width:100%; max-width:800px; }
-.combined-table th { font-size:12px; letter-spacing:3px; opacity:.6; text-align:left; padding:9px 12px; border-bottom:1px solid var(--border); }
-.combined-table td { padding:11px 12px; border-bottom:1px solid rgba(76,0,7,0.07); font-size:14px; }
 
 /* ── Athlete detail modal ── */
 .modal-overlay {
@@ -319,6 +317,11 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   <button class="ctrl-btn"        onclick="setGym(this)">Gym Battle</button>
 </div>
 
+<div class="controls" id="genderControls">
+  <button class="gender-btn active" onclick="setGender('male',this)">Male</button>
+  <button class="gender-btn"        onclick="setGender('female',this)">Female</button>
+</div>
+
 <!-- Podium -->
 <div class="podium" id="podium"></div>
 
@@ -333,14 +336,6 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   <div class="analytics-block" id="champBlock">
     <div class="analytics-title">Station Champions</div>
     <div class="station-champs-grid" id="champGrid"><p class="status-loading">Loading...</p></div>
-  </div>
-  <div class="analytics-block" id="combinedBlock">
-    <div class="analytics-title">Combined Ranking — All Battles</div>
-    <div id="combinedTable"><p class="status-loading">Loading...</p></div>
-  </div>
-  <div class="analytics-block" id="avgBlock">
-    <div class="analytics-title">Category Averages</div>
-    <div id="avgTable"><p class="status-loading">Loading...</p></div>
   </div>
 </div>
 
@@ -415,6 +410,7 @@ let allScores     = [];
 let lastUpdated   = null;
 let currentBattle = 1;
 let currentDivision = 'solo';
+let currentGender = 'male';
 let analyticsOpen = false;
 let secondsSince  = 0;
 let analyticsLoaded = false;
@@ -424,10 +420,10 @@ let analyticsLoaded = false;
 async function loadScores() {
   try {
     const url  = currentDivision === 'gym'
-      ? `${APPS_SCRIPT_URL}?action=scores&division=gym`
+      ? `${APPS_SCRIPT_URL}?action=gym_scores`
       : String(currentBattle) === '2'
-        ? `${APPS_SCRIPT_URL}?action=battle2_scores`
-        : `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&division=solo`;
+        ? `${APPS_SCRIPT_URL}?action=battle2_scores&category=${currentGender}`
+        : `${APPS_SCRIPT_URL}?action=scores&round=${currentBattle}&category=${currentGender}`;
     const res  = await fetch(url);
     const data = await res.json();
     allScores   = data.scores || [];
@@ -441,12 +437,10 @@ async function loadScores() {
 
 async function loadAnalytics() {
   try {
-    const url  = `${APPS_SCRIPT_URL}?action=analytics&round=${currentBattle}`;
+    const url  = `${APPS_SCRIPT_URL}?action=analytics&round=${currentBattle}&category=${currentGender}`;
     const res  = await fetch(url);
     const data = await res.json();
     renderStationChamps(data.station_champions || {});
-    renderCombined(data.combined_ranking || []);
-    renderAvgTable(data.category_averages || {});
   } catch {
     document.getElementById('champGrid').innerHTML = '<p class="status-loading">Failed to load analytics.</p>';
   }
@@ -460,19 +454,18 @@ function renderAll() {
 }
 
 function renderPodium() {
-  const medals = ['🥇','🥈','🥉'];
-  const top3   = allScores.slice(0, 3);
+  const top3 = allScores.slice(0, 3);
   if (!top3.length) { document.getElementById('podium').innerHTML = ''; return; }
 
-  const isB2 = String(currentBattle) === '2';
+  const isB2  = String(currentBattle) === '2';
+  const isGym = currentDivision === 'gym';
   const html = top3.map((r, i) => `
     <div class="podium-card ${i===0?'p1':''}">
-      <div class="podium-medal">${medals[i]}</div>
-      <div class="podium-rank">#${esc(r.rank ?? i+1)}</div>
-      <div class="podium-name">${esc(r.name)}</div>
-      <div class="podium-cat">${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))} · Wave ${esc(r.wave??'—')}</div>
-      <div class="podium-total">${esc(isB2 ? (r.rounds_completed??'—') : (r.total??'—'))}</div>
-      <div class="podium-total-label">${isB2 ? 'ROUNDS COMPLETED' : 'TOTAL POINTS'}</div>
+      <div class="podium-rank">#${esc(r.gender_rank ?? r.rank ?? i+1)}</div>
+      <div class="podium-name">${esc(isGym ? r.team_name : r.name)}</div>
+      <div class="podium-cat">${isGym ? `ZONE ${esc(r.zone??'—')}` : esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))}</div>
+      <div class="podium-total">${esc(isGym ? (r.team_score??'—') : isB2 ? (r.rounds_completed??'—') : (r.total??'—'))}</div>
+      <div class="podium-total-label">${isGym ? 'TEAM SCORE' : isB2 ? 'ROUNDS COMPLETED' : 'TOTAL POINTS'}</div>
       ${isB2 && battle2Detail(r) ? `<div class="podium-total-label" style="margin-top:2px; font-weight:700; opacity:.85;">${esc(battle2Detail(r))}</div>` : ''}
     </div>`).join('');
 
@@ -487,25 +480,28 @@ function renderTable() {
     return;
   }
 
-  const stations = BATTLE_STATIONS[String(currentBattle)] || [];
-  const isB2 = String(currentBattle) === '2';
+  const isB2  = String(currentBattle) === '2';
+  const isGym = currentDivision === 'gym';
+  const stations = isGym ? GYM_STATIONS : (BATTLE_STATIONS[String(currentBattle)] || []);
 
   let html = `<table class="scores-table"><thead><tr>
-    <th>RANK</th><th>ATHLETE</th><th>WAVE</th>
+    <th>RANK</th><th>${isGym ? 'TEAM' : 'ATHLETE'}</th>${isGym ? '<th>ZONE</th>' : ''}
     ${stations.map(s => `<th>${(STATION_LABELS[s]||s).toUpperCase()}</th>`).join('')}
-    <th>${isB2 ? 'ROUNDS' : 'TOTAL'}</th>
+    <th>${isGym ? 'TEAM SCORE' : isB2 ? 'ROUNDS' : 'TOTAL'}</th>
   </tr></thead><tbody>`;
 
   filtered.forEach(row => {
     const isComplete = row.complete === true || row.complete === 'TRUE';
-    html += `<tr onclick="openModal('${esc(row.athlete_id)}')">
-      <td><span class="rank-num">${esc(row.rank??'—')}</span></td>
-      <td>${esc(row.name)}</td>
-      <td>${esc(row.wave??'—')}</td>
+    html += `<tr ${isGym ? '' : `onclick="openModal('${esc(row.athlete_id)}')"`}>
+      <td><span class="rank-num">${esc(isGym ? row.rank : (row.gender_rank ?? row.rank) ?? '—')}</span></td>
+      <td>${esc(isGym ? row.team_name : row.name)}</td>
+      ${isGym ? `<td>${esc(row.zone??'—')}</td>` : ''}
       ${stations.map(s => `<td>${row[s]!==''&&row[s]!==undefined ? esc(row[s]) : '—'}</td>`).join('')}
-      <td>${isB2
-        ? `<strong>${esc(row.rounds_completed??0)}</strong>${battle2Detail(row) ? `<div style="font-size:11px; font-weight:700; opacity:.85;">${esc(battle2Detail(row))}</div>` : ''}`
-        : (isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>')}</td>
+      <td>${isGym
+        ? `<strong>${esc(row.team_score??0)}</strong>`
+        : isB2
+          ? `<strong>${esc(row.rounds_completed??0)}</strong>${battle2Detail(row) ? `<div style="font-size:11px; font-weight:700; opacity:.85;">${esc(battle2Detail(row))}</div>` : ''}`
+          : (isComplete ? `<strong>${esc(row.total)}</strong>` : '<span class="in-progress">IN PROGRESS</span>')}</td>
     </tr>`;
   });
 
@@ -535,49 +531,6 @@ function renderStationChamps(champs) {
   }).join('');
 
   document.getElementById('champGrid').innerHTML = html;
-}
-
-function renderCombined(ranking) {
-  if (!ranking.length) {
-    document.getElementById('combinedTable').innerHTML = '<p style="opacity:.4;font-size:11px;">Data available once athletes compete in multiple battles.</p>';
-    return;
-  }
-  let html = `<table class="combined-table"><thead><tr>
-    <th>RANK</th><th>ATHLETE</th><th>CATEGORY</th><th>B1</th><th>B2</th><th>B3</th><th>TOTAL</th>
-  </tr></thead><tbody>`;
-  ranking.forEach(r => {
-    html += `<tr>
-      <td><strong>${esc(r.rank)}</strong></td>
-      <td>${esc(r.name)}</td>
-      <td>${esc(String(r.category||'').charAt(0).toUpperCase()+String(r.category||'').slice(1))}</td>
-      <td>${r.r1||'—'}</td><td>${r.r2||'—'}</td><td>${r.r3||'—'}</td>
-      <td><strong>${esc(r.combined_total)}</strong></td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('combinedTable').innerHTML = html;
-}
-
-function renderAvgTable(avgs) {
-  const stations = BATTLE_STATIONS[String(currentBattle)] || [];
-  if (!stations.length || (!avgs.male && !avgs.female)) {
-    document.getElementById('avgTable').innerHTML = '<p style="opacity:.4;font-size:11px;">No data yet.</p>';
-    return;
-  }
-  let html = `<table class="avg-table"><thead><tr>
-    <th>STATION</th><th>MALE AVG</th><th>FEMALE AVG</th>
-  </tr></thead><tbody>`;
-  stations.forEach(st => {
-    const m = avgs.male   ? (avgs.male[st]   ?? '—') : '—';
-    const f = avgs.female ? (avgs.female[st] ?? '—') : '—';
-    html += `<tr>
-      <td>${STATION_LABELS[st]||st}</td>
-      <td class="avg-m">${m}</td>
-      <td class="avg-f">${f}</td>
-    </tr>`;
-  });
-  html += '</tbody></table>';
-  document.getElementById('avgTable').innerHTML = html;
 }
 
 // ── Athlete modal ─────────────────────────────────────────────────────────────
@@ -646,6 +599,7 @@ function setBattle(n, btn) {
   currentDivision = 'solo';
   document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  document.getElementById('genderControls').style.display = '';
   analyticsLoaded = false;
   loadScores();
   if (analyticsOpen) loadAnalytics();
@@ -654,6 +608,16 @@ function setBattle(n, btn) {
 function setGym(btn) {
   currentDivision = 'gym';
   document.querySelectorAll('.ctrl-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('genderControls').style.display = 'none';
+  analyticsLoaded = false;
+  loadScores();
+  if (analyticsOpen) loadAnalytics();
+}
+
+function setGender(g, btn) {
+  currentGender = g;
+  document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   analyticsLoaded = false;
   loadScores();

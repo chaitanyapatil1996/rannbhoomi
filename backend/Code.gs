@@ -333,7 +333,8 @@ function getAthlete(e) {
 // ─── Analytics ────────────────────────────────────────────────────────────────
 
 function getAnalytics(e) {
-  const round = e.parameter.round || '1';
+  const round    = e.parameter.round || '1';
+  const category = (e.parameter.category || '').toLowerCase();
   const ss    = SpreadsheetApp.openById(SPREADSHEET_ID);
   const sheet = ss.getSheetByName(SCORE_SHEETS[round]);
   if (!sheet) return jsonResponse({ error: 'Invalid round' });
@@ -342,11 +343,12 @@ function getAnalytics(e) {
   const headers     = data[0];
   const completeIdx = headers.indexOf('complete');
   const catIdx      = headers.indexOf('category');
-  const totalIdx    = headers.indexOf('total');
   const stations    = STATION_ROUNDS[String(round)] || [];
-  const done        = data.slice(1).filter(r => r[0] && r[completeIdx] === true);
+  const done        = data.slice(1).filter(r =>
+    r[0] && r[completeIdx] === true && (!category || String(r[catIdx]).toLowerCase() === category)
+  );
 
-  // Per-station top 3
+  // Per-station top 3 (gender-scoped via the category filter above)
   const stationChampions = {};
   stations.forEach(st => {
     const col = headers.indexOf(st);
@@ -357,44 +359,7 @@ function getAnalytics(e) {
       .slice(0, 3);
   });
 
-  // Category averages
-  const categoryAverages = {};
-  ['male', 'female'].forEach(cat => {
-    const rows = done.filter(r => String(r[catIdx]).toLowerCase() === cat);
-    if (!rows.length) return;
-    const avgs = {};
-    stations.forEach(st => {
-      const col = headers.indexOf(st);
-      if (col === -1) return;
-      const vals = rows.map(r => Number(r[col]) || 0);
-      avgs[st] = Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 10) / 10;
-    });
-    categoryAverages[cat] = avgs;
-  });
-
-  // Combined ranking — sum of totals across all rounds
-  const athleteTotals = {};
-  Object.keys(SCORE_SHEETS).forEach(r => {
-    const s = ss.getSheetByName(SCORE_SHEETS[r]);
-    if (!s) return;
-    const d = s.getDataRange().getValues();
-    const h = d[0];
-    const tIdx = h.indexOf('total');
-    const cIdx = h.indexOf('complete');
-    const catI = h.indexOf('category');
-    d.slice(1).filter(row => row[0] && row[cIdx] === true).forEach(row => {
-      const aid = String(row[0]);
-      if (!athleteTotals[aid]) athleteTotals[aid] = { athlete_id: aid, name: row[1], category: row[catI], r1: 0, r2: 0, r3: 0 };
-      athleteTotals[aid][`r${r}`] = Number(row[tIdx]) || 0;
-    });
-  });
-  const combinedRanking = Object.values(athleteTotals)
-    .map(a => ({ ...a, combined_total: a.r1 + a.r2 + a.r3 }))
-    .filter(a => a.combined_total > 0)
-    .sort((a, b) => b.combined_total - a.combined_total)
-    .map((a, i) => ({ ...a, rank: i + 1 }));
-
-  return jsonResponse({ round, station_champions: stationChampions, category_averages: categoryAverages, combined_ranking: combinedRanking });
+  return jsonResponse({ round, station_champions: stationChampions });
 }
 
 // ─── Wave release ─────────────────────────────────────────────────────────────
