@@ -286,6 +286,20 @@ function getAthlete(e) {
   const athlete = {};
   athleteH.forEach((h, i) => { athlete[h] = athleteRow[i]; });
 
+  // Battle 1 gender-rank — the one rank that's stable and available for
+  // every athlete regardless of how far they progressed, since it's their
+  // qualifier placing. Read from the cache (not recomputed here) so it only
+  // reflects whatever's actually been released to the public leaderboard.
+  const r1Cache = ss.getSheetByName(CACHE_SHEETS['1']);
+  if (r1Cache && r1Cache.getLastRow() > 1) {
+    const cacheData = r1Cache.getDataRange().getValues();
+    const cacheH    = cacheData[0];
+    const idIdx     = cacheH.indexOf('athlete_id');
+    const rankIdx   = cacheH.indexOf('gender_rank');
+    const cacheRow  = cacheData.find((r, i) => i > 0 && String(r[idIdx]) === String(id));
+    if (cacheRow && rankIdx > -1 && cacheRow[rankIdx] !== '') athlete.battle1_gender_rank = cacheRow[rankIdx];
+  }
+
   const rounds = {};
   Object.keys(SCORE_SHEETS).forEach(round => {
     const sheet = ss.getSheetByName(SCORE_SHEETS[round]);
