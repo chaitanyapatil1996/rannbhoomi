@@ -214,7 +214,7 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 /* Header — event name only now; the shield is positioned absolutely (see
    below) so it's out of normal flow entirely. Any future size change to
    it can never push the divider or anything else around again. */
-.cert-header { display:flex; align-items:center; justify-content:flex-end; margin-bottom:24px; }
+.cert-header { display:flex; align-items:flex-start; justify-content:flex-end; margin-bottom:24px; min-height:115px; }
 .cert-header-right { text-align:right; }
 /* Shield anchored to the paper's top-left, independent of document flow —
    grows downward from a fixed top edge, never affects layout below it. */
