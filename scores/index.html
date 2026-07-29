@@ -238,6 +238,11 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .cert-stations { display:flex; flex-wrap:wrap; justify-content:center; gap:0; }
 .cert-station { flex:0 0 110px; width:110px; padding:6px 10px; border-right:1px solid rgba(222,193,137,0.1); margin-bottom:4px; text-align:center; }
 .cert-station:last-child { border-right:none; }
+/* Battle 1 has 7 stations — force exactly 4 per row (then 3) instead of
+   however many fit at the fixed 110px width (was 6 then 1). Percentage
+   width means this always wraps at 4 regardless of the paper's actual
+   pixel width. */
+.cert-stations-b1 .cert-station { flex:0 0 25%; width:25%; }
 .cert-st-label { font-family:'Bebas Neue',sans-serif; font-size:12px; letter-spacing:2px; opacity:.4; text-transform:uppercase; margin-bottom:3px; text-align:center; font-weight:700; }
 .cert-st-val { font-family:'Bebas Neue',sans-serif; font-size:26px; line-height:1; text-align:center; font-weight:700; }
 
@@ -792,7 +797,7 @@ function renderCertificate(data) {
             <span class="cert-battle-total-val">${isB2 ? esc(scores.rounds_completed??0) : (isComplete ? esc(scores.total) : 'IN PROGRESS')}</span>
           </div>
         </div>
-        <div class="cert-stations">${stationsHtml}</div>
+        <div class="cert-stations${b.round === '1' ? ' cert-stations-b1' : ''}">${stationsHtml}</div>
       </div>`;
   });
 
