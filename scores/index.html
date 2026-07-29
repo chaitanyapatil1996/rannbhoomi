@@ -211,9 +211,12 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .cert-corner-tr { position:absolute; top:14px; right:14px; width:22px; height:22px; border-top:1px solid rgba(222,193,137,0.45); border-right:1px solid rgba(222,193,137,0.45); }
 .cert-corner-bl { position:absolute; bottom:14px; left:14px; width:22px; height:22px; border-bottom:1px solid rgba(222,193,137,0.45); border-left:1px solid rgba(222,193,137,0.45); }
 
-/* Header — shield (left, replaces the wordmark logo) / event name (right) */
-.cert-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
-.cert-shield { height:60px; }
+/* Header — shield (left, replaces the wordmark logo) / event name (right).
+   Shield grows into the row's own margin-bottom (60px shield + 24px margin
+   -> 84px shield + 0 margin) so the divider below stays in the exact same
+   position instead of being pushed down. */
+.cert-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0; }
+.cert-shield { height:84px; }
 .cert-header-right { text-align:right; }
 .cert-event-name { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:6px; font-weight:700; }
 .cert-divider { width:100%; height:1px; background:rgba(222,193,137,0.18); margin:20px 0; }
