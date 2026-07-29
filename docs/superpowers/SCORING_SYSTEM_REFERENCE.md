@@ -189,37 +189,53 @@ Full history: `2026-07-19-gym-battle-single-entry-design.md`.
 
 ## Known issues / open items
 
-- **Duplicate `release_all` row in Config** (found 2026-07-22): `getConfig()`
-  reads via a forEach that lets a later row silently overwrite an earlier
-  one (last row wins for *reads*), but `setReleaseAll()`/`seedTestData()`
-  write via `findIndex` (first match wins for *writes*) — if two
-  `release_all` rows ever hold different values, the admin panel's toggle
-  can appear to succeed while the value actually used elsewhere doesn't
-  change. **Status unconfirmed as of this writing** — organizer was told
-  to delete the duplicate manually but the final state wasn't verified
-  back to me. Check this before trusting the leaderboard release state.
-- **`s3_lunges` displays as "Deadlift"** everywhere (PIN labels, Scoring
-  Table, judge UI) — legacy exercise rename where only the label changed,
-  not the internal key/column name. Organizer confirmed 2026-07-22 this is
-  fine to leave — not worth renaming a live `Round1_Scores` column over.
-  Purely cosmetic, consistent throughout.
+- **Duplicate `release_all` row in Config** — **RESOLVED**, organizer
+  confirmed the duplicate row was deleted (2026-07-27). No longer a
+  concern for leaderboard release-state trust.
+- **`s3_lunges` displays as "Deadlift"** everywhere — legacy exercise
+  rename where only the label changed, not the internal key/column name.
+  This was NOT actually consistent everywhere: `scores/index.html`'s own
+  `STATION_LABELS` map (used by the public leaderboard table, athlete
+  modal, and both certificates) independently said `'Lunges'`, a real
+  display bug caught by the organizer reviewing the certificate
+  ("I can see lunges, but it's not part of battle 1"). Fixed 2026-07-29 —
+  now genuinely consistent everywhere.
 - **`Round1` public leaderboard table is wide** (11 columns) — fixed to
   not need horizontal scroll on desktop (`.table-wrap` max-width relaxed
   above 900px), but mobile still scrolls horizontally by design (accepted
   tradeoff, organizer's call 2026-07-23).
-- **Battle 1 timeline estimate is stale** — the original ~9h33m estimate
-  (`docs/superpowers/specs/2026-07-17-...`) assumed 11 synchronized heats
-  across all 4 zones; the actual per-zone-independent, staggered model
-  (confirmed 2026-07-22) likely needs a different estimate entirely.
+- **Battle 1 timeline estimate** — organizer explicitly said (2026-07-27)
+  this does not need to be recalculated; live scoring is working fine as
+  designed. Drop this from future open-items tracking.
 - **Test-data contamination**: reused bib numbers across sessions can
   carry forward historical `complete`/scored data from earlier testing —
   a "bug" where one station's submit appears to complete all 7 is often
   just that the other 6 were already filled from an earlier pass. Verify
   actual sheet values before assuming a write-scoping bug. Use
   `admin_clear` for a genuinely clean slate.
-- **Battle 3 and Gym Battle's other-3-judges read-only screens**: still
-  not live-tested (Battle 3 not at all; Gym Battle's read-only view was
-  explicitly deprioritized by the organizer, not tested).
+- **Battle 3 and Gym Battle's other-3-judges read-only screens**: Battle 3
+  has now been live-tested end-to-end with no issues reported
+  (2026-07-27/28). Gym Battle's 3 read-only judge screens remain
+  deliberately untested — deprioritized by the organizer, not needed
+  operationally.
+- **Gym Battle had no public leaderboard/analytics support until
+  2026-07-28** — `scores/index.html`'s Gym Battle tab called
+  `action=scores&division=gym`, but the backend never read a `division`
+  parameter at all, so it silently fell through to the generic Battle 1
+  cache and showed Solo Battle 1 data mislabeled as Gym Battle. Fixed:
+  frontend now calls the dedicated `gym_scores` action; `getAnalytics()`
+  gained a `round==='gym'` branch reading `Gym_Results` directly for real
+  Station Champions (top 3 teams per station). Podium/table rendering
+  branches on `currentDivision==='gym'` for the different data shape
+  (`team_name`/`team_score`/`zone` vs `name`/`total`/`category`).
+- **Battle 1 gender-rank now exposed on `getAthlete()`** — new
+  `battle1_gender_rank` field, read from `Leaderboard_Cache_R1`'s
+  `gender_rank` column (not recomputed). Used by the certificate's
+  athlete-meta line (`MALE · RANK - 3`). Blank if Battle 1 isn't
+  released/rebuilt for that athlete yet. The public leaderboard table
+  also switched its rank column from combined overall `rank` to
+  `gender_rank` for the same reason (was interleaving M/F rankings under
+  one number, which didn't match "top 3 male" style displays).
 
 ## Testing / deployment conventions
 
