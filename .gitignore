@@ -9,6 +9,10 @@ images/sections/
 images/sections_v2/
 images/dbg_*
 
+# Certificate email system — generated PDFs and per-run logs
+certificates/
+certificate_log_*.txt
+
 # Claude Code internal files
 .claude/
 .superpowers/
