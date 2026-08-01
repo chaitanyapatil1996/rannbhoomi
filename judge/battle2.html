@@ -165,6 +165,24 @@ select.field-input, .field-input {
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
+// Backend locks writes with a 15s wait, so concurrent judges can occasionally
+// see "Server busy" under real load. Retry transparently before surfacing it.
+async function postJSON(body) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error && /server busy/i.test(data.error) && attempt < 2) {
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      continue;
+    }
+    return data;
+  }
+}
+
 const STATIONS = [
   { key: 'rowing',       label: 'Rowing',           target: 500, unit: 'metres' },
   { key: 'devils_press',  label: "Devil's Press",   target: 12,  unit: 'reps' },
@@ -236,12 +254,7 @@ async function startHeat() {
   msg.textContent = '';
 
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'battle2_start', pin, athlete_id: athleteId }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'battle2_start', pin, athlete_id: athleteId });
     if (!data.success) throw new Error(data.error || 'Failed to start heat');
 
     currentAthlete = { athlete_id: athleteId, name: data.name, category: data.category };
@@ -297,12 +310,7 @@ async function stationDone() {
   btn.disabled = true;
   msg.textContent = '';
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'battle2_station_done', pin, athlete_id: currentAthlete.athlete_id }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'battle2_station_done', pin, athlete_id: currentAthlete.athlete_id });
     if (!data.success) throw new Error(data.error || 'Failed');
 
     // Always trust the server's returned state rather than assuming what
@@ -348,12 +356,7 @@ async function confirmWhistle() {
   const value = document.getElementById('whistleValue').value;
   const msg = document.getElementById('heatMsg');
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'battle2_partial', pin, athlete_id: currentAthlete.athlete_id, value }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'battle2_partial', pin, athlete_id: currentAthlete.athlete_id, value });
     if (!data.success) throw new Error(data.error || 'Failed');
 
     const cumulative = data.cumulative || {};

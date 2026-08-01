@@ -132,6 +132,24 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
+// Backend locks writes with a 15s wait, so concurrent judges can occasionally
+// see "Server busy" under real load. Retry transparently before surfacing it.
+async function postJSON(body) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error && /server busy/i.test(data.error) && attempt < 2) {
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      continue;
+    }
+    return data;
+  }
+}
+
 let pin = null;
 let judge = null;
 let athleteConfirmed = false;
@@ -240,21 +258,16 @@ async function submitEntry() {
   msg.textContent = '';
 
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({
-        action: 'battle3_submit',
-        pin,
-        athlete_id: currentAthleteId,
-        snatch_weight: num('snatchWeight'), snatch_reps: num('snatchReps'),
-        sled_weight: num('sledWeight'), sled_laps: num('sledLaps'),
-        ski_metres: num('skiMetres'),
-        box_step_reps: num('boxReps'),
-        sandbag_reps: num('sandbagReps'),
-      }),
+    const data = await postJSON({
+      action: 'battle3_submit',
+      pin,
+      athlete_id: currentAthleteId,
+      snatch_weight: num('snatchWeight'), snatch_reps: num('snatchReps'),
+      sled_weight: num('sledWeight'), sled_laps: num('sledLaps'),
+      ski_metres: num('skiMetres'),
+      box_step_reps: num('boxReps'),
+      sandbag_reps: num('sandbagReps'),
     });
-    const data = await res.json();
     if (!data.success) throw new Error(data.error || 'Submission failed');
 
     msg.textContent = `Saved — ${data.name}: ${data.total} pts total`;

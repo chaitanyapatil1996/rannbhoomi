@@ -131,6 +131,24 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
+// Backend locks writes with a 15s wait, so concurrent judges can occasionally
+// see "Server busy" under real load. Retry transparently before surfacing it.
+async function postJSON(body) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error && /server busy/i.test(data.error) && attempt < 2) {
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      continue;
+    }
+    return data;
+  }
+}
+
 const STATION_ORDER = ['front_squats', 'devils_press', 'rower', 'box_jump'];
 const STATION_META = {
   front_squats: { label: 'Front Squats',    unit: 'reps × 10 pts' },
@@ -254,12 +272,7 @@ async function submitRotation() {
   btn.disabled = true;
   document.getElementById('scoreMsg').textContent = '';
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'gym_submit_rotation', pin, deltas }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'gym_submit_rotation', pin, deltas });
     if (!data.success) throw new Error(data.error || 'Failed');
 
     renderZone(data.zone, { rebuildInputs: true });
@@ -308,12 +321,7 @@ async function startTeam() {
   btn.disabled = true;
   msg.textContent = '';
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'gym_start_team', pin, team_name: teamName }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'gym_start_team', pin, team_name: teamName });
     if (!data.success) throw new Error(data.error || 'Failed to start');
     document.getElementById('teamNameInput').value = '';
     await pollZone();

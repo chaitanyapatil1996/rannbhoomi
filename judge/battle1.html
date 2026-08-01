@@ -52,9 +52,6 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
 .msg.err { color:var(--crimson); }
 .msg.ok  { color:var(--ok); }
 
-.late-panel { display:none; margin-top:14px; padding:16px; border:1px dashed var(--border); background:rgba(76,0,7,0.04); }
-.late-panel.open { display:block; }
-
 .btn-logout { margin-top:24px; padding:10px 18px; background:transparent; color:var(--crimson); border:1px solid var(--border); font-family:'Cinzel',serif; font-size:9px; letter-spacing:3px; cursor:pointer; opacity:0.65; }
 .btn-logout:hover { opacity:1; }
 </style>
@@ -73,7 +70,7 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
     <div class="rule"></div>
 
     <table class="roster-table" id="rosterTable" style="display:none;">
-      <thead><tr><th>Athlete</th><th style="text-align:right;">Score</th></tr></thead>
+      <thead><tr><th>Athlete</th><th style="text-align:right;" id="scoreColHeader">Reps</th></tr></thead>
       <tbody id="rosterBody"></tbody>
     </table>
     <div class="empty-roster" id="emptyRoster" style="display:none;">No one checked in yet for this wave/zone.</div>
@@ -81,20 +78,30 @@ body { padding: env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe
     <button class="btn-primary" id="submitBtn" onclick="submitAll()" style="display:none;">SUBMIT ALL</button>
     <div class="msg" id="rosterMsg"></div>
 
-    <button class="btn-secondary" onclick="toggleLateEntry()">LATE ENTRY — SCORE A DIFFERENT WAVE</button>
-    <div class="late-panel" id="latePanel">
-      <label style="font-size:9px; letter-spacing:3px; opacity:0.75; display:block; margin-bottom:8px;">Select wave</label>
-      <select id="lateWaveSelect" onchange="onLateWaveChange()" style="width:100%; padding:12px; border:1px solid var(--border); background:rgba(214,185,122,0.4); font-family:'Cinzel',serif; font-size:13px; color:var(--crimson);">
-        <option value="">-- select --</option>
-      </select>
-    </div>
-
     <button class="btn-logout" onclick="logout()">LOG OUT</button>
   </div>
 </div>
 
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
+
+// Backend locks writes with a 15s wait, so concurrent judges can occasionally
+// see "Server busy" under real load. Retry transparently before surfacing it.
+async function postJSON(body) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error && /server busy/i.test(data.error) && attempt < 2) {
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      continue;
+    }
+    return data;
+  }
+}
 
 const STATION_LABELS = {
   s1_burpees:   { label: 'Static Burpees',    unit: 'reps' },
@@ -155,12 +162,15 @@ async function loadRoster(waveOverride) {
   }
 }
 
+const UNIT_COL_HEADERS = { reps: 'Reps', metres: 'Distance (m)', laps: 'Laps' };
+
 function renderRoster(wave, roster) {
   const stInfo = STATION_LABELS[judge.station] || { label: judge.station, unit: '' };
+  document.getElementById('scoreColHeader').textContent = UNIT_COL_HEADERS[stInfo.unit] || 'Score';
   document.getElementById('waveTitle').textContent = wave ? `WAVE ${wave}` : 'NO ACTIVE WAVE';
   document.getElementById('waveSub').textContent = wave
     ? `${roster.length} checked in — enter ${stInfo.label} (${stInfo.unit})`
-    : 'Use Late Entry below to score a specific wave, or wait for Front Desk to activate one.';
+    : 'Waiting for Front Desk to activate a wave.';
 
   const table = document.getElementById('rosterTable');
   const empty = document.getElementById('emptyRoster');
@@ -207,12 +217,7 @@ async function submitAll() {
   btn.disabled = true;
   msg.textContent = '';
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'battle1_submit_wave', pin, wave: currentWave, scores }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'battle1_submit_wave', pin, wave: currentWave, scores });
     if (!data.success) throw new Error(data.error || 'Failed');
 
     msg.textContent = `Submitted ${data.submitted} score${data.submitted === 1 ? '' : 's'}.` +
@@ -224,32 +229,6 @@ async function submitAll() {
     msg.className = 'msg err';
   }
   btn.disabled = false;
-}
-
-function toggleLateEntry() {
-  const panel = document.getElementById('latePanel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) loadLateWaves();
-}
-
-async function loadLateWaves() {
-  const sel = document.getElementById('lateWaveSelect');
-  try {
-    const res = await fetch(`${APPS_SCRIPT_URL}?action=waves_for_late_entry`);
-    const data = await res.json();
-    const waves = data.waves || [];
-    sel.innerHTML = '<option value="">-- select --</option>' +
-      waves.map(w => `<option value="${w.wave_num}">Wave ${w.wave_num} (${w.status})</option>`).join('');
-  } catch {
-    sel.innerHTML = '<option value="">Failed to load</option>';
-  }
-}
-
-function onLateWaveChange() {
-  const wave = document.getElementById('lateWaveSelect').value;
-  if (!wave) return;
-  loadRoster(wave);
-  document.getElementById('latePanel').classList.remove('open');
 }
 
 function logout() {

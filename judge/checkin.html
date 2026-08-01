@@ -150,6 +150,24 @@ select.field-input, .field-input {
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxELQsXchGNJXNDyETPXuFOLNKXNNL48OZcG0IRtS-eohXx9gOSP-ZFC1J0PHl-QjNG/exec';
 
+// Backend locks writes with a 15s wait, so concurrent judges can occasionally
+// see "Server busy" under real load. Retry transparently before surfacing it.
+async function postJSON(body) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const res  = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data.error && /server busy/i.test(data.error) && attempt < 2) {
+      await new Promise(r => setTimeout(r, 1200 * (attempt + 1)));
+      continue;
+    }
+    return data;
+  }
+}
+
 let judge = null;
 let pin = null;
 let allAthletes = [];
@@ -240,12 +258,7 @@ async function activateWave() {
   if (!wave) return;
   document.getElementById('activateBtn').disabled = true;
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'checkin_activate_wave', pin, wave }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'checkin_activate_wave', pin, wave });
     if (!data.success) throw new Error(data.error || 'Failed');
     msg.textContent = `Wave ${wave} is now Active for Zone ${judge.assignment}.`;
     msg.className = 'msg ok';
@@ -264,12 +277,7 @@ async function forceCompleteWave() {
   if (!confirm(`Force Wave ${wave} to Complete for Zone ${judge.assignment}, even if not everyone's scored?`)) return;
   document.getElementById('forceCompleteBtn').disabled = true;
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'checkin_complete_wave', pin, wave }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'checkin_complete_wave', pin, wave });
     if (!data.success) throw new Error(data.error || 'Failed');
     msg.textContent = `Wave ${wave} marked Complete for Zone ${judge.assignment}.`;
     msg.className = 'msg ok';
@@ -339,12 +347,7 @@ async function doCheckin(force) {
   document.getElementById('checkinBtn').disabled = true;
   msg.textContent = '';
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'checkin_submit', pin, wave, athlete_id: selectedAthlete.athlete_id, force }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'checkin_submit', pin, wave, athlete_id: selectedAthlete.athlete_id, force });
 
     if (data.error === 'already_checked_in') {
       document.getElementById('dupMsg').textContent =
@@ -397,12 +400,7 @@ async function submitWalkin() {
   document.getElementById('walkinSubmitBtn').disabled = true;
   msg.textContent = '';
   try {
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'checkin_add_walkin', pin, wave, athlete_id: bib, name, category }),
-    });
-    const data = await res.json();
+    const data = await postJSON({ action: 'checkin_add_walkin', pin, wave, athlete_id: bib, name, category });
     if (!data.success) throw new Error(data.error || 'Failed');
 
     msg.textContent = `${name} added and checked into Wave ${wave}.`;
