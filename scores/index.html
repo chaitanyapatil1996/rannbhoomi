@@ -62,6 +62,18 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
 .cert-mode-btn.active { background:var(--crimson); color:var(--gold); border-color:var(--crimson); }
 .cert-mode-btn:hover:not(.active) { background:rgba(76,0,7,0.07); }
 
+/* Separate class from .ctrl-btn/.gender-btn on purpose — same reset-collision
+   reason as above; this toggle needs to survive battle/gym/gender switches. */
+.sort-btn {
+  padding:10px 22px; border:1px solid var(--border);
+  background:transparent; font-family:'Cinzel',serif; font-size:14px;
+  letter-spacing:3px; color:var(--crimson); cursor:pointer; transition:.18s;
+}
+.sort-btn.active { background:var(--crimson); color:var(--gold); border-color:var(--crimson); }
+.sort-btn:hover:not(.active) { background:rgba(76,0,7,0.07); }
+
+.table-title { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:3px; margin-bottom:16px; opacity:.85; }
+
 /* ── Podium ── */
 .podium { display:flex; gap:14px; margin-bottom:36px; flex-wrap:wrap; }
 .podium-card {
@@ -332,10 +344,16 @@ body { min-height:100vh; background:#d6b97a; font-family:'Cinzel',serif; color:v
   <button class="gender-btn"        onclick="setGender('female',this)">Female</button>
 </div>
 
+<div class="controls" id="sortControls">
+  <button class="sort-btn active" onclick="setSort('rank',this)">By Rank</button>
+  <button class="sort-btn"        onclick="setSort('recent',this)">By Recent Finish</button>
+</div>
+
 <!-- Podium -->
 <div class="podium" id="podium"></div>
 
 <!-- Table -->
+<div class="table-title" id="tableTitle"></div>
 <div class="table-wrap" id="tableWrap"><p class="status-loading">Loading scores...</p></div>
 
 <!-- Analytics toggle -->
@@ -421,9 +439,38 @@ let lastUpdated   = null;
 let currentBattle = 1;
 let currentDivision = 'solo';
 let currentGender = 'male';
+let currentSort   = 'rank'; // 'rank' | 'recent'
 let analyticsOpen = false;
 let secondsSince  = 0;
 let analyticsLoaded = false;
+
+const BATTLE_TITLES = { '1': 'BATTLE 1 — QUALIFIERS', '2': 'BATTLE 2 — SEMI FINALS', '3': 'BATTLE 3 — FINALS' };
+
+// Each battle format stamps its "last touched" timestamp under a different
+// column name (a pre-existing quirk, not introduced by this feature) — this
+// is the single place that knows which one applies to the current view.
+function recencyField() {
+  if (currentDivision === 'gym') return 'finished_at';
+  if (String(currentBattle) === '2') return 'updated_at';
+  return 'submitted_at';
+}
+
+// Scores currently on screen, in the order they should render — server
+// order (already rank-sorted) for 'rank', most-recently-touched-first for
+// 'recent'. Kept separate from allScores so re-sorting never needs a refetch.
+function displayScores() {
+  if (currentSort !== 'recent') return allScores;
+  const field = recencyField();
+  return [...allScores].sort((a, b) => new Date(b[field] || 0) - new Date(a[field] || 0));
+}
+
+function updateTableTitle() {
+  const parts = currentDivision === 'gym'
+    ? ['GYM BATTLE']
+    : [BATTLE_TITLES[String(currentBattle)] || `BATTLE ${currentBattle}`, currentGender.toUpperCase()];
+  parts.push(currentSort === 'recent' ? 'MOST RECENT FINISHES' : 'RANKED');
+  document.getElementById('tableTitle').textContent = parts.join(' · ');
+}
 
 // ── Data loading ──────────────────────────────────────────────────────────────
 
@@ -461,11 +508,16 @@ async function loadAnalytics() {
 // ── Rendering ─────────────────────────────────────────────────────────────────
 
 function renderAll() {
+  updateTableTitle();
   renderPodium();
   renderTable();
 }
 
 function renderPodium() {
+  // Podium is a "top 3 by rank" concept — meaningless once the table is
+  // sorted by recency, so it's hidden rather than showing 3 medal-styled
+  // cards for whoever happens to have finished most recently.
+  if (currentSort === 'recent') { document.getElementById('podium').innerHTML = ''; return; }
   const top3 = allScores.slice(0, 3);
   if (!top3.length) { document.getElementById('podium').innerHTML = ''; return; }
 
@@ -485,7 +537,7 @@ function renderPodium() {
 }
 
 function renderTable() {
-  const filtered = allScores;
+  const filtered = displayScores();
 
   if (!filtered.length) {
     document.getElementById('tableWrap').innerHTML = '<p class="status-loading">No scores released yet for this battle.</p>';
@@ -634,6 +686,16 @@ function setGender(g, btn) {
   analyticsLoaded = false;
   loadScores();
   if (analyticsOpen) loadAnalytics();
+}
+
+// Purely a client-side re-render of already-fetched scores — no reload
+// needed, so switching views stays instant on a leaderboard being
+// projected live.
+function setSort(mode, btn) {
+  currentSort = mode;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
 }
 
 function toggleAnalytics() {

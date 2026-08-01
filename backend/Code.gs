@@ -1211,13 +1211,14 @@ function battle2Scores(e) {
   const catIdx        = headers.indexOf('category');
   const completeIdx   = headers.indexOf('round_complete');
   const finishedIdx   = headers.indexOf('heat_finished');
+  const updatedIdx    = headers.indexOf('updated_at');
 
   const byAthlete = {};
   data.slice(1).forEach(r => {
     if (!r[idIdx]) return;
     const id = String(r[idIdx]);
     if (!byAthlete[id]) {
-      byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_station: null, partial_last_value: 0, complete: true };
+      byAthlete[id] = { athlete_id: id, name: r[nameIdx], category: r[catIdx], rounds_completed: 0, partial_stations: 0, partial_last_station: null, partial_last_value: 0, complete: true, updated_at: null };
       BATTLE2_STATIONS.forEach(([k]) => { byAthlete[id][k] = 0; });
     }
     BATTLE2_STATIONS.forEach(([k]) => {
@@ -1230,6 +1231,12 @@ function battle2Scores(e) {
       byAthlete[id].partial_stations     = filled.length;
       byAthlete[id].partial_last_station = filled.length ? filled[filled.length - 1][0] : null;
       byAthlete[id].partial_last_value   = filled.length ? Number(r[headers.indexOf(filled[filled.length - 1][0])]) || 0 : 0;
+    }
+    // Track this athlete's most recent write across all their rounds/rows —
+    // used by the leaderboard's "sort by recent finish" view.
+    const rowUpdated = updatedIdx > -1 ? r[updatedIdx] : null;
+    if (rowUpdated && (!byAthlete[id].updated_at || new Date(rowUpdated) > new Date(byAthlete[id].updated_at))) {
+      byAthlete[id].updated_at = rowUpdated;
     }
   });
 
