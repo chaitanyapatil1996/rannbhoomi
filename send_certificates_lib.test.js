@@ -45,6 +45,15 @@ test('buildSoloEmail congratulates a finalist distinctly from a semi-finalist', 
   assert.match(text, /Battle 3 — The Finals/);
 });
 
+test('buildSoloEmail congratulates a semi-finalist advancing from Battle 1 to Battle 2', () => {
+  const athleteRow = makeRow({ name: 'Semi-finalist Sam', gender_rank: 15 });
+  const record = { athlete: { name: 'Semi-finalist Sam' }, rounds: { '1': {}, '2': {} } };
+  const { subject, text } = buildSoloEmail(athleteRow, record, [athleteRow]);
+  assert.match(subject, /Semi-finalist Sam/);
+  assert.match(text, /Battle 2 — Semi-Finals/);
+  assert.doesNotMatch(text, /Battle 3 — The Finals/);
+});
+
 test('buildSoloEmail includes gap analysis for non-qualifiers past rank 30', () => {
   const cutoff  = makeRow({ gender_rank: 30, total: 500 });
   const athlete = makeRow({ name: 'Eliminated Eve', gender_rank: 45, total: 460 });
