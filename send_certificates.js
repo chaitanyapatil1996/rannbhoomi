@@ -12,7 +12,9 @@
 // Setup:
 //   1. Add an `email` column (last column) to the Gym_Results sheet — one
 //      email per team row. Teams without one are skipped, not an error.
-//   2. Generate a Gmail App Password for frontline@rannbhoomi.com
+//   2. Solo athlete emails come from the Athletes sheet's `email` column —
+//      confirm it's populated (schema is athlete_id, name, email, category, wave).
+//   3. Generate a Gmail App Password for frontline@rannbhoomi.com
 //      (Google Account → Security → App Passwords) and set it as
 //      GMAIL_APP_PASSWORD before running for real.
 
@@ -51,6 +53,10 @@ async function renderSoloCertificatePDF(browser, athleteRecord, outPath) {
       renderCertificate(data);
       document.getElementById('certOverlay').classList.add('open');
     }, athleteRecord);
+    await page.waitForFunction(() => {
+      const img = document.querySelector('.cert-shield');
+      return img && img.complete && img.naturalWidth > 0;
+    }, { timeout: 10000 });
     await page.emulateMediaType('print');
     await page.pdf({ path: outPath, format: 'A4', printBackground: true });
   } finally {
@@ -66,6 +72,10 @@ async function renderGymCertificatePDF(browser, team, outPath) {
       renderGymCertificate(teamData);
       document.getElementById('certOverlay').classList.add('open');
     }, team);
+    await page.waitForFunction(() => {
+      const img = document.querySelector('.cert-shield');
+      return img && img.complete && img.naturalWidth > 0;
+    }, { timeout: 10000 });
     await page.emulateMediaType('print');
     await page.pdf({ path: outPath, format: 'A4', printBackground: true });
   } finally {
@@ -115,91 +125,107 @@ async function main() {
   const logLines = [`Certificate Send Log — ${new Date().toLocaleString()}`, '─'.repeat(80)];
   let sent = 0, skipped = 0;
 
-  // ── Solo athletes ──
-  for (const row of board1) {
-    const boardForCategory = board1.filter(r => r.category === row.category);
-    process.stdout.write(`${row.name} (${row.category}, rank ${row.gender_rank}) ... `);
+  try {
+    // ── Solo athletes ──
+    for (const row of board1) {
+      const boardForCategory = board1.filter(r => r.category === row.category);
+      process.stdout.write(`${row.name} (${row.category}, rank ${row.gender_rank}) ... `);
 
-    const record = await fetchJSON(`${APPS_SCRIPT_URL}?action=athlete&athlete_id=${encodeURIComponent(row.athlete_id)}`);
-    if (record.error || !record.athlete) {
-      console.log('SKIP — could not load athlete record');
-      logLines.push(`SKIPPED  | ${row.name.padEnd(30)} | Solo | no athlete record`);
-      skipped++;
-      continue;
-    }
+      try {
+        const record = await fetchJSON(`${APPS_SCRIPT_URL}?action=athlete&athlete_id=${encodeURIComponent(row.athlete_id)}`);
+        if (record.error || !record.athlete) {
+          console.log('SKIP — could not load athlete record');
+          logLines.push(`SKIPPED  | ${row.name.padEnd(30)} | Solo | no athlete record`);
+          skipped++;
+          continue;
+        }
 
-    const fileName = `${safeFileName(row.name)} - Certificate.pdf`;
-    const pdfPath  = path.join(OUTPUT_DIR, fileName);
-    await renderSoloCertificatePDF(browser, record, pdfPath);
+        const fileName = `${safeFileName(row.name)} - Certificate.pdf`;
+        const pdfPath  = path.join(OUTPUT_DIR, fileName);
+        await renderSoloCertificatePDF(browser, record, pdfPath);
 
-    const { subject, text } = buildSoloEmail(row, record, boardForCategory);
+        const { subject, text } = buildSoloEmail(row, record, boardForCategory);
 
-    if (DRY_RUN) {
-      console.log('PDF saved (dry run)');
-      logLines.push(`DRY RUN  | ${row.name.padEnd(30)} | Solo | ${fileName}`);
-      continue;
-    }
+        if (DRY_RUN) {
+          console.log('PDF saved (dry run)');
+          logLines.push(`DRY RUN  | ${row.name.padEnd(30)} | Solo | ${fileName}`);
+          continue;
+        }
 
-    const sendTo = TEST_TO || record.athlete.email;
-    if (!sendTo) {
-      console.log('PDF saved — no email on record');
-      logLines.push(`NO EMAIL | ${row.name.padEnd(30)} | Solo | ${fileName}`);
-      skipped++;
-      continue;
-    }
+        const sendTo = TEST_TO || record.athlete.email;
+        if (!sendTo) {
+          console.log('PDF saved — no email on record');
+          logLines.push(`NO EMAIL | ${row.name.padEnd(30)} | Solo | ${fileName}`);
+          skipped++;
+          continue;
+        }
 
-    await sendCertificateEmail(transporter, { to: sendTo, subject, text, pdfPath, fileName });
-    console.log(`sent to ${sendTo}`);
-    logLines.push(`SENT     | ${row.name.padEnd(30)} | Solo | ${fileName} | -> ${sendTo}`);
-    sent++;
-    if (TEST_TO) break;
-    await new Promise(r => setTimeout(r, SEND_DELAY_MS));
-  }
-
-  // ── Gym Battle teams (skipped entirely if --test-to already sent one above) ──
-  if (!(TEST_TO && sent > 0)) {
-    for (const team of gymTeams) {
-      process.stdout.write(`${team.team_name} (Gym, rank ${team.rank}) ... `);
-
-      const fileName = `${safeFileName(team.team_name)} - Certificate.pdf`;
-      const pdfPath  = path.join(OUTPUT_DIR, fileName);
-      await renderGymCertificatePDF(browser, team, pdfPath);
-
-      const { subject, text } = buildGymEmail(team);
-
-      if (DRY_RUN) {
-        console.log('PDF saved (dry run)');
-        logLines.push(`DRY RUN  | ${team.team_name.padEnd(30)} | Gym  | ${fileName}`);
-        continue;
-      }
-
-      const sendTo = TEST_TO || team.email;
-      if (!sendTo) {
-        console.log('PDF saved — no email on record');
-        logLines.push(`NO EMAIL | ${team.team_name.padEnd(30)} | Gym  | ${fileName}`);
+        await sendCertificateEmail(transporter, { to: sendTo, subject, text, pdfPath, fileName });
+        console.log(`sent to ${sendTo}`);
+        logLines.push(`SENT     | ${row.name.padEnd(30)} | Solo | ${fileName} | -> ${sendTo}`);
+        sent++;
+        if (TEST_TO) break;
+        await new Promise(r => setTimeout(r, SEND_DELAY_MS));
+      } catch (err) {
+        console.log(`FAILED — ${err.message}`);
+        logLines.push(`FAILED   | ${row.name.padEnd(30)} | Solo | ${err.message}`);
         skipped++;
         continue;
       }
-
-      await sendCertificateEmail(transporter, { to: sendTo, subject, text, pdfPath, fileName });
-      console.log(`sent to ${sendTo}`);
-      logLines.push(`SENT     | ${team.team_name.padEnd(30)} | Gym  | ${fileName} | -> ${sendTo}`);
-      sent++;
-      if (TEST_TO) break;
-      await new Promise(r => setTimeout(r, SEND_DELAY_MS));
     }
+
+    // ── Gym Battle teams (skipped entirely if --test-to already sent one above) ──
+    if (!(TEST_TO && sent > 0)) {
+      for (const team of gymTeams) {
+        process.stdout.write(`${team.team_name} (Gym, rank ${team.rank}) ... `);
+
+        try {
+          const fileName = `${safeFileName(team.team_name)} - Certificate.pdf`;
+          const pdfPath  = path.join(OUTPUT_DIR, fileName);
+          await renderGymCertificatePDF(browser, team, pdfPath);
+
+          const { subject, text } = buildGymEmail(team);
+
+          if (DRY_RUN) {
+            console.log('PDF saved (dry run)');
+            logLines.push(`DRY RUN  | ${team.team_name.padEnd(30)} | Gym  | ${fileName}`);
+            continue;
+          }
+
+          const sendTo = TEST_TO || team.email;
+          if (!sendTo) {
+            console.log('PDF saved — no email on record');
+            logLines.push(`NO EMAIL | ${team.team_name.padEnd(30)} | Gym  | ${fileName}`);
+            skipped++;
+            continue;
+          }
+
+          await sendCertificateEmail(transporter, { to: sendTo, subject, text, pdfPath, fileName });
+          console.log(`sent to ${sendTo}`);
+          logLines.push(`SENT     | ${team.team_name.padEnd(30)} | Gym  | ${fileName} | -> ${sendTo}`);
+          sent++;
+          if (TEST_TO) break;
+          await new Promise(r => setTimeout(r, SEND_DELAY_MS));
+        } catch (err) {
+          console.log(`FAILED — ${err.message}`);
+          logLines.push(`FAILED   | ${team.team_name.padEnd(30)} | Gym  | ${err.message}`);
+          skipped++;
+          continue;
+        }
+      }
+    }
+
+    console.log(`\nDone. ${sent} sent, ${skipped} skipped.`);
+    console.log(`PDFs saved to: ${OUTPUT_DIR}`);
+  } finally {
+    logLines.push('─'.repeat(80));
+    logLines.push(`Total: ${sent} sent, ${skipped} skipped`);
+    const logPath = path.join(__dirname, `certificate_log_${Date.now()}.txt`);
+    fs.writeFileSync(logPath, logLines.join('\n'));
+    console.log(`Log saved to:  ${logPath}`);
+
+    if (browser) await browser.close().catch(() => {});
   }
-
-  await browser.close();
-
-  logLines.push('─'.repeat(80));
-  logLines.push(`Total: ${sent} sent, ${skipped} skipped`);
-  const logPath = path.join(__dirname, `certificate_log_${Date.now()}.txt`);
-  fs.writeFileSync(logPath, logLines.join('\n'));
-
-  console.log(`\nDone. ${sent} sent, ${skipped} skipped.`);
-  console.log(`PDFs saved to: ${OUTPUT_DIR}`);
-  console.log(`Log saved to:  ${logPath}`);
 }
 
 main().catch(err => { console.error(err); process.exit(1); });
