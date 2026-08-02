@@ -92,6 +92,12 @@ label   { display:block; font-size:9px; letter-spacing:3px; opacity:.5; margin-b
       <button class="btn-secondary" onclick="rebuildNow()">REBUILD NOW</button>
     </div>
 
+    <div class="action-card">
+      <h3>RECOMPUTE BATTLE 1 TOTALS</h3>
+      <p>Manually editing a station's rep count in Round1_Scores does not update that athlete's total — this recalculates every Battle 1 total from current station values (using the Scoring Table's points-per-unit) and rebuilds the leaderboard right after. Use this any time you hand-correct a station value in the Sheet.</p>
+      <button class="btn-secondary" onclick="recomputeBattle1()">RECOMPUTE TOTALS</button>
+    </div>
+
   </div>
   <div class="msg" id="globalMsg"></div>
 </div>
@@ -184,6 +190,21 @@ async function rebuildNow() {
     const res = await post({ action: 'rebuild_leaderboard', pin: getPin() });
     if (res.success) {
       showMsg('globalMsg', 'Leaderboard rebuilt.', 'ok');
+    } else {
+      throw new Error(res.error || 'Failed');
+    }
+  } catch (err) {
+    showMsg('globalMsg', err.message, 'err');
+  }
+}
+
+async function recomputeBattle1() {
+  if (!getPin()) { showMsg('globalMsg', 'Enter PIN first', 'err'); return; }
+  showMsg('globalMsg', 'Recomputing...', '');
+  try {
+    const res = await post({ action: 'admin_recompute_battle1', pin: getPin() });
+    if (res.success) {
+      showMsg('globalMsg', `Recomputed ${res.updated} row(s) and rebuilt leaderboard.`, 'ok');
     } else {
       throw new Error(res.error || 'Failed');
     }

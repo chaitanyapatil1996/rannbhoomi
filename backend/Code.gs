@@ -52,6 +52,7 @@ function doPost(e) {
   if (action === 'admin_clear')       return clearAllScores(body);
   if (action === 'set_release_all')   return setReleaseAll(body);
   if (action === 'rebuild_leaderboard') return adminRebuild(body);
+  if (action === 'admin_recompute_battle1') return adminRecomputeBattle1Totals(body);
   if (action === 'checkin_submit')       return checkinSubmit(body);
   if (action === 'checkin_add_walkin')   return checkinAddWalkin(body);
   if (action === 'checkin_activate_wave') return checkinActivateWave(body);
@@ -537,6 +538,50 @@ function adminRebuild(body) {
   if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
   rebuildLeaderboard();
   return jsonResponse({ success: true });
+}
+
+// ─── Admin: recompute Battle 1 totals from station values ───────────────────
+// Manually editing a station cell in Round1_Scores does NOT recompute
+// `total` — that only happens inside handleScore()'s judge-submission path.
+// This re-derives every row's total from its current station values (same
+// points-per-unit formula as handleScore()) and rebuilds the leaderboard
+// cache in one call, so a manual correction is one button instead of
+// hand-doing the points math and remembering to hit Rebuild Now after.
+function adminRecomputeBattle1Totals(body) {
+  const ss  = SpreadsheetApp.openById(SPREADSHEET_ID);
+  const cfg = getConfig(ss);
+  if (String(body.pin) !== String(cfg['judge_pin'])) return jsonResponse({ error: 'Invalid PIN' });
+
+  const sheet = ss.getSheetByName(SCORE_SHEETS['1']);
+  if (!sheet || sheet.getLastRow() <= 1) return jsonResponse({ success: true, updated: 0 });
+
+  const data          = sheet.getDataRange().getValues();
+  const headers       = data[0];
+  const roundStations = STATION_ROUNDS['1'];
+  const completeIdx   = headers.indexOf('complete');
+  const totalIdx      = headers.indexOf('total');
+
+  let updated = 0;
+  for (let r = 1; r < data.length; r++) {
+    const row = data[r];
+    if (!row[0]) continue;
+
+    const stationIdxs = roundStations.map(s => headers.indexOf(s)).filter(i => i > -1);
+    const vals        = stationIdxs.map(i => row[i]);
+    const allFilled    = vals.every(v => v !== '' && v !== null && v !== undefined);
+    const total = roundStations.reduce((sum, st, i) => {
+      const scoring = _getScoringRow('1', st);
+      const pts = scoring ? Number(scoring.pointsPerUnit) || 0 : 1;
+      return sum + (Number(vals[i]) || 0) * pts;
+    }, 0);
+
+    sheet.getRange(r + 1, completeIdx + 1).setValue(allFilled);
+    if (allFilled) sheet.getRange(r + 1, totalIdx + 1).setValue(total);
+    updated++;
+  }
+
+  rebuildLeaderboard();
+  return jsonResponse({ success: true, updated });
 }
 
 // ─── Battle 1 — Check-In ──────────────────────────────────────────────────
