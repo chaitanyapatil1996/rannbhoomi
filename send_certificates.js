@@ -107,6 +107,9 @@ async function sendCertificateEmail(transporter, { to, subject, text, pdfPath, f
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
+  // Check environment first — fail fast before allocating any resources or doing work
+  const transporter  = makeTransporter();
+
   if (!fs.existsSync(OUTPUT_DIR)) fs.mkdirSync(OUTPUT_DIR, { recursive: true });
 
   console.log('Fetching Battle 1 leaderboard...');
@@ -120,7 +123,6 @@ async function main() {
   console.log(`Found ${gymTeams.length} Gym Battle teams.`);
 
   const browser      = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
-  const transporter  = makeTransporter();
 
   const logLines = [`Certificate Send Log — ${new Date().toLocaleString()}`, '─'.repeat(80)];
   let sent = 0, skipped = 0;
