@@ -236,6 +236,26 @@ Full history: `2026-07-19-gym-battle-single-entry-design.md`.
   also switched its rank column from combined overall `rank` to
   `gender_rank` for the same reason (was interleaving M/F rankings under
   one number, which didn't match "top 3 male" style displays).
+- **Battle 3 leaderboard/certificate/analytics showed stale placeholder
+  columns** (`weight_total`/`time_seconds`) instead of real station data —
+  leftover from before Battle 3's stations were finalized. Fixed
+  2026-08-05: `STATION_ROUNDS['3']` (Code.gs), `BATTLE_STATIONS['3']` and
+  `STATION_LABELS` (scores/index.html) now list the stations actually run
+  this event — `sled_weight`, `sled_laps`, `ski_metres`, `sandbag_reps`.
+  Note: this event only ran 4 of the 5 stations `Round3_Scores` has
+  columns for (`snatch_weight`/`snatch_reps`/`box_step_reps` are unused
+  this event) — the display lists were deliberately trimmed to match what
+  was actually run, not the full sheet schema. If a future event runs
+  Snatch or Box Step-Up, add those keys back to both lists.
+- **`loadScores()` (scores/index.html) has no stale-response guard** —
+  found 2026-08-05 while testing the Battle 3 fix: rapid overlapping
+  fetches (auto-refresh firing mid-request, or quick battle/gender
+  switches) can resolve out of order, so a slower/older response can
+  overwrite a newer one and the table shows the wrong battle's data or an
+  inconsistent row count. Root cause is `fetch` + assign with no
+  request-generation token to discard stale responses. **Organizer's
+  call (2026-08-05): leave as-is, fix only if actually reported as a
+  problem** — not fixing speculatively.
 
 ## Testing / deployment conventions
 
