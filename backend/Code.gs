@@ -3,7 +3,7 @@ const SPREADSHEET_ID = '1KX7BtTBFBJkLW_Chl1Xi_WdWLjqUjUotZGrGQU3g9u8';
 const STATION_ROUNDS = {
   '1': ['s1_burpees','s2_bike','s3_lunges','s4_pushups','s5_sprint','s6_inchworms','s7_squats'],
   '2': ['rowing','devils_press','kb_walk','box_jump'],
-  '3': ['snatch_weight','snatch_reps','sled_weight','sled_laps','ski_metres','box_step_reps','sandbag_reps'],
+  '3': ['sled_weight','sled_laps','ski_metres','sandbag_reps'],
 };
 
 const SCORE_SHEETS  = { '1':'Round1_Scores',       '2':'Round2_Scores',       '3':'Round3_Scores'       };
